@@ -939,23 +939,23 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
     const formatted = formatDisplayDate(currentDateStr);
 
     return (
-      <div className={`flex items-center justify-between bg-slate-900 dark:bg-slate-900 border border-slate-700/80 rounded-2xl px-2.5 sm:px-3 py-1.5 shadow-md shrink-0 select-none ${className}`}>
+      <div className={`flex items-center justify-between bg-slate-900 dark:bg-slate-900 border border-slate-700/80 rounded-2xl px-1.5 sm:px-3 py-1 sm:py-1.5 shadow-md min-w-0 select-none ${className}`}>
         <button
           type="button"
           title="পূর্ববর্তী দিন"
           onClick={onPrev}
           disabled={!canPrev}
-          className="p-1 text-slate-400 hover:text-white disabled:opacity-20 transition-colors cursor-pointer shrink-0"
+          className="p-1 sm:p-1.5 text-slate-400 hover:text-white disabled:opacity-20 transition-colors cursor-pointer shrink-0"
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
         </button>
 
-        <div className="relative flex items-center space-x-2 px-1.5 sm:px-2 cursor-pointer group">
-          <Calendar className="w-4 h-4 text-amber-500 shrink-0 pointer-events-none" />
-          <span className="text-xs sm:text-sm font-black text-white tracking-wide">
+        <div className="relative flex items-center space-x-1 sm:space-x-2 px-1 sm:px-2 cursor-pointer group min-w-0 justify-center">
+          <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 shrink-0 pointer-events-none" />
+          <span className="text-[11px] sm:text-sm font-black text-white tracking-tight truncate">
             {formatted}
           </span>
-          <Calendar className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-400 shrink-0 pointer-events-none transition-colors" />
+          <Calendar className="hidden md:block w-3.5 h-3.5 text-slate-400 group-hover:text-amber-400 shrink-0 pointer-events-none transition-colors" />
 
           {/* Hidden native Date Picker Input covering the entire pill */}
           <input
@@ -969,7 +969,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
 
           {/* Bengali Day Badge */}
           {currentDayName && (
-            <span className="text-[11px] sm:text-xs font-black text-amber-200 bg-amber-950/90 group-hover:bg-amber-900/90 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-xl border border-amber-600/60 shadow-inner shrink-0 block transition-colors">
+            <span className="text-[10px] sm:text-xs font-black text-amber-200 bg-amber-950/90 group-hover:bg-amber-900/90 px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-lg sm:rounded-xl border border-amber-600/60 shadow-inner shrink-0 block transition-colors leading-tight">
               {getBanglaDay(currentDayName)}
             </span>
           )}
@@ -980,9 +980,9 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
           title="পরবর্তী দিন"
           onClick={onNext}
           disabled={!canNext}
-          className="p-1 text-slate-400 hover:text-white disabled:opacity-20 transition-colors cursor-pointer shrink-0"
+          className="p-1 sm:p-1.5 text-slate-400 hover:text-white disabled:opacity-20 transition-colors cursor-pointer shrink-0"
         >
-          <ChevronRight className="w-4 h-4" />
+          <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
         </button>
       </div>
     );
@@ -1125,7 +1125,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
       </div>
 
       {/* Sticky Mobile Sub-Header (Date Navigator & Actions for Mobile Phone View) */}
-      <div className="sm:hidden sticky top-[54px] z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-2 rounded-2xl shadow-md border border-slate-200/90 dark:border-slate-800/90 flex items-center justify-between gap-2">
+      <div className="sm:hidden sticky top-[54px] z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-1.5 rounded-2xl shadow-md border border-slate-200/90 dark:border-slate-800/90 flex items-center gap-1.5 w-full min-w-0">
         {/* Unified Date Navigator Pill in Mobile Sub-Header */}
         {renderDateNavigatorPill(
           activeDisplayDate,
@@ -1135,13 +1135,13 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
           () => handleUnifiedDateStep(1),
           activeDateIdx > 0,
           activeDateIdx < data.length - 1,
-          "w-full"
+          "flex-1 min-w-0"
         )}
 
         {/* Quick New Day Button on Mobile Header */}
         <button
           onClick={handleCreateNewDay}
-          className="p-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm active:scale-95 shrink-0"
+          className="h-9 w-9 flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl text-xs font-bold shadow-sm active:scale-95 shrink-0 cursor-pointer"
           title="নতুন দিনের পাতা"
         >
           <Plus className="w-4 h-4" />
@@ -1371,54 +1371,58 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
               </div>
 
               {/* Timeframe Selector Bar */}
-              <div className="flex flex-wrap items-center gap-2 p-1.5 bg-slate-100/90 dark:bg-slate-800/90 rounded-2xl">
+              <div className="grid grid-cols-4 gap-1 sm:gap-2 p-1 sm:p-1.5 bg-slate-100/90 dark:bg-slate-800/90 rounded-2xl">
                 <button
                   type="button"
                   onClick={() => setSelectedProfitDateRange("weekly")}
-                  className={`flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer text-center flex items-center justify-center space-x-1.5 ${
+                  className={`py-1.5 sm:py-2 px-1 sm:px-3 rounded-xl text-[11px] sm:text-sm font-black transition-all cursor-pointer text-center flex items-center justify-center space-x-1 sm:space-x-1.5 ${
                     selectedProfitDateRange === "weekly" || selectedProfitDateRange === "7"
                       ? "bg-white dark:bg-slate-700 text-emerald-900 dark:text-emerald-300 shadow-md ring-1 ring-slate-200/60 dark:ring-slate-600 font-black"
                       : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white/60 dark:hover:bg-slate-700/50"
                   }`}
                 >
-                  <span>📅</span>
-                  <span>সাপ্তাহিক (7D)</span>
+                  <span className="hidden xs:inline text-xs sm:text-base">📅</span>
+                  <span>7D</span>
+                  <span className="hidden sm:inline">(সাপ্তাহিক)</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setSelectedProfitDateRange("monthly")}
-                  className={`flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer text-center flex items-center justify-center space-x-1.5 ${
+                  className={`py-1.5 sm:py-2 px-1 sm:px-3 rounded-xl text-[11px] sm:text-sm font-black transition-all cursor-pointer text-center flex items-center justify-center space-x-1 sm:space-x-1.5 ${
                     selectedProfitDateRange === "monthly" || selectedProfitDateRange === "30"
                       ? "bg-white dark:bg-slate-700 text-emerald-900 dark:text-emerald-300 shadow-md ring-1 ring-slate-200/60 dark:ring-slate-600 font-black"
                       : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white/60 dark:hover:bg-slate-700/50"
                   }`}
                 >
-                  <span>🗓️</span>
-                  <span>মাসিক (30D)</span>
+                  <span className="hidden xs:inline text-xs sm:text-base">🗓️</span>
+                  <span>30D</span>
+                  <span className="hidden sm:inline">(মাসিক)</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setSelectedProfitDateRange("yearly")}
-                  className={`flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer text-center flex items-center justify-center space-x-1.5 ${
+                  className={`py-1.5 sm:py-2 px-1 sm:px-3 rounded-xl text-[11px] sm:text-sm font-black transition-all cursor-pointer text-center flex items-center justify-center space-x-1 sm:space-x-1.5 ${
                     selectedProfitDateRange === "yearly" || selectedProfitDateRange === "365"
                       ? "bg-white dark:bg-slate-700 text-emerald-900 dark:text-emerald-300 shadow-md ring-1 ring-slate-200/60 dark:ring-slate-600 font-black"
                       : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white/60 dark:hover:bg-slate-700/50"
                   }`}
                 >
-                  <span>📊</span>
-                  <span>বাৎসরিক (1Y)</span>
+                  <span className="hidden xs:inline text-xs sm:text-base">📊</span>
+                  <span>1Y</span>
+                  <span className="hidden sm:inline">(বাৎসরিক)</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setSelectedProfitDateRange("all")}
-                  className={`flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer text-center flex items-center justify-center space-x-1.5 ${
+                  className={`py-1.5 sm:py-2 px-1 sm:px-3 rounded-xl text-[11px] sm:text-sm font-black transition-all cursor-pointer text-center flex items-center justify-center space-x-1 sm:space-x-1.5 ${
                     selectedProfitDateRange === "all"
                       ? "bg-white dark:bg-slate-700 text-emerald-900 dark:text-emerald-300 shadow-md ring-1 ring-slate-200/60 dark:ring-slate-600 font-black"
                       : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white/60 dark:hover:bg-slate-700/50"
                   }`}
                 >
-                  <span>📋</span>
-                  <span>সম্পূর্ণ (All)</span>
+                  <span className="hidden xs:inline text-xs sm:text-base">📋</span>
+                  <span>All</span>
+                  <span className="hidden sm:inline">(সব)</span>
                 </button>
               </div>
 
