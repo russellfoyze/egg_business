@@ -1,0 +1,128 @@
+{
+  "date": "2026-08-25",
+  "day": "মঙ্গলবার",
+  "pageNo": "98",
+  "stockEntries": [
+    {
+      "eggType": "সাদা (White Egg)",
+      "currentStock": 2092,
+      "purchaseRate": 10.80,
+      "hasPurchase": false,
+      "purchaseQty": 0
+    },
+    {
+      "eggType": "লাল (Red Egg)",
+      "currentStock": 4438,
+      "purchaseRate": 11.25,
+      "hasPurchase": false,
+      "purchaseQty": 0
+    },
+    {
+      "eggType": "হাঁস (Duck Egg)",
+      "currentStock": 164,
+      "purchaseRate": 17.00,
+      "hasPurchase": false,
+      "purchaseQty": 0
+    },
+    {
+      "eggType": "মুরগী (Chicken Egg)",
+      "currentStock": 0,
+      "purchaseRate": 15.00,
+      "hasPurchase": false,
+      "purchaseQty": 0
+    },
+    {
+      "eggType": "কোয়েল (Quail Egg)",
+      "currentStock": 350,
+      "purchaseRate": 3.00,
+      "hasPurchase": false,
+      "purchaseQty": 0
+    },
+    {
+      "eggType": "L.M",
+      "currentStock": 0,
+      "purchaseRate": 0,
+      "hasPurchase": false,
+      "purchaseQty": 0
+    }
+  ],
+  "financialEntry": {
+    "prevDayBalance": 872795,
+    "totalDue": 653556,
+    "totalCash": 105290,
+    "extraDue": 0,
+    "providerName": "",
+    "providerPhone": "",
+    "providerEggType": "",
+    "providerDueMoney": 0,
+    "providerUnitPrice": 0
+  },
+  "extraDueList": [
+    {
+      "label": "ভাঙ্গিনা",
+      "amount": 400
+    },
+    {
+      "label": "কো (490 x 3)",
+      "qty": 490,
+      "unitPrice": 3.00,
+      "amount": 1470
+    }
+  ],
+  "extraCollectionList": [
+    {
+      "label": "বাকি আদায়",
+      "amount": 350
+    },
+    {
+      "label": "নগদ আদায়",
+      "amount": 290
+    },
+    {
+      "label": "কাওসার",
+      "amount": 1500
+    },
+    {
+      "label": "অন্যান্য আদায়",
+      "amount": 150
+    }
+  ],
+  "expensesList": [
+    {
+      "expenseType": "নাস্তা-চা",
+      "amount": 400,
+      "wastedEggQty": 0,
+      "wastedEggCost": 0
+    },
+    {
+      "expenseType": "গাড়ির রং",
+      "amount": 3000,
+      "wastedEggQty": 0,
+      "wastedEggCost": 0
+    },
+    {
+      "expenseType": "কো",
+      "amount": 1470,
+      "wastedEggQty": 0,
+      "wastedEggCost": 0
+    },
+    {
+      "expenseType": "মোঃ আলি",
+      "amount": 38000,
+      "wastedEggQty": 0,
+      "wastedEggCost": 0
+    },
+    {
+      "expenseType": "গাড়ির তেল",
+      "amount": 1060,
+      "wastedEggQty": 0,
+      "wastedEggCost": 0
+    },
+    {
+      "expenseType": "ভাঙ্গা",
+      "amount": 270,
+      "wastedEggQty": 25,
+      "wastedEggCost": 270
+    }
+  ]
+}
