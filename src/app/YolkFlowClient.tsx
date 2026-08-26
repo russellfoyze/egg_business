@@ -675,8 +675,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
   }, [sevenDayMargin, sevenDaysList]);
 
   // Chart data
-  // Chart data
-  const filteredData = useMemo(() => {
+  const filteredData: ComputedDayData[] = useMemo(() => {
     if (selectedDateRange === "all") return data;
     if (selectedDateRange === "weekly" || selectedDateRange === "7") return data.slice(-7);
     if (selectedDateRange === "monthly" || selectedDateRange === "30") return data.slice(-30);
@@ -693,7 +692,18 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
   const maxSold = Math.max(...chartSoldTotal, 100);
 
   // Egg Price Trend Data Computation with 0.5 Intervals
-  const eggPriceStats = useMemo(() => {
+  const eggPriceStats: {
+    pricesByEgg: { [eggName: string]: number[] };
+    maxPrice: number;
+    minPrice: number;
+    avgPrice: number;
+    peakPoint: { date: string; day: string; eggType: string; price: number; index: number } | null;
+    lowestPoint: { date: string; day: string; eggType: string; price: number; index: number } | null;
+    yMin: number;
+    yMax: number;
+    yTicks: number[];
+    ySubTicks: number[];
+  } = useMemo(() => {
     const pricesByEgg: { [eggName: string]: number[] } = {};
     EGG_TYPES.forEach((t) => (pricesByEgg[t] = []));
 
@@ -720,7 +730,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
     let peakPoint: { date: string; day: string; eggType: string; price: number; index: number } | null = null;
     let lowestPoint: { date: string; day: string; eggType: string; price: number; index: number } | null = null;
 
-    filteredData.forEach((d, idx) => {
+    filteredData.forEach((d: ComputedDayData, idx: number) => {
       activeEggList.forEach((t) => {
         const p = d.stock[t]?.purchaseRate || DEFAULT_RATES[t] || 0;
         if (p === rawMax && !peakPoint) {
@@ -2117,9 +2127,9 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                 {renderDateNavigatorPill(
                   formDate,
                   formDay,
-                  (d) => handleDateChangeInForm(d),
-                  () => handleStepDateInForm(-1),
-                  () => handleStepDateInForm(1),
+                  handleUnifiedDateChange,
+                  () => handleUnifiedDateStep(-1),
+                  () => handleUnifiedDateStep(1),
                   true,
                   true
                 )}

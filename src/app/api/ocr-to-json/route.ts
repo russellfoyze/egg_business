@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 const SYSTEM_PROMPT = `You are a high-precision OCR Data Extraction AI specializing in Bengali handwritten Wholesale Egg Ledger notebook pages ("দৈনিক হালখাতা").
 
 Read the handwritten text, numbers, and tables from the ledger image with 100% mathematical accuracy.
@@ -178,7 +180,7 @@ function sanitizeAndVerifyLedgerData(data: any): any {
       prevDayBalance,
       totalDue,
       totalCash,
-      extraDue: extraCollectionList.reduce((s, c) => s + c.amount, 0),
+      extraDue: extraCollectionList.reduce((s: number, c: { label: string; amount: number }) => s + (c.amount || 0), 0),
       providerName: fin.providerName || "",
       providerPhone: fin.providerPhone || "",
       providerEggType: fin.providerEggType || "",

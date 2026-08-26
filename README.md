@@ -83,6 +83,27 @@ npm run dev
 
 ---
 
+## 🌐 ভার্সেল ডিপ্লয়মেন্ট গাইড (Deploying to Vercel)
+
+### ১. Vercel এ প্রজেক্ট ইমপোর্ট করুন:
+1. [Vercel Dashboard](https://vercel.com/dashboard) এ যান এবং **Add New... > Project** এ ক্লিক করুন।
+2. আপনার GitHub অ্যাকাউন্ট থেকে `russellfoyze/egg_business` রিপোজিটরিটি সিলেক্ট করুন।
+
+### ২. Environment Variables যুক্ত করুন:
+Vercel এর **Environment Variables** সেকশনে নিচের ৪টি ভ্যারিয়েবল কপি করে যুক্ত করুন:
+
+| Variable Name | Description |
+| :--- | :--- |
+| **`GOOGLE_SHEET_ID`** | আপনার গুগল স্প্রেডশিটের আইডি |
+| **`GOOGLE_SERVICE_ACCOUNT_EMAIL`** | গুগল ক্লাউড সার্ভিস অ্যাকাউন্টের ইমেইল |
+| **`GOOGLE_PRIVATE_KEY`** | সার্ভিস অ্যাকাউন্টের সম্পূর্ণ Private Key (BEGIN/END সহ) |
+| **`GEMINI_API_KEY`** | Google AI Studio থেকে পাওয়া Gemini API Key |
+
+### ৩. Deploy ক্লিক করুন:
+Vercel স্বয়ংক্রিয়ভাবে Next.js অপ্টিমাইজড বিল্ড তৈরি করবে এবং আপনার লাইভ ডোমেইনে অ্যাপ চালু হয়ে যাবে!
+
+---
+
 ## 🧪 SQA অটোমেশন টেস্ট রান করা
 ```bash
 node sqa_deep_full_test.cjs

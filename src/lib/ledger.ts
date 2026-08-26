@@ -137,7 +137,10 @@ export async function fetchLedgerData(): Promise<{ success: boolean; data: Compu
         };
       }
 
-      const fin = financialsEntryForDate || {
+      const fin: FinancialsEntry = financialsEntryForDate || {
+        date,
+        day,
+        pageNo,
         totalDue: 0,
         extraDue: 0,
         totalCash: 0,

@@ -6,6 +6,8 @@ import {
   OverheadExpenseItem,
 } from "@/lib/googleSheets";
 
+export const dynamic = "force-dynamic";
+
 // Fallback in-memory/file storage if Sheets is temporarily unavailable
 let localOverheadMemory: OverheadExpenseItem[] = [
   {

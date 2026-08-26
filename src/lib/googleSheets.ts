@@ -1,10 +1,12 @@
 import { google } from "googleapis";
 
-// Unescape the private key if it has escaped newlines
+// Unescape the private key if it has escaped newlines or quotes in Vercel
 const getPrivateKey = () => {
-  const key = process.env.GOOGLE_PRIVATE_KEY;
+  let key = process.env.GOOGLE_PRIVATE_KEY;
   if (!key) return undefined;
-  // If it contains escaped newlines, replace them
+  if (key.startsWith('"') && key.endsWith('"')) {
+    key = key.slice(1, -1);
+  }
   return key.replace(/\\n/g, "\n");
 };
 
@@ -222,7 +224,7 @@ export async function createOrUpdateDayTab(
   financialEntry: any,
   expensesList: any[],
   extraCollectionList: { label: string; amount: number }[] = [],
-  extraDueList: { label: string; amount: number }[] = []
+  extraDueList: { label: string; amount: number; qty?: number; unitPrice?: number }[] = []
 ) {
   try {
     const sheets = await getSheetsClient();
