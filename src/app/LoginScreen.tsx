@@ -117,7 +117,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="যেমন: russellfoyze, billal, juel"
+                  placeholder="যেমন: russellfoyze, billal, kayes, juel"
                   className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50/70 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500 placeholder-slate-400 dark:placeholder-slate-500"
                   required
                 />
@@ -188,7 +188,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                 </span>
               </button>
 
-              {/* Manager Card */}
+              {/* Manager Card - Billal */}
               <button
                 type="button"
                 onClick={() => handleQuickLogin("billal")}
@@ -204,6 +204,26 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                   </div>
                 </div>
                 <span className="text-[10px] font-bold text-blue-800 dark:text-blue-300 bg-blue-100/90 dark:bg-blue-900/80 px-2 py-0.5 rounded-lg">
+                  লগইন ↗
+                </span>
+              </button>
+
+              {/* Manager Card - Kayes */}
+              <button
+                type="button"
+                onClick={() => handleQuickLogin("kayes")}
+                className="flex items-center justify-between p-2.5 rounded-xl border border-purple-200 dark:border-purple-900/60 bg-purple-50/50 dark:bg-purple-950/40 hover:bg-purple-100/70 dark:hover:bg-purple-900/50 transition-colors text-left cursor-pointer group"
+              >
+                <div className="flex items-center space-x-2.5">
+                  <span className="text-lg">💼</span>
+                  <div>
+                    <p className="text-xs font-black text-slate-900 dark:text-slate-100 group-hover:text-purple-800 dark:group-hover:text-purple-300">
+                      kayes <span className="font-semibold text-slate-500">(ম্যানেজার)</span>
+                    </p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">ড্যাশবোর্ড, হালখাতা ও মাসিক খরচ অ্যাক্সেস</p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold text-purple-800 dark:text-purple-300 bg-purple-100/90 dark:bg-purple-900/80 px-2 py-0.5 rounded-lg">
                   লগইন ↗
                 </span>
               </button>

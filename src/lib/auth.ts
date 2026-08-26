@@ -34,6 +34,17 @@ export const USERS: Record<string, UserAccount & { passwordHash: string }> = {
     canDelete: false,
     avatarEmoji: "👔",
   },
+  kayes: {
+    username: "kayes",
+    passwordHash: "kayes",
+    name: "Kayes",
+    role: "manager",
+    roleLabel: "👔 ম্যানেজার (হিসাবরক্ষক)",
+    allowedTabs: ["dashboard", "entry", "overhead"],
+    canEdit: true,
+    canDelete: true,
+    avatarEmoji: "💼",
+  },
   juel: {
     username: "juel",
     passwordHash: "juel",
