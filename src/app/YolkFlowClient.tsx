@@ -1462,8 +1462,8 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
 
               {/* Interactive SVG Profit Bar + Curve Graph */}
               <div className="pt-2">
-                <div className="w-full overflow-x-auto bg-slate-50/80 dark:bg-slate-950/60 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-2 sm:p-4">
-                  <svg viewBox="0 0 840 330" className="w-full min-w-[580px] h-64 sm:h-76 select-none">
+                <div className="w-full overflow-hidden bg-slate-50/80 dark:bg-slate-950/60 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-1.5 sm:p-4">
+                  <svg viewBox="0 0 840 330" className="w-full h-auto select-none block">
                     <defs>
                       <linearGradient id="profitBarGrad" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#10b981" />
@@ -1484,8 +1484,8 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                       const yMax = profitGraphStats.yMax;
                       const plotTop = 38;
                       const plotHeight = 220;
-                      const leftMargin = 72;
-                      const rightMargin = 805;
+                      const leftMargin = 68;
+                      const rightMargin = 808;
                       const plotWidth = rightMargin - leftMargin;
 
                       const getY = (v: number) => {
@@ -1501,7 +1501,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                       const zeroY = getY(0);
                       const avgY = getY(profitGraphStats.avgProfit);
                       const totalDays = profitFilteredData.length;
-                      const barWidth = Math.min(38, Math.max(16, (plotWidth / Math.max(1, totalDays)) * 0.48));
+                      const barWidth = Math.min(38, Math.max(14, (plotWidth / Math.max(1, totalDays)) * 0.46));
 
                       const pts = profitFilteredData.map((d, i) => {
                         const margin = d.financials.profitMargin || 0;
@@ -1528,7 +1528,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                   y1={yP}
                                   x2={rightMargin}
                                   y2={yP}
-                                  className={tickVal === 0 ? "stroke-slate-400 dark:stroke-slate-500" : "stroke-slate-200 dark:border-slate-800"}
+                                  className={tickVal === 0 ? "stroke-slate-400 dark:stroke-slate-500" : "stroke-slate-200 dark:stroke-slate-800"}
                                   strokeWidth={tickVal === 0 ? "1.5" : "1"}
                                   strokeDasharray={tickVal === 0 ? undefined : "4 4"}
                                 />
@@ -1548,12 +1548,12 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                           <line x1={leftMargin} y1="30" x2={leftMargin} y2="260" className="stroke-slate-600 dark:stroke-slate-400" strokeWidth="1.5" />
 
                           {/* Y-Axis Title */}
-                          <text x={leftMargin} y="18" textAnchor="start" className="text-[10px] font-black fill-slate-600 dark:fill-slate-400 uppercase tracking-wider">
-                            Y: নিট লাভ / মার্জিন (৳) ↑
+                          <text x={leftMargin} y="16" textAnchor="start" className="text-[10px] font-black fill-slate-600 dark:fill-slate-400 uppercase tracking-wider">
+                            Y: লাভ / মার্জিন (৳) ↑
                           </text>
 
                           {/* X-Axis Title */}
-                          <text x={rightMargin} y="18" textAnchor="end" className="text-[10px] font-black fill-slate-600 dark:fill-slate-400 uppercase tracking-wider">
+                          <text x={rightMargin} y="16" textAnchor="end" className="text-[10px] font-black fill-slate-600 dark:fill-slate-400 uppercase tracking-wider">
                             X: সময়কাল (তারিখ) →
                           </text>
 
@@ -1570,19 +1570,19 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                 strokeDasharray="4 4"
                               />
                               <rect
-                                x={leftMargin + 10}
+                                x={leftMargin + 6}
                                 y={avgY - 9}
                                 width="96"
                                 height="18"
                                 rx="5"
-                                className="fill-indigo-50 dark:fill-slate-800 stroke-indigo-400 dark:stroke-indigo-600"
+                                className="fill-indigo-900/90 dark:fill-indigo-950/90 stroke-indigo-400"
                                 strokeWidth="1"
                               />
                               <text
-                                x={leftMargin + 58}
+                                x={leftMargin + 54}
                                 y={avgY + 3.5}
                                 textAnchor="middle"
-                                className="text-[9px] font-black fill-indigo-700 dark:fill-indigo-300 pointer-events-none"
+                                className="text-[9.5px] font-black fill-indigo-100 pointer-events-none"
                               >
                                 গড় লাভ: ৳{profitGraphStats.avgProfit.toLocaleString()}
                               </text>
@@ -1688,6 +1688,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                           {/* Data Point Dots & Exact Margin Labels */}
                           {pts.map((p) => {
                             const isCurrent = currentViewDay && currentViewDay.date === p.date;
+                            const isPeak = profitGraphStats.peakDay && profitGraphStats.peakDay.date === p.date;
                             return (
                               <g
                                 key={`profit-pt-${p.date}`}
@@ -1712,16 +1713,18 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                   stroke={p.isPositive ? "#059669" : "#e11d48"}
                                   strokeWidth={isCurrent ? "3" : "2"}
                                 />
-                                <text
-                                  x={p.x}
-                                  y={p.isPositive ? p.y - 8 : p.y + 16}
-                                  textAnchor="middle"
-                                  className={`text-[10px] font-black pointer-events-none ${
-                                    p.isPositive ? "fill-emerald-800 dark:fill-emerald-300" : "fill-rose-700 dark:fill-rose-300"
-                                  }`}
-                                >
-                                  ৳{Math.round(p.margin).toLocaleString()}
-                                </text>
+                                {!isPeak && (
+                                  <text
+                                    x={p.x}
+                                    y={p.isPositive ? p.y - 8 : p.y + 16}
+                                    textAnchor="middle"
+                                    className={`text-[10px] font-black pointer-events-none ${
+                                      p.isPositive ? "fill-emerald-800 dark:fill-emerald-300" : "fill-rose-700 dark:fill-rose-300"
+                                    }`}
+                                  >
+                                    ৳{Math.round(p.margin).toLocaleString()}
+                                  </text>
+                                )}
                               </g>
                             );
                           })}
@@ -1732,35 +1735,34 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                               const peak = profitGraphStats.peakDay;
                               const peakX = getX(peak.index, totalDays);
                               const peakY = getY(peak.profit);
-                              const calloutY = Math.max(8, peakY - 32);
+                              const calloutY = Math.max(6, peakY - 32);
                               return (
                                 <g>
                                   <line
                                     x1={peakX}
-                                    y1={peakY}
+                                    y1={peakY - 6}
                                     x2={peakX}
-                                    y2={calloutY + 18}
+                                    y2={calloutY + 19}
                                     stroke="#059669"
                                     strokeWidth="1.5"
                                     strokeDasharray="2 2"
                                   />
                                   <rect
-                                    x={peakX - 45}
+                                    x={Math.max(8, Math.min(730, peakX - 52))}
                                     y={calloutY}
-                                    width="90"
-                                    height="18"
-                                    rx="5"
-                                    fill="#064e3b"
-                                    stroke="#34d399"
-                                    strokeWidth="1"
+                                    width="104"
+                                    height="20"
+                                    rx="6"
+                                    className="fill-emerald-950 stroke-emerald-400"
+                                    strokeWidth="1.5"
                                   />
                                   <text
-                                    x={peakX}
-                                    y={calloutY + 12}
+                                    x={Math.max(60, Math.min(782, peakX))}
+                                    y={calloutY + 13.5}
                                     textAnchor="middle"
-                                    className="text-[9px] font-black fill-emerald-200 pointer-events-none"
+                                    className="text-[10px] font-black fill-emerald-200 pointer-events-none"
                                   >
-                                    সর্বোচ্চ: ৳{peak.profit.toLocaleString()}
+                                    ★ সর্বোচ্চ: ৳{Math.round(peak.profit).toLocaleString()}
                                   </text>
                                 </g>
                               );
@@ -1971,8 +1973,8 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
 
               {/* Interactive SVG X-Y Coordinate Graph with 0.5 Intervals */}
               <div className="pt-2">
-                <div className="w-full overflow-x-auto bg-slate-50/80 dark:bg-slate-950/60 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-2 sm:p-4">
-                  <svg viewBox="0 0 840 330" className="w-full min-w-[580px] h-64 sm:h-76 select-none">
+                <div className="w-full overflow-hidden bg-slate-50/80 dark:bg-slate-950/60 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-1.5 sm:p-4">
+                  <svg viewBox="0 0 840 330" className="w-full h-auto select-none block">
                     <defs>
                       {/* Linear gradients for area fill */}
                       {Object.entries(EGG_COLORS).map(([eggName, color]) => (
@@ -1989,6 +1991,9 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                       const yMax = eggPriceStats.yMax;
                       const plotTop = 38;
                       const plotHeight = 220;
+                      const leftMargin = 66;
+                      const rightMargin = 808;
+                      const plotWidth = rightMargin - leftMargin;
 
                       const getY = (v: number) => {
                         const clamped = Math.max(yMin, Math.min(yMax, v));
@@ -1996,8 +2001,8 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                       };
 
                       const getX = (index: number, total: number) => {
-                        if (total <= 1) return 430;
-                        return 65 + (index / (total - 1)) * 730;
+                        if (total <= 1) return leftMargin + plotWidth / 2;
+                        return leftMargin + (index / (total - 1)) * plotWidth;
                       };
 
                       const avgY = getY(eggPriceStats.avgPrice);
@@ -2010,9 +2015,9 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                             return (
                               <line
                                 key={`sub-${subVal}`}
-                                x1="65"
+                                x1={leftMargin}
                                 y1={yP}
-                                x2="805"
+                                x2={rightMargin}
                                 y2={yP}
                                 className="stroke-slate-100 dark:stroke-slate-800/80"
                                 strokeWidth="0.8"
@@ -2027,16 +2032,16 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                             return (
                               <g key={`tick-${tickVal}`}>
                                 <line
-                                  x1="65"
+                                  x1={leftMargin}
                                   y1={yP}
-                                  x2="805"
+                                  x2={rightMargin}
                                   y2={yP}
                                   className={tickVal === yMin ? "stroke-slate-600 dark:stroke-slate-500" : "stroke-slate-200 dark:stroke-slate-800"}
                                   strokeWidth={tickVal === yMin ? "1.5" : "1"}
                                   strokeDasharray={tickVal === yMin ? undefined : "4 4"}
                                 />
                                 <text
-                                  x="56"
+                                  x={leftMargin - 8}
                                   y={yP + 4}
                                   textAnchor="end"
                                   className="text-[10px] sm:text-[11px] font-bold fill-slate-500 dark:fill-slate-400"
@@ -2048,15 +2053,15 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                           })}
 
                           {/* Left Y-Axis Solid Line */}
-                          <line x1="65" y1="30" x2="65" y2="260" className="stroke-slate-600 dark:stroke-slate-400" strokeWidth="1.5" />
+                          <line x1={leftMargin} y1="30" x2={leftMargin} y2="260" className="stroke-slate-600 dark:stroke-slate-400" strokeWidth="1.5" />
 
                           {/* Y-Axis Title (Left) */}
-                          <text x="65" y="18" textAnchor="start" className="text-[10px] font-black fill-slate-600 dark:fill-slate-400 uppercase tracking-wider">
-                            Y: ডিমের দর (৳ প্রতি পিস) ↑
+                          <text x={leftMargin} y="16" textAnchor="start" className="text-[10px] font-black fill-slate-600 dark:fill-slate-400 uppercase tracking-wider">
+                            Y: দর (৳/পিস) ↑
                           </text>
 
-                          {/* X-Axis Title (Cleanly at Top Right - No Overlapping) */}
-                          <text x="800" y="18" textAnchor="end" className="text-[10px] font-black fill-slate-600 dark:fill-slate-400 uppercase tracking-wider">
+                          {/* X-Axis Title (Cleanly at Top Right) */}
+                          <text x={rightMargin} y="16" textAnchor="end" className="text-[10px] font-black fill-slate-600 dark:fill-slate-400 uppercase tracking-wider">
                             X: সময়কাল (তারিখ) →
                           </text>
 
@@ -2064,23 +2069,23 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                           {eggPriceStats.avgPrice >= yMin && eggPriceStats.avgPrice <= yMax && (
                             <g>
                               <line
-                                x1="65"
+                                x1={leftMargin}
                                 y1={avgY}
-                                x2="805"
+                                x2={rightMargin}
                                 y2={avgY}
                                 className="stroke-slate-400 dark:stroke-slate-500"
                                 strokeWidth="1.5"
                                 strokeDasharray="4 4"
                               />
                               {/* Dotted Average Label on Left Side */}
-                              <rect x="75" y={avgY - 9} width="85" height="17" rx="4" className="fill-slate-50 dark:fill-slate-800 stroke-slate-400 dark:stroke-slate-600" strokeWidth="1" />
+                              <rect x={leftMargin + 6} y={avgY - 9} width="85" height="17" rx="4" className="fill-slate-900/90 dark:fill-slate-800/90 stroke-slate-500" strokeWidth="1" />
                               <text
-                                x="117"
+                                x={leftMargin + 48}
                                 y={avgY + 3}
                                 textAnchor="middle"
-                                className="text-[9px] font-black fill-slate-700 dark:fill-slate-200 pointer-events-none"
+                                className="text-[9px] font-black fill-slate-100 dark:fill-slate-200 pointer-events-none"
                               >
-                                গড় দর: ৳{eggPriceStats.avgPrice}
+                                গড়: ৳{eggPriceStats.avgPrice}
                               </text>
                             </g>
                           )}
@@ -2168,6 +2173,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                 {/* Data Point Dots */}
                                 {pts.map((p) => {
                                   const isCurrent = currentViewDay && currentViewDay.date === p.date;
+                                  const isPeak =
+                                    eggPriceStats.peakPoint &&
+                                    eggPriceStats.peakPoint.date === p.date &&
+                                    eggPriceStats.peakPoint.eggType === eggType;
                                   return (
                                     <g
                                       key={`pt-${eggType}-${p.date}`}
@@ -2192,8 +2201,8 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                         stroke={color.stroke}
                                         strokeWidth={isCurrent ? "3" : "2"}
                                       />
-                                      {/* Exact Price on dot */}
-                                      {(selectedEggPriceFilter !== "all" || isCurrent) && (
+                                      {/* Exact Price on dot (hide if peak to prevent overlap) */}
+                                      {!isPeak && (selectedEggPriceFilter !== "all" || isCurrent) && (
                                         <text
                                           x={p.x}
                                           y={p.y - 8}
@@ -2216,12 +2225,12 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                               const peak = eggPriceStats.peakPoint;
                               const peakX = getX(peak.index, filteredData.length);
                               const peakY = getY(peak.price);
-                              const calloutY = Math.max(8, peakY - 32);
+                              const calloutY = Math.max(6, peakY - 32);
                               return (
                                 <g>
                                   <line
                                     x1={peakX}
-                                    y1={peakY}
+                                    y1={peakY - 6}
                                     x2={peakX}
                                     y2={calloutY + 18}
                                     stroke="#e11d48"
@@ -2229,22 +2238,22 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                     strokeDasharray="2 2"
                                   />
                                   <rect
-                                    x={peakX - 42}
+                                    x={Math.max(8, Math.min(740, peakX - 44))}
                                     y={calloutY}
-                                    width="84"
-                                    height="18"
+                                    width="88"
+                                    height="19"
                                     rx="5"
                                     fill="#0f172a"
                                     stroke="#e11d48"
-                                    strokeWidth="1"
+                                    strokeWidth="1.2"
                                   />
                                   <text
-                                    x={peakX}
-                                    y={calloutY + 12}
+                                    x={Math.max(52, Math.min(784, peakX))}
+                                    y={calloutY + 13}
                                     textAnchor="middle"
-                                    className="text-[9px] font-black fill-amber-300 pointer-events-none"
+                                    className="text-[9.5px] font-black fill-amber-300 pointer-events-none"
                                   >
-                                    সর্বোচ্চ: ৳{peak.price}
+                                    ★ সর্বোচ্চ: ৳{peak.price}
                                   </text>
                                 </g>
                               );
