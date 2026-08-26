@@ -376,9 +376,9 @@
       "pageNo": "95",
       "eggType": "লাল (Red Egg)",
       "currentStock": 12475,
-      "hasPurchase": false,
+      "hasPurchase": true,
       "purchaseRate": 11.25,
-      "purchaseQty": 0
+      "purchaseQty": 11700
     },
     {
       "date": "2026-08-22",
@@ -599,6 +599,126 @@
       "hasPurchase": false,
       "purchaseRate": 8.5,
       "purchaseQty": 0
+    },
+    {
+      "date": "2026-08-26",
+      "day": "বুধবার",
+      "pageNo": "99",
+      "eggType": "সাদা (White Egg)",
+      "currentStock": 4725,
+      "hasPurchase": true,
+      "purchaseRate": 10.37,
+      "purchaseQty": 4500
+    },
+    {
+      "date": "2026-08-26",
+      "day": "বুধবার",
+      "pageNo": "99",
+      "eggType": "লাল (Red Egg)",
+      "currentStock": 2406,
+      "hasPurchase": false,
+      "purchaseRate": 11.25,
+      "purchaseQty": 0
+    },
+    {
+      "date": "2026-08-26",
+      "day": "বুধবার",
+      "pageNo": "99",
+      "eggType": "হাঁস (Duck Egg)",
+      "currentStock": 28,
+      "hasPurchase": false,
+      "purchaseRate": 17,
+      "purchaseQty": 0
+    },
+    {
+      "date": "2026-08-26",
+      "day": "বুধবার",
+      "pageNo": "99",
+      "eggType": "মুরগী (Chicken Egg)",
+      "currentStock": 0,
+      "hasPurchase": false,
+      "purchaseRate": 15,
+      "purchaseQty": 0
+    },
+    {
+      "date": "2026-08-26",
+      "day": "বুধবার",
+      "pageNo": "99",
+      "eggType": "কোয়েল (Quail Egg)",
+      "currentStock": 170,
+      "hasPurchase": false,
+      "purchaseRate": 3,
+      "purchaseQty": 0
+    },
+    {
+      "date": "2026-08-26",
+      "day": "বুধবার",
+      "pageNo": "99",
+      "eggType": "L.M",
+      "currentStock": 0,
+      "hasPurchase": false,
+      "purchaseRate": 8.5,
+      "purchaseQty": 0
+    },
+    {
+      "date": "2026-08-28",
+      "day": "শুক্রবার",
+      "pageNo": "99",
+      "eggType": "সাদা (White Egg)",
+      "currentStock": 0,
+      "hasPurchase": false,
+      "purchaseRate": 0,
+      "purchaseQty": 0
+    },
+    {
+      "date": "2026-08-28",
+      "day": "শুক্রবার",
+      "pageNo": "99",
+      "eggType": "লাল (Red Egg)",
+      "currentStock": 0,
+      "hasPurchase": false,
+      "purchaseRate": 0,
+      "purchaseQty": 0
+    },
+    {
+      "date": "2026-08-28",
+      "day": "শুক্রবার",
+      "pageNo": "99",
+      "eggType": "হাঁস (Duck Egg)",
+      "currentStock": 0,
+      "hasPurchase": false,
+      "purchaseRate": 0,
+      "purchaseQty": 0
+    },
+    {
+      "date": "2026-08-28",
+      "day": "শুক্রবার",
+      "pageNo": "99",
+      "eggType": "মুরগী (Chicken Egg)",
+      "currentStock": 0,
+      "hasPurchase": false,
+      "purchaseRate": 0,
+      "purchaseQty": 0
+    },
+    {
+      "date": "2026-08-28",
+      "day": "শুক্রবার",
+      "pageNo": "99",
+      "eggType": "কোয়েল (Quail Egg)",
+      "currentStock": 0,
+      "hasPurchase": false,
+      "purchaseRate": 0,
+      "purchaseQty": 0
+    },
+    {
+      "date": "2026-08-28",
+      "day": "শুক্রবার",
+      "pageNo": "99",
+      "eggType": "L.M",
+      "currentStock": 0,
+      "hasPurchase": false,
+      "purchaseRate": 0,
+      "purchaseQty": 0
     }
   ],
   "financials": [
@@ -614,7 +734,9 @@
       "providerPhone": "",
       "providerEggType": "",
       "providerDueMoney": 0,
-      "providerUnitPrice": 0
+      "providerUnitPrice": 0,
+      "extraCollections": [],
+      "extraDues": []
     },
     {
       "date": "2026-08-17",
@@ -628,7 +750,9 @@
       "providerPhone": "",
       "providerEggType": "",
       "providerDueMoney": 0,
-      "providerUnitPrice": 0
+      "providerUnitPrice": 0,
+      "extraCollections": [],
+      "extraDues": []
     },
     {
       "date": "2026-08-18",
@@ -642,7 +766,9 @@
       "providerPhone": "",
       "providerEggType": "",
       "providerDueMoney": 0,
-      "providerUnitPrice": 0
+      "providerUnitPrice": 0,
+      "extraCollections": [],
+      "extraDues": []
     },
     {
       "date": "2026-08-19",
@@ -656,7 +782,9 @@
       "providerPhone": "",
       "providerEggType": "",
       "providerDueMoney": 0,
-      "providerUnitPrice": 0
+      "providerUnitPrice": 0,
+      "extraCollections": [],
+      "extraDues": []
     },
     {
       "date": "2026-08-20",
@@ -670,7 +798,9 @@
       "providerPhone": "",
       "providerEggType": "",
       "providerDueMoney": 0,
-      "providerUnitPrice": 0
+      "providerUnitPrice": 0,
+      "extraCollections": [],
+      "extraDues": []
     },
     {
       "date": "2026-08-21",
@@ -684,7 +814,9 @@
       "providerPhone": "",
       "providerEggType": "",
       "providerDueMoney": 0,
-      "providerUnitPrice": 0
+      "providerUnitPrice": 0,
+      "extraCollections": [],
+      "extraDues": []
     },
     {
       "date": "2026-08-22",
@@ -698,7 +830,14 @@
       "providerPhone": "",
       "providerEggType": "সাদা (White Egg)",
       "providerDueMoney": 0,
-      "providerUnitPrice": 0
+      "providerUnitPrice": 0,
+      "extraCollections": [
+        {
+          "label": "অন্যান্য পাওনা / আদায়",
+          "amount": 3050
+        }
+      ],
+      "extraDues": []
     },
     {
       "date": "2026-08-23",
@@ -712,7 +851,9 @@
       "providerPhone": "",
       "providerEggType": "সাদা (White Egg)",
       "providerDueMoney": 0,
-      "providerUnitPrice": 0
+      "providerUnitPrice": 0,
+      "extraCollections": [],
+      "extraDues": []
     },
     {
       "date": "2026-08-24",
@@ -735,13 +876,13 @@
       ],
       "extraDues": [
         {
-          "label": "md ali (3600 x 10.8)",
+          "label": "",
           "qty": 3600,
           "unitPrice": 10.8,
           "amount": 38880
         },
         {
-          "label": "(210 x 17)",
+          "label": "",
           "qty": 210,
           "unitPrice": 17,
           "amount": 3570
@@ -761,38 +902,60 @@
       "providerEggType": "সাদা (White Egg)",
       "providerDueMoney": 0,
       "providerUnitPrice": 0,
+      "extraCollections": [],
+      "extraDues": []
+    },
+    {
+      "date": "2026-08-26",
+      "day": "বুধবার",
+      "pageNo": "99",
+      "totalDue": 656378,
+      "extraDue": 1890,
+      "totalCash": 145910,
+      "prevDayBalance": 833491,
+      "providerName": "",
+      "providerPhone": "",
+      "providerEggType": "সাদা (White Egg)",
+      "providerDueMoney": 0,
+      "providerUnitPrice": 0,
       "extraCollections": [
         {
-          "label": "বাকি আদায়",
-          "amount": 350
-        },
-        {
-          "label": "নগদ আদায়",
-          "amount": 290
-        },
-        {
-          "label": "কাওসার",
+          "label": "kauser",
           "amount": 1500
         },
         {
-          "label": "অন্যান্য আদায়",
-          "amount": 150
+          "label": "",
+          "amount": 290
+        },
+        {
+          "label": "",
+          "amount": 100
         }
       ],
       "extraDues": [
         {
-          "label": "ভাঙ্গিনা",
-          "qty": 0,
-          "unitPrice": 0,
-          "amount": 400
-        },
-        {
-          "label": "কো",
-          "qty": 490,
-          "unitPrice": 3,
-          "amount": 1470
+          "label": "md ali",
+          "qty": 4500,
+          "unitPrice": 10.35,
+          "amount": 46575
         }
       ]
+    },
+    {
+      "date": "2026-08-28",
+      "day": "শুক্রবার",
+      "pageNo": "99",
+      "totalDue": 0,
+      "extraDue": 0,
+      "totalCash": 0,
+      "prevDayBalance": 0,
+      "providerName": "",
+      "providerPhone": "",
+      "providerEggType": "সাদা (White Egg)",
+      "providerDueMoney": 0,
+      "providerUnitPrice": 0,
+      "extraCollections": [],
+      "extraDues": []
     }
   ],
   "expenses": [
@@ -1353,6 +1516,33 @@
       "amount": 170,
       "wastedEggQty": 25,
       "wastedEggCost": 270
+    },
+    {
+      "date": "2026-08-26",
+      "day": "বুধবার",
+      "pageNo": "99",
+      "expenseType": "ভাঙ্গা",
+      "amount": 900,
+      "wastedEggQty": 80,
+      "wastedEggCost": 872
+    },
+    {
+      "date": "2026-08-26",
+      "day": "বুধবার",
+      "pageNo": "99",
+      "expenseType": "রিকসা+ফকির",
+      "amount": 100,
+      "wastedEggQty": 0,
+      "wastedEggCost": 0
+    },
+    {
+      "date": "2026-08-26",
+      "day": "বুধবার",
+      "pageNo": "99",
+      "expenseType": "নাস্তা-চা",
+      "amount": 230,
+      "wastedEggQty": 0,
+      "wastedEggCost": 0
     }
   ]
 }
