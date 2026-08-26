@@ -157,6 +157,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
   // Dashboard state: specific day selection & live refresh
   const [selectedDashboardDate, setSelectedDashboardDate] = useState<string>("");
   const [selectedDateRange, setSelectedDateRange] = useState<string>("all");
+  const [selectedProfitDateRange, setSelectedProfitDateRange] = useState<string>("weekly");
   const [selectedEggPriceFilter, setSelectedEggPriceFilter] = useState<string>("all");
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
@@ -673,6 +674,96 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
   const sevenDayAvgMargin = useMemo(() => {
     return sevenDaysList.length > 0 ? Math.round(sevenDayMargin / sevenDaysList.length) : 0;
   }, [sevenDayMargin, sevenDaysList]);
+
+  // Profit & Margin Trend Chart Data
+  const profitFilteredData: ComputedDayData[] = useMemo(() => {
+    if (!data || data.length === 0) return [];
+    if (selectedProfitDateRange === "all") return data;
+    if (selectedProfitDateRange === "weekly" || selectedProfitDateRange === "7") return data.slice(-7);
+    if (selectedProfitDateRange === "monthly" || selectedProfitDateRange === "30") return data.slice(-30);
+    if (selectedProfitDateRange === "yearly" || selectedProfitDateRange === "365") return data.slice(-365);
+    const count = parseInt(selectedProfitDateRange, 10);
+    if (!isNaN(count)) return data.slice(-count);
+    return data;
+  }, [data, selectedProfitDateRange]);
+
+  const profitGraphStats = useMemo(() => {
+    if (!profitFilteredData || profitFilteredData.length === 0) {
+      return {
+        totalProfit: 0,
+        avgProfit: 0,
+        maxProfit: 0,
+        minProfit: 0,
+        peakDay: null as { date: string; day: string; profit: number; index: number } | null,
+        lowestDay: null as { date: string; day: string; profit: number; index: number } | null,
+        positiveDays: 0,
+        yMin: 0,
+        yMax: 5000,
+        yTicks: [0, 1000, 2000, 3000, 4000, 5000],
+      };
+    }
+
+    const profits = profitFilteredData.map((d) => d.financials.profitMargin || 0);
+    const totalProfit = profits.reduce((a, b) => a + b, 0);
+    const avgProfit = Math.round(totalProfit / profitFilteredData.length);
+    const rawMax = Math.max(...profits);
+    const rawMin = Math.min(...profits);
+    const positiveDays = profits.filter((p) => p > 0).length;
+
+    let peakDay: { date: string; day: string; profit: number; index: number } | null = null;
+    let lowestDay: { date: string; day: string; profit: number; index: number } | null = null;
+
+    profitFilteredData.forEach((d, idx) => {
+      const p = d.financials.profitMargin || 0;
+      if (p === rawMax && !peakDay) {
+        peakDay = { date: d.date, day: d.day, profit: p, index: idx };
+      }
+      if (p === rawMin && !lowestDay) {
+        lowestDay = { date: d.date, day: d.day, profit: p, index: idx };
+      }
+    });
+
+    let yMin = rawMin < 0 ? Math.floor(rawMin * 1.15) : 0;
+    let yMax = rawMax > 0 ? Math.ceil(rawMax * 1.18) : 2000;
+
+    if (yMax - yMin < 1000) {
+      yMax = yMin + 1000;
+    }
+
+    const span = yMax - yMin;
+    let step = 1000;
+    if (span <= 1500) step = 250;
+    else if (span <= 3000) step = 500;
+    else if (span <= 8000) step = 1000;
+    else if (span <= 20000) step = 2500;
+    else if (span <= 50000) step = 5000;
+    else step = 10000;
+
+    yMax = Math.ceil(yMax / step) * step;
+    if (yMin < 0) {
+      yMin = Math.floor(yMin / step) * step;
+    } else {
+      yMin = 0;
+    }
+
+    const yTicks: number[] = [];
+    for (let tick = yMin; tick <= yMax + 0.001; tick += step) {
+      yTicks.push(tick);
+    }
+
+    return {
+      totalProfit,
+      avgProfit,
+      maxProfit: rawMax,
+      minProfit: rawMin,
+      peakDay,
+      lowestDay,
+      positiveDays,
+      yMin,
+      yMax,
+      yTicks,
+    };
+  }, [profitFilteredData]);
 
   // Chart data
   const filteredData: ComputedDayData[] = useMemo(() => {
@@ -1259,10 +1350,523 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
             </div>
           )}
 
+          {/* ================= SECTION 1: PROFIT & MARGIN ANALYTICS GRID ================= */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-stretch">
+            {/* 70% SECTION: Profit & Margin Trend Graph */}
+            <div className="lg:col-span-8 xl:col-span-8 bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-4 flex flex-col justify-between transition-colors">
+              {/* Header Title & Subtitle */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+                <div>
+                  <h3 className="text-base font-black text-slate-800 dark:text-slate-100 flex items-center space-x-2">
+                    <TrendingUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>দৈনিক মুনাফা ও মার্জিন বিশ্লেষণ গ্রাফ (Profit & Margin Trend)</span>
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                    দৈনিক নিট লাভ, বার গ্রাফ ও মার্জিনের ওঠানামা বিশ্লেষণ
+                  </p>
+                </div>
+                <span className="text-xs font-black text-emerald-900 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/80 px-3 py-1 rounded-full border border-emerald-200 dark:border-emerald-800/60">
+                  মোট লাভ: ৳ {profitGraphStats.totalProfit.toLocaleString()}
+                </span>
+              </div>
 
+              {/* Timeframe Selector Bar */}
+              <div className="flex flex-wrap items-center gap-2 p-1.5 bg-slate-100/90 dark:bg-slate-800/90 rounded-2xl">
+                <button
+                  type="button"
+                  onClick={() => setSelectedProfitDateRange("weekly")}
+                  className={`flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer text-center flex items-center justify-center space-x-1.5 ${
+                    selectedProfitDateRange === "weekly" || selectedProfitDateRange === "7"
+                      ? "bg-white dark:bg-slate-700 text-emerald-900 dark:text-emerald-300 shadow-md ring-1 ring-slate-200/60 dark:ring-slate-600 font-black"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white/60 dark:hover:bg-slate-700/50"
+                  }`}
+                >
+                  <span>📅</span>
+                  <span>সাপ্তাহিক (7D)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedProfitDateRange("monthly")}
+                  className={`flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer text-center flex items-center justify-center space-x-1.5 ${
+                    selectedProfitDateRange === "monthly" || selectedProfitDateRange === "30"
+                      ? "bg-white dark:bg-slate-700 text-emerald-900 dark:text-emerald-300 shadow-md ring-1 ring-slate-200/60 dark:ring-slate-600 font-black"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white/60 dark:hover:bg-slate-700/50"
+                  }`}
+                >
+                  <span>🗓️</span>
+                  <span>মাসিক (30D)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedProfitDateRange("yearly")}
+                  className={`flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer text-center flex items-center justify-center space-x-1.5 ${
+                    selectedProfitDateRange === "yearly" || selectedProfitDateRange === "365"
+                      ? "bg-white dark:bg-slate-700 text-emerald-900 dark:text-emerald-300 shadow-md ring-1 ring-slate-200/60 dark:ring-slate-600 font-black"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white/60 dark:hover:bg-slate-700/50"
+                  }`}
+                >
+                  <span>📊</span>
+                  <span>বাৎসরিক (1Y)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedProfitDateRange("all")}
+                  className={`flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer text-center flex items-center justify-center space-x-1.5 ${
+                    selectedProfitDateRange === "all"
+                      ? "bg-white dark:bg-slate-700 text-emerald-900 dark:text-emerald-300 shadow-md ring-1 ring-slate-200/60 dark:ring-slate-600 font-black"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white/60 dark:hover:bg-slate-700/50"
+                  }`}
+                >
+                  <span>📋</span>
+                  <span>সম্পূর্ণ (All)</span>
+                </button>
+              </div>
 
+              {/* Key Profit Summary Badges */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 pt-1">
+                <div className="bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-3">
+                  <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-400 block">মোট নিট লাভ (Total)</span>
+                  <span className="text-base font-black text-emerald-950 dark:text-emerald-200 mt-0.5 block">
+                    ৳ {profitGraphStats.totalProfit.toLocaleString()}
+                  </span>
+                </div>
+                <div className="bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-900/50 rounded-xl p-3">
+                  <span className="text-[11px] font-bold text-indigo-800 dark:text-indigo-400 block">দৈনিক গড় লাভ (Avg)</span>
+                  <span className="text-base font-black text-indigo-950 dark:text-indigo-200 mt-0.5 block">
+                    ৳ {profitGraphStats.avgProfit.toLocaleString()}
+                  </span>
+                </div>
+                <div className="bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-900/50 rounded-xl p-3">
+                  <span className="text-[11px] font-bold text-amber-800 dark:text-amber-400 block">সর্বোচ্চ লাভ (Peak)</span>
+                  <span className="text-base font-black text-amber-950 dark:text-amber-200 mt-0.5 block">
+                    ৳ {profitGraphStats.maxProfit.toLocaleString()}
+                    {profitGraphStats.peakDay && (
+                      <span className="text-[10px] text-amber-700 dark:text-amber-400 font-semibold ml-1 block">
+                        ({profitGraphStats.peakDay.date.slice(5)})
+                      </span>
+                    )}
+                  </span>
+                </div>
+                <div className="bg-rose-50/70 dark:bg-rose-950/40 border border-rose-200/80 dark:border-rose-900/50 rounded-xl p-3">
+                  <span className="text-[11px] font-bold text-rose-800 dark:text-rose-400 block">সর্বনিম্ন লাভ (Lowest)</span>
+                  <span className="text-base font-black text-rose-950 dark:text-rose-200 mt-0.5 block">
+                    ৳ {profitGraphStats.minProfit.toLocaleString()}
+                    {profitGraphStats.lowestDay && (
+                      <span className="text-[10px] text-rose-700 dark:text-rose-400 font-semibold ml-1 block">
+                        ({profitGraphStats.lowestDay.date.slice(5)})
+                      </span>
+                    )}
+                  </span>
+                </div>
+              </div>
 
-          {/* 70/30 Analytics Grid: Left 70% X-Y Price Trend Graph, Right 30% 7-Day Weekly Margin & Sales Widget */}
+              {/* Interactive SVG Profit Bar + Curve Graph */}
+              <div className="pt-2">
+                <div className="w-full overflow-x-auto bg-slate-50/80 dark:bg-slate-950/60 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-2 sm:p-4">
+                  <svg viewBox="0 0 840 330" className="w-full min-w-[580px] h-64 sm:h-76 select-none">
+                    <defs>
+                      <linearGradient id="profitBarGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#10b981" />
+                        <stop offset="100%" stopColor="#047857" />
+                      </linearGradient>
+                      <linearGradient id="lossBarGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#f43f5e" />
+                        <stop offset="100%" stopColor="#be123c" />
+                      </linearGradient>
+                      <linearGradient id="profitAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#10b981" stopOpacity="0.30" />
+                        <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
+                      </linearGradient>
+                    </defs>
+
+                    {(() => {
+                      const yMin = profitGraphStats.yMin;
+                      const yMax = profitGraphStats.yMax;
+                      const plotTop = 38;
+                      const plotHeight = 220;
+                      const leftMargin = 72;
+                      const rightMargin = 805;
+                      const plotWidth = rightMargin - leftMargin;
+
+                      const getY = (v: number) => {
+                        const clamped = Math.max(yMin, Math.min(yMax, v));
+                        return plotTop + plotHeight - ((clamped - yMin) / Math.max(1, yMax - yMin)) * plotHeight;
+                      };
+
+                      const getX = (index: number, total: number) => {
+                        if (total <= 1) return leftMargin + plotWidth / 2;
+                        return leftMargin + (index / (total - 1)) * plotWidth;
+                      };
+
+                      const zeroY = getY(0);
+                      const avgY = getY(profitGraphStats.avgProfit);
+                      const totalDays = profitFilteredData.length;
+                      const barWidth = Math.min(38, Math.max(16, (plotWidth / Math.max(1, totalDays)) * 0.48));
+
+                      const pts = profitFilteredData.map((d, i) => {
+                        const margin = d.financials.profitMargin || 0;
+                        const x = getX(i, totalDays);
+                        const y = getY(margin);
+                        return { x, y, margin, date: d.date, day: d.day, isPositive: margin >= 0 };
+                      });
+
+                      const pathD = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
+                      const areaD =
+                        pts.length > 0
+                          ? `${pathD} L ${pts[pts.length - 1].x} ${zeroY} L ${pts[0].x} ${zeroY} Z`
+                          : "";
+
+                      return (
+                        <g>
+                          {/* Y-Axis Grid Lines & Labels */}
+                          {profitGraphStats.yTicks.map((tickVal) => {
+                            const yP = getY(tickVal);
+                            return (
+                              <g key={`profit-tick-${tickVal}`}>
+                                <line
+                                  x1={leftMargin}
+                                  y1={yP}
+                                  x2={rightMargin}
+                                  y2={yP}
+                                  className={tickVal === 0 ? "stroke-slate-400 dark:stroke-slate-500" : "stroke-slate-200 dark:border-slate-800"}
+                                  strokeWidth={tickVal === 0 ? "1.5" : "1"}
+                                  strokeDasharray={tickVal === 0 ? undefined : "4 4"}
+                                />
+                                <text
+                                  x={leftMargin - 8}
+                                  y={yP + 4}
+                                  textAnchor="end"
+                                  className="text-[10px] sm:text-[11px] font-bold fill-slate-500 dark:fill-slate-400"
+                                >
+                                  ৳{tickVal >= 1000 ? `${(tickVal / 1000).toFixed(tickVal % 1000 === 0 ? 0 : 1)}k` : tickVal}
+                                </text>
+                              </g>
+                            );
+                          })}
+
+                          {/* Left Y-Axis Solid Line */}
+                          <line x1={leftMargin} y1="30" x2={leftMargin} y2="260" className="stroke-slate-600 dark:stroke-slate-400" strokeWidth="1.5" />
+
+                          {/* Y-Axis Title */}
+                          <text x={leftMargin} y="18" textAnchor="start" className="text-[10px] font-black fill-slate-600 dark:fill-slate-400 uppercase tracking-wider">
+                            Y: নিট লাভ / মার্জিন (৳) ↑
+                          </text>
+
+                          {/* X-Axis Title */}
+                          <text x={rightMargin} y="18" textAnchor="end" className="text-[10px] font-black fill-slate-600 dark:fill-slate-400 uppercase tracking-wider">
+                            X: সময়কাল (তারিখ) →
+                          </text>
+
+                          {/* Average Profit Reference Line */}
+                          {profitGraphStats.avgProfit >= yMin && profitGraphStats.avgProfit <= yMax && (
+                            <g>
+                              <line
+                                x1={leftMargin}
+                                y1={avgY}
+                                x2={rightMargin}
+                                y2={avgY}
+                                className="stroke-indigo-400 dark:stroke-indigo-500"
+                                strokeWidth="1.5"
+                                strokeDasharray="4 4"
+                              />
+                              <rect
+                                x={leftMargin + 10}
+                                y={avgY - 9}
+                                width="96"
+                                height="18"
+                                rx="5"
+                                className="fill-indigo-50 dark:fill-slate-800 stroke-indigo-400 dark:stroke-indigo-600"
+                                strokeWidth="1"
+                              />
+                              <text
+                                x={leftMargin + 58}
+                                y={avgY + 3.5}
+                                textAnchor="middle"
+                                className="text-[9px] font-black fill-indigo-700 dark:fill-indigo-300 pointer-events-none"
+                              >
+                                গড় লাভ: ৳{profitGraphStats.avgProfit.toLocaleString()}
+                              </text>
+                            </g>
+                          )}
+
+                          {/* Area Under Curve Fill */}
+                          {areaD && <path d={areaD} fill="url(#profitAreaGrad)" />}
+
+                          {/* Trend Line Curve */}
+                          <path
+                            d={pathD}
+                            fill="none"
+                            stroke="#10b981"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="drop-shadow-sm"
+                          />
+
+                          {/* X-Axis Ticks, Guidelines, and Bars */}
+                          {profitFilteredData.map((d, i) => {
+                            const xP = getX(i, totalDays);
+                            const isCurrentDay = currentViewDay && currentViewDay.date === d.date;
+                            const margin = d.financials.profitMargin || 0;
+                            const yP = getY(margin);
+                            const isPositive = margin >= 0;
+                            const barH = Math.max(4, Math.abs(zeroY - yP));
+                            const barY = isPositive ? yP : zeroY;
+
+                            return (
+                              <g
+                                key={`profit-col-${d.date}`}
+                                className="cursor-pointer group"
+                                onClick={() => setSelectedDashboardDate(d.date)}
+                              >
+                                {/* Guideline line */}
+                                <line
+                                  x1={xP}
+                                  y1="30"
+                                  x2={xP}
+                                  y2="260"
+                                  stroke={isCurrentDay ? "rgba(16, 185, 129, 0.35)" : undefined}
+                                  className={isCurrentDay ? undefined : "stroke-slate-200/40 dark:stroke-slate-800/30"}
+                                  strokeWidth={isCurrentDay ? "2" : "1"}
+                                  strokeDasharray={isCurrentDay ? "2 2" : undefined}
+                                />
+
+                                {/* Selected day background glow */}
+                                {isCurrentDay && (
+                                  <rect
+                                    x={xP - barWidth / 2 - 4}
+                                    y="30"
+                                    width={barWidth + 8}
+                                    height="230"
+                                    rx="6"
+                                    fill="rgba(16, 185, 129, 0.08)"
+                                    className="dark:fill-emerald-400/10"
+                                  />
+                                )}
+
+                                {/* Profit Bar */}
+                                <rect
+                                  x={xP - barWidth / 2}
+                                  y={barY}
+                                  width={barWidth}
+                                  height={barH}
+                                  rx="5"
+                                  fill={isPositive ? "url(#profitBarGrad)" : "url(#lossBarGrad)"}
+                                  className={`transition-all ${isCurrentDay ? "stroke-2 stroke-emerald-600 dark:stroke-emerald-300" : "group-hover:opacity-90"}`}
+                                />
+
+                                {/* Bottom Tick Mark */}
+                                <line x1={xP} y1="260" x2={xP} y2="266" className="stroke-slate-600 dark:stroke-slate-400" strokeWidth="1.5" />
+
+                                {/* Date Label */}
+                                <text
+                                  x={xP}
+                                  y="280"
+                                  textAnchor="middle"
+                                  className={`text-[10px] font-bold ${
+                                    isCurrentDay ? "fill-emerald-600 dark:fill-emerald-400 font-black text-xs" : "fill-slate-700 dark:fill-slate-300"
+                                  }`}
+                                >
+                                  {d.date.slice(8)}/{d.date.slice(5, 7)}
+                                </text>
+
+                                {/* Day of Week Label */}
+                                <text
+                                  x={xP}
+                                  y="294"
+                                  textAnchor="middle"
+                                  className={`text-[9px] font-semibold ${
+                                    isCurrentDay ? "fill-emerald-600 dark:fill-emerald-400 font-bold" : "fill-slate-400 dark:fill-slate-500"
+                                  }`}
+                                >
+                                  {getBanglaDay(d.day).replace("বার", "")}
+                                </text>
+                              </g>
+                            );
+                          })}
+
+                          {/* Data Point Dots & Exact Margin Labels */}
+                          {pts.map((p) => {
+                            const isCurrent = currentViewDay && currentViewDay.date === p.date;
+                            return (
+                              <g
+                                key={`profit-pt-${p.date}`}
+                                onClick={() => setSelectedDashboardDate(p.date)}
+                                className="cursor-pointer group"
+                              >
+                                {isCurrent && (
+                                  <circle
+                                    cx={p.x}
+                                    cy={p.y}
+                                    r="9"
+                                    fill="#10b981"
+                                    opacity="0.3"
+                                    className="animate-ping"
+                                  />
+                                )}
+                                <circle
+                                  cx={p.x}
+                                  cy={p.y}
+                                  r={isCurrent ? "6" : "4.5"}
+                                  fill="white"
+                                  stroke={p.isPositive ? "#059669" : "#e11d48"}
+                                  strokeWidth={isCurrent ? "3" : "2"}
+                                />
+                                <text
+                                  x={p.x}
+                                  y={p.isPositive ? p.y - 8 : p.y + 16}
+                                  textAnchor="middle"
+                                  className={`text-[10px] font-black pointer-events-none ${
+                                    p.isPositive ? "fill-emerald-800 dark:fill-emerald-300" : "fill-rose-700 dark:fill-rose-300"
+                                  }`}
+                                >
+                                  ৳{Math.round(p.margin).toLocaleString()}
+                                </text>
+                              </g>
+                            );
+                          })}
+
+                          {/* Peak Profit Callout Annotation */}
+                          {profitGraphStats.peakDay && (
+                            (() => {
+                              const peak = profitGraphStats.peakDay;
+                              const peakX = getX(peak.index, totalDays);
+                              const peakY = getY(peak.profit);
+                              const calloutY = Math.max(8, peakY - 32);
+                              return (
+                                <g>
+                                  <line
+                                    x1={peakX}
+                                    y1={peakY}
+                                    x2={peakX}
+                                    y2={calloutY + 18}
+                                    stroke="#059669"
+                                    strokeWidth="1.5"
+                                    strokeDasharray="2 2"
+                                  />
+                                  <rect
+                                    x={peakX - 45}
+                                    y={calloutY}
+                                    width="90"
+                                    height="18"
+                                    rx="5"
+                                    fill="#064e3b"
+                                    stroke="#34d399"
+                                    strokeWidth="1"
+                                  />
+                                  <text
+                                    x={peakX}
+                                    y={calloutY + 12}
+                                    textAnchor="middle"
+                                    className="text-[9px] font-black fill-emerald-200 pointer-events-none"
+                                  >
+                                    সর্বোচ্চ: ৳{peak.profit.toLocaleString()}
+                                  </text>
+                                </g>
+                              );
+                            })()
+                          )}
+                        </g>
+                      );
+                    })()}
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* 30% SECTION: 7-Day Weekly Margin Widget */}
+            <div className="lg:col-span-4 xl:col-span-4 flex flex-col justify-between gap-3 sm:gap-4 h-full">
+              {/* 7-Day Weekly Margin Card */}
+              <div className="flex-1 bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 flex flex-col justify-between space-y-3 transition-colors">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-2.5">
+                    <div className="flex items-center space-x-2">
+                      <div className="bg-indigo-50 dark:bg-indigo-950/70 p-1.5 rounded-xl border border-indigo-100 dark:border-indigo-800/60 text-indigo-700 dark:text-indigo-400">
+                        <TrendingUp className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100">
+                          ৭ দিনের মার্জিন
+                        </h4>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">সাপ্তাহিক মোট ও গড় লাভ</p>
+                      </div>
+                    </div>
+                    <span className="text-[11px] font-black text-indigo-900 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/80 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800/60">
+                      ৳ {sevenDayMargin.toLocaleString()}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-center py-0.5">
+                    <div className="bg-slate-50 dark:bg-slate-800/60 p-2 rounded-xl border border-slate-200 dark:border-slate-700/60">
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold block">মোট ৭ দিনের লাভ</span>
+                      <span className="text-xs sm:text-sm font-black text-indigo-900 dark:text-indigo-300 mt-0.5 block">৳ {sevenDayMargin.toLocaleString()}</span>
+                    </div>
+                    <div className="bg-emerald-50 dark:bg-emerald-950/40 p-2 rounded-xl border border-emerald-200 dark:border-emerald-800/60">
+                      <span className="text-[10px] text-emerald-800 dark:text-emerald-400 font-bold block">দৈনিক গড় লাভ</span>
+                      <span className="text-xs sm:text-sm font-black text-emerald-900 dark:text-emerald-300 mt-0.5 block">৳ {sevenDayAvgMargin.toLocaleString()}</span>
+                    </div>
+                  </div>
+
+                  {/* 7-Day compact day list */}
+                  <div className="space-y-1 divide-y divide-slate-100 dark:divide-slate-800">
+                    {sevenDaysList.map((dayItem) => {
+                      const isSelected = currentViewDay && currentViewDay.date === dayItem.date;
+                      const marginVal = dayItem.financials.profitMargin || 0;
+                      return (
+                        <div
+                          key={dayItem.date}
+                          onClick={() => setSelectedDashboardDate(dayItem.date)}
+                          className={`flex justify-between items-center py-1 px-2 rounded-lg cursor-pointer transition-all ${
+                            isSelected ? "bg-indigo-100/70 dark:bg-indigo-950/80 font-black border border-indigo-300 dark:border-indigo-700" : "hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                          }`}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200">{dayItem.date.slice(5)}</span>
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">({getBanglaDay(dayItem.day).slice(0, 4)})</span>
+                          </div>
+                          <span className={`text-xs font-black ${marginVal >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                            ৳ {marginVal.toLocaleString()}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Selected Day Margin Summary */}
+                  <div className="pt-2.5 mt-2 border-t border-slate-200 dark:border-slate-800 space-y-1.5">
+                    <div className="flex justify-between items-center pb-0.5">
+                      <span className="text-[11px] font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider flex items-center space-x-1.5">
+                        <Activity className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                        <span>নির্বাচিত দিনের লাভ বিবরণ</span>
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
+                        {currentViewDay ? currentViewDay.date.slice(5) : ""}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1 text-xs">
+                      <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800">
+                        <span className="text-slate-600 dark:text-slate-400 font-medium">মোট বিক্রি:</span>
+                        <span className="font-bold text-slate-900 dark:text-slate-200">৳ {viewDailySalesAmount.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800">
+                        <span className="text-slate-600 dark:text-slate-400 font-medium">ডিমের ক্রয়মূল্য:</span>
+                        <span className="font-bold text-slate-900 dark:text-slate-200">৳ {viewSoldStockCost.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between items-center pt-1">
+                        <span className="font-bold text-slate-700 dark:text-slate-300">নিট মার্জিন:</span>
+                        <span className={`font-black text-sm ${viewProfit >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                          ৳ {viewProfit.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ================= SECTION 2: EGG PRICE TRENDS & ITEM SALES GRID ================= */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-stretch">
             {/* 70% SECTION: X-Y Egg Price Trend Graph */}
             <div className="lg:col-span-8 xl:col-span-8 bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-4 flex flex-col justify-between transition-colors">
@@ -1658,23 +2262,23 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                   <button
                     type="button"
                     onClick={() => setSelectedEggPriceFilter("all")}
-                    className={`flex items-center space-x-1.5 cursor-pointer hover:opacity-90 transition-all px-3.5 py-1.5 rounded-xl border shadow-2xs font-black ${
+                    className={`flex items-center space-x-1.5 cursor-pointer hover:opacity-90 transition-all px-3 py-1.5 rounded-xl border shadow-2xs ${
                       selectedEggPriceFilter === "all"
-                        ? "bg-slate-900 dark:bg-amber-500 text-white dark:text-slate-950 border-slate-900 dark:border-amber-400 ring-2 ring-amber-400"
+                        ? "bg-amber-600 dark:bg-amber-500 text-white border-amber-600 dark:border-amber-500 ring-2 ring-amber-300"
                         : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60"
                     }`}
                   >
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400 dark:bg-amber-300 inline-block" />
-                    <span>সকল ডিম (All Eggs)</span>
+                    <span>🌈</span>
+                    <span>সবগুলো ডিম (All Eggs)</span>
                   </button>
 
-                  {/* INDIVIDUAL EGG BUTTONS */}
+                  {/* Individual Egg Color Toggles */}
                   {EGG_TYPES.map((eggType) => {
-                    const color = EGG_COLORS[eggType];
+                    const color = EGG_COLORS[eggType] || { stroke: "#d97706", label: eggType };
                     const isSelected = selectedEggPriceFilter === eggType;
                     return (
                       <button
-                        key={`legend-${eggType}`}
+                        key={eggType}
                         type="button"
                         onClick={() =>
                           setSelectedEggPriceFilter(selectedEggPriceFilter === eggType ? "all" : eggType)
@@ -1698,105 +2302,56 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
               </div>
             </div>
 
-            {/* 30% SECTION: 7-Day Weekly Margin & Sales Widget Sidebar */}
+            {/* 30% SECTION: Per Item Sell & Daily Egg Sales Widget Sidebar */}
             <div className="lg:col-span-4 xl:col-span-4 flex flex-col justify-between gap-3 sm:gap-4 h-full">
-              {/* 7-Day Weekly Margin & Item-wise Sell Card */}
+              {/* Item-wise Sell Card */}
               <div className="flex-1 bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 flex flex-col justify-between space-y-3 transition-colors">
                 <div className="space-y-3">
                   <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-2.5">
                     <div className="flex items-center space-x-2">
-                      <div className="bg-indigo-50 dark:bg-indigo-950/70 p-1.5 rounded-xl border border-indigo-100 dark:border-indigo-800/60 text-indigo-700 dark:text-indigo-400">
-                        <TrendingUp className="w-4 h-4" />
+                      <div className="bg-amber-50 dark:bg-amber-950/70 p-1.5 rounded-xl border border-amber-100 dark:border-amber-800/60 text-amber-700 dark:text-amber-400">
+                        <Package className="w-4 h-4" />
                       </div>
                       <div>
                         <h4 className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100">
-                          ৭ দিনের মার্জিন
+                          ডিম অনুযায়ী বিক্রি
                         </h4>
-                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">সাপ্তাহিক মোট ও গড় লাভ</p>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Per Item Sell Breakdown</p>
                       </div>
                     </div>
-                    <span className="text-[11px] font-black text-indigo-900 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/80 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800/60">
-                      ৳ {sevenDayMargin.toLocaleString()}
+                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
+                      {currentViewDay ? currentViewDay.date.slice(5) : ""}
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-center py-0.5">
-                    <div className="bg-slate-50 dark:bg-slate-800/60 p-2 rounded-xl border border-slate-200 dark:border-slate-700/60">
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold block">মোট ৭ দিনের লাভ</span>
-                      <span className="text-xs sm:text-sm font-black text-indigo-900 dark:text-indigo-300 mt-0.5 block">৳ {sevenDayMargin.toLocaleString()}</span>
-                    </div>
-                    <div className="bg-emerald-50 dark:bg-emerald-950/40 p-2 rounded-xl border border-emerald-200 dark:border-emerald-800/60">
-                      <span className="text-[10px] text-emerald-800 dark:text-emerald-400 font-bold block">দৈনিক গড় লাভ</span>
-                      <span className="text-xs sm:text-sm font-black text-emerald-900 dark:text-emerald-300 mt-0.5 block">৳ {sevenDayAvgMargin.toLocaleString()}</span>
-                    </div>
-                  </div>
+                  <div className="grid grid-cols-1 gap-1 divide-y divide-slate-100 dark:divide-slate-800/80 text-xs">
+                    {EGG_TYPES.map((eggType) => {
+                      const stockInfo = currentViewDay?.stock[eggType];
+                      const soldQty = stockInfo?.soldQty || 0;
+                      const rate = stockInfo?.purchaseRate || DEFAULT_RATES[eggType] || 0;
+                      const soldVal = stockInfo?.soldValue !== undefined ? stockInfo.soldValue : (soldQty * rate);
+                      const color = EGG_COLORS[eggType] || { stroke: "#d97706" };
 
-                  {/* 7-Day compact day list */}
-                  <div className="space-y-1 divide-y divide-slate-100 dark:divide-slate-800">
-                    {sevenDaysList.map((dayItem) => {
-                      const isSelected = currentViewDay && currentViewDay.date === dayItem.date;
-                      const marginVal = dayItem.financials.profitMargin || 0;
                       return (
-                        <div
-                          key={dayItem.date}
-                          onClick={() => setSelectedDashboardDate(dayItem.date)}
-                          className={`flex justify-between items-center py-1 px-2 rounded-lg cursor-pointer transition-all ${
-                            isSelected ? "bg-indigo-100/70 dark:bg-indigo-950/80 font-black border border-indigo-300 dark:border-indigo-700" : "hover:bg-slate-50 dark:hover:bg-slate-800/60"
-                          }`}
-                        >
-                          <div className="flex items-center space-x-2">
-                            <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200">{dayItem.date.slice(5)}</span>
-                            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">({getBanglaDay(dayItem.day).slice(0, 4)})</span>
+                        <div key={`sell-${eggType}`} className="flex justify-between items-center py-1 px-1 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-md transition-colors">
+                          <div className="flex items-center space-x-1.5">
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color.stroke }} />
+                            <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                              {eggType.split(" (")[0]}
+                            </span>
                           </div>
-                          <span className={`text-xs font-black ${marginVal >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
-                            ৳ {marginVal.toLocaleString()}
-                          </span>
+                          <div className="flex items-center space-x-2 text-[11px]">
+                            <span className="font-bold text-slate-900 dark:text-slate-100">
+                              {soldQty > 0 ? `${soldQty.toLocaleString()} টি` : "০ টি"}
+                            </span>
+                            <span className="text-slate-400 dark:text-slate-500 font-medium">@ ৳{rate}</span>
+                            <span className="font-black text-amber-800 dark:text-amber-300 w-16 text-right">
+                              {soldVal > 0 ? `৳ ${soldVal.toLocaleString()}` : "৳ ০"}
+                            </span>
+                          </div>
                         </div>
                       );
                     })}
-                  </div>
-
-                  {/* Per Item Sell Data (ডিম অনুযায়ী বিক্রি বিবরণ) */}
-                  <div className="pt-2.5 mt-2 border-t border-slate-200 dark:border-slate-800 space-y-1.5">
-                    <div className="flex justify-between items-center pb-0.5">
-                      <span className="text-[11px] font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider flex items-center space-x-1.5">
-                        <Package className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                        <span>ডিম অনুযায়ী বিক্রি (Per Item Sell)</span>
-                      </span>
-                      <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
-                        {currentViewDay ? currentViewDay.date.slice(5) : ""}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-1 divide-y divide-slate-100 dark:divide-slate-800/80 text-xs">
-                      {EGG_TYPES.map((eggType) => {
-                        const stockInfo = currentViewDay?.stock[eggType];
-                        const soldQty = stockInfo?.soldQty || 0;
-                        const rate = stockInfo?.purchaseRate || DEFAULT_RATES[eggType] || 0;
-                        const soldVal = stockInfo?.soldValue !== undefined ? stockInfo.soldValue : (soldQty * rate);
-                        const color = EGG_COLORS[eggType] || { stroke: "#d97706" };
-
-                        return (
-                          <div key={`sell-${eggType}`} className="flex justify-between items-center py-1 px-1 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-md transition-colors">
-                            <div className="flex items-center space-x-1.5">
-                              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color.stroke }} />
-                              <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                                {eggType.split(" (")[0]}
-                              </span>
-                            </div>
-                            <div className="flex items-center space-x-2 text-[11px]">
-                              <span className="font-bold text-slate-900 dark:text-slate-100">
-                                {soldQty > 0 ? `${soldQty.toLocaleString()} টি` : "০ টি"}
-                              </span>
-                              <span className="text-slate-400 dark:text-slate-500 font-medium">@ ৳{rate}</span>
-                              <span className="font-black text-amber-800 dark:text-amber-300 w-16 text-right">
-                                {soldVal > 0 ? `৳ ${soldVal.toLocaleString()}` : "৳ ০"}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
                   </div>
                 </div>
               </div>
