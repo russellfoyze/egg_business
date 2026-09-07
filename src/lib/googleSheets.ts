@@ -425,7 +425,18 @@ export interface OverheadExpenseItem {
   id: string;
   date: string;
   month: string;
-  category: "employee" | "rent" | "utilities" | "security" | "transport" | "tax" | "extra" | "savings_shop" | "savings_bank";
+  category:
+    | "employee"
+    | "rent"
+    | "utilities"
+    | "security"
+    | "transport"
+    | "tax"
+    | "extra"
+    | "savings_shop"
+    | "savings_bank"
+    | "bill_from_savings_shop"
+    | "bill_from_savings_bank";
   title: string;
   amount: number;
   paymentMode: "cash" | "mfs" | "bank";

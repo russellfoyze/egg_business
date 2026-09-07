@@ -35,6 +35,10 @@ import {
   LogOut,
   UserCheck,
   PiggyBank,
+  ToggleLeft,
+  ToggleRight,
+  Link2,
+  Receipt,
 } from "lucide-react";
 import { ComputedDayData, saveLedgerEntryAction } from "./actions";
 import OverheadExpensesView from "./OverheadExpensesView";
@@ -218,8 +222,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
       amount: number;
       wastedEggQty: number;
       wastedEggCost: number;
+      isOverheadLinked?: boolean;
+      overheadCategory?: string;
     }[]
-  >([{ expenseType: "নাস্তা-চা", customName: "", amount: 0, wastedEggQty: 0, wastedEggCost: 0 }]);
+  >([{ expenseType: "নাস্তা-চা", customName: "", amount: 0, wastedEggQty: 0, wastedEggCost: 0, isOverheadLinked: false, overheadCategory: "extra" }]);
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submitMessage, setSubmitMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -478,7 +484,15 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
   // Handle expense rows (adds new row at the top)
   const addExpenseRow = () => {
     setExpenses([
-      { expenseType: "নাস্তা-চা", customName: "", amount: 0, wastedEggQty: 0, wastedEggCost: 0 },
+      {
+        expenseType: "নাস্তা-চা",
+        customName: "",
+        amount: 0,
+        wastedEggQty: 0,
+        wastedEggCost: 0,
+        isOverheadLinked: false,
+        overheadCategory: "extra",
+      },
       ...expenses,
     ]);
   };
@@ -492,6 +506,14 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
   const handleExpenseChange = (index: number, field: string, value: any) => {
     const updated = [...expenses];
     const current = { ...updated[index], [field]: value };
+
+    // Auto-link preset "সমিতি" to in-shop savings (সমিতি === দোকানে সঞ্চয়)
+    if (field === "expenseType") {
+      if (value === "সমিতি") {
+        current.isOverheadLinked = true;
+        current.overheadCategory = "savings_shop";
+      }
+    }
 
     // Auto-calculate wasted egg cost
     if (current.expenseType === "ভাঙ্গা" && field === "wastedEggQty") {
@@ -521,6 +543,56 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
   // 2. Expenses Total (Table 3 Total Expenses): Sum of B29:B42 (Cell B43)
   const formLiveTotalExpenses = useMemo(() => {
     return expenses.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
+  }, [expenses]);
+
+  // Live breakdown of expenses linked to Overhead & Savings
+  const formLiveOverheadBreakdown = useMemo(() => {
+    let overheadCount = 0;
+    let overheadSum = 0;
+    let savingsShopSum = 0;
+    let savingsBankSum = 0;
+    let billsFromShopSavingsSum = 0;
+    let billsFromBankSavingsSum = 0;
+
+    expenses.forEach((exp) => {
+      if (!exp.isOverheadLinked || !exp.amount || exp.amount <= 0) return;
+      const amt = Number(exp.amount) || 0;
+      const cat = exp.overheadCategory || (exp.expenseType === "সমিতি" ? "savings_shop" : "extra");
+
+      if (cat === "savings_shop") {
+        savingsShopSum += amt;
+      } else if (cat === "savings_bank") {
+        savingsBankSum += amt;
+      } else if (cat === "bill_from_savings_shop") {
+        billsFromShopSavingsSum += amt;
+      } else if (cat === "bill_from_savings_bank") {
+        billsFromBankSavingsSum += amt;
+      } else {
+        overheadCount++;
+        overheadSum += amt;
+      }
+    });
+
+    const totalLinked =
+      overheadSum +
+      savingsShopSum +
+      savingsBankSum +
+      billsFromShopSavingsSum +
+      billsFromBankSavingsSum;
+    const totalLinkedCount = expenses.filter(
+      (exp) => exp.isOverheadLinked && exp.amount && exp.amount > 0
+    ).length;
+
+    return {
+      overheadCount,
+      overheadSum,
+      savingsShopSum,
+      savingsBankSum,
+      billsFromShopSavingsSum,
+      billsFromBankSavingsSum,
+      totalLinked,
+      totalLinkedCount,
+    };
   }, [expenses]);
 
   // 3. Customer Due & Cash
@@ -611,7 +683,49 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
       );
 
       if (response.success) {
-        setSubmitMessage({ type: "success", text: `${formDate} তারিখের পেজ গুগল শিটে সফলভাবে সেভ ও সিঙ্ক হয়েছে!` });
+        // Auto-sync any overhead & savings linked expense entries
+        const linkedExpenses = expenses.filter(
+          (exp) => exp.isOverheadLinked && Number(exp.amount) > 0
+        );
+
+        if (linkedExpenses.length > 0) {
+          for (const exp of linkedExpenses) {
+            const finalType =
+              exp.expenseType === "Other" && exp.customName ? exp.customName.trim() : exp.expenseType;
+            const cat =
+              exp.overheadCategory ||
+              (exp.expenseType === "সমিতি" ? "savings_shop" : "extra");
+            const pMode =
+              cat === "savings_bank" || cat === "bill_from_savings_bank"
+                ? "bank"
+                : "cash";
+
+            try {
+              await fetch("/api/overhead", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  date: formDate,
+                  category: cat,
+                  title: `${finalType}${cat === "savings_shop" && !finalType.includes("সমিতি") ? " (সমিতি)" : ""}`,
+                  amount: Number(exp.amount),
+                  paymentMode: pMode,
+                  notes: `দৈনিক হালখাতা (পৃষ্ঠা ${formPageNo}) হতে স্বয়ংক্রিয় সিঙ্ক`,
+                }),
+              });
+            } catch (e) {
+              console.error("Failed to auto-sync linked overhead expense:", e);
+            }
+          }
+        }
+
+        setSubmitMessage({
+          type: "success",
+          text:
+            linkedExpenses.length > 0
+              ? `${formDate} তারিখের পেজ এবং কর্মচারী/সঞ্চয় ফান্ড সফলভাবে সেভ ও সিঙ্ক হয়েছে!`
+              : `${formDate} তারিখের পেজ গুগল শিটে সফলভাবে সেভ ও সিঙ্ক হয়েছে!`,
+        });
         const updatedRaw = await fetch("/api/data").then((res) => res.json());
         if (updatedRaw && updatedRaw.data) {
           setData(updatedRaw.data);
@@ -3270,76 +3384,186 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
               {expenses.map((exp, index) => (
                 <div
                   key={index}
-                  className="flex flex-col sm:flex-row sm:items-center gap-2.5 p-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors"
+                  className={`p-3 border rounded-xl transition-all ${
+                    exp.isOverheadLinked
+                      ? "bg-amber-50/70 dark:bg-amber-950/40 border-amber-300 dark:border-amber-700/80 shadow-xs"
+                      : "bg-slate-50/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/80"
+                  }`}
                 >
-                  {/* Preset Dropdown */}
-                  <div className="w-full sm:w-44">
-                    <select
-                      value={exp.expenseType}
-                      onChange={(e) => handleExpenseChange(index, "expenseType", e.target.value)}
-                      className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-2.5 py-1.5 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 focus:outline-none"
-                    >
-                      {EXPENSE_PRESETS.map((preset) => (
-                        <option key={preset} value={preset}>
-                          {preset}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Custom Name if Other */}
-                  {exp.expenseType === "Other" && (
-                    <div className="flex-1">
-                      <input
-                        type="text"
-                        value={exp.customName || ""}
-                        onChange={(e) => handleExpenseChange(index, "customName", e.target.value)}
-                        placeholder="খরচের বিবরণ"
-                        className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-2.5 py-1.5 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-900 dark:text-slate-100 focus:outline-none"
-                      />
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2.5">
+                    {/* Preset Dropdown */}
+                    <div className="w-full sm:w-44">
+                      <select
+                        value={exp.expenseType}
+                        onChange={(e) => handleExpenseChange(index, "expenseType", e.target.value)}
+                        className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-2.5 py-1.5 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 focus:outline-none"
+                      >
+                        {EXPENSE_PRESETS.map((preset) => (
+                          <option key={preset} value={preset}>
+                            {preset}
+                          </option>
+                        ))}
+                      </select>
                     </div>
-                  )}
 
-                  {/* Waste Egg Calculator */}
-                  {exp.expenseType === "ভাঙ্গা" && (
-                    <div className="flex items-center space-x-2 flex-1">
-                      <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">ভাঙ্গা ডিম:</span>
+                    {/* Custom Name if Other */}
+                    {exp.expenseType === "Other" && (
+                      <div className="flex-1">
+                        <input
+                          type="text"
+                          value={exp.customName || ""}
+                          onChange={(e) => handleExpenseChange(index, "customName", e.target.value)}
+                          placeholder="খরচের বিবরণ"
+                          className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-2.5 py-1.5 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-900 dark:text-slate-100 focus:outline-none"
+                        />
+                      </div>
+                    )}
+
+                    {/* Waste Egg Calculator */}
+                    {exp.expenseType === "ভাঙ্গা" && (
+                      <div className="flex items-center space-x-2 flex-1">
+                        <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">ভাঙ্গা ডিম:</span>
+                        <input
+                          type="number"
+                          value={exp.wastedEggQty || ""}
+                          onChange={(e) => handleExpenseChange(index, "wastedEggQty", Number(e.target.value))}
+                          placeholder="সংখ্যা"
+                          className="w-20 border border-slate-300 dark:border-slate-600 rounded-lg px-2 py-1.5 bg-white dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none"
+                        />
+                      </div>
+                    )}
+
+                    {/* Amount Input */}
+                    <div className="relative w-full sm:w-36">
+                      <span className="absolute inset-y-0 left-0 pl-2.5 flex items-center text-slate-400 text-xs font-bold">৳</span>
                       <input
                         type="number"
-                        value={exp.wastedEggQty || ""}
-                        onChange={(e) => handleExpenseChange(index, "wastedEggQty", Number(e.target.value))}
-                        placeholder="সংখ্যা"
-                        className="w-20 border border-slate-300 dark:border-slate-600 rounded-lg px-2 py-1.5 bg-white dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none"
+                        value={exp.amount || ""}
+                        onChange={(e) => handleExpenseChange(index, "amount", Number(e.target.value))}
+                        placeholder="টাকা"
+                        className="w-full border border-slate-300 dark:border-slate-600 rounded-lg pl-6 pr-2.5 py-1.5 bg-white dark:bg-slate-800 text-xs font-black text-rose-700 dark:text-rose-400 focus:outline-none"
                       />
                     </div>
-                  )}
 
-                  {/* Amount Input */}
-                  <div className="relative w-full sm:w-36">
-                    <span className="absolute inset-y-0 left-0 pl-2.5 flex items-center text-slate-400 text-xs font-bold">৳</span>
-                    <input
-                      type="number"
-                      value={exp.amount || ""}
-                      onChange={(e) => handleExpenseChange(index, "amount", Number(e.target.value))}
-                      placeholder="টাকা"
-                      className="w-full border border-slate-300 dark:border-slate-600 rounded-lg pl-6 pr-2.5 py-1.5 bg-white dark:bg-slate-800 text-xs font-black text-rose-700 dark:text-rose-400 focus:outline-none"
-                    />
+                    {/* Overhead & Savings Toggle Button */}
+                    <div className="flex items-center space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = [...expenses];
+                          const nextState = !updated[index].isOverheadLinked;
+                          updated[index].isOverheadLinked = nextState;
+                          if (nextState && !updated[index].overheadCategory) {
+                            if (updated[index].expenseType === "সমিতি") {
+                              updated[index].overheadCategory = "savings_shop";
+                            } else {
+                              updated[index].overheadCategory = "extra";
+                            }
+                          }
+                          setExpenses(updated);
+                        }}
+                        className={`inline-flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer border ${
+                          exp.isOverheadLinked
+                            ? "bg-amber-600 text-white border-amber-700 shadow-xs"
+                            : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
+                        }`}
+                        title="কর্মচারী, দোকান ভাড়া বা সঞ্চয় ফান্ডে যুক্ত করুন"
+                      >
+                        {exp.isOverheadLinked ? (
+                          <>
+                            <ToggleRight className="w-4 h-4 text-amber-200" />
+                            <span>ফান্ড লিঙ্ক চালু</span>
+                          </>
+                        ) : (
+                          <>
+                            <ToggleLeft className="w-4 h-4 text-slate-400" />
+                            <span>+ ওভারহেড/সঞ্চয়</span>
+                          </>
+                        )}
+                      </button>
+
+                      {/* Delete Button */}
+                      {expenses.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeExpenseRow(index)}
+                          className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors cursor-pointer"
+                          title="মুছুন"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Delete Button */}
-                  {expenses.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeExpenseRow(index)}
-                      className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/50 self-end sm:self-center transition-colors cursor-pointer"
-                      title="মুছুন"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                  {/* Dropdown for Overhead / Savings classification */}
+                  {exp.isOverheadLinked && (
+                    <div className="mt-2.5 pt-2.5 border-t border-amber-200/80 dark:border-amber-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white/70 dark:bg-slate-900/70 p-2.5 rounded-xl border border-amber-200 dark:border-amber-800/40">
+                      <div className="flex items-center space-x-1.5 text-xs font-bold text-amber-900 dark:text-amber-200">
+                        <Link2 className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                        <span>ওভারহেড ও সঞ্চয় খতিয়ান (ফান্ড নির্বাচন):</span>
+                      </div>
+                      <select
+                        value={exp.overheadCategory || (exp.expenseType === "সমিতি" ? "savings_shop" : "extra")}
+                        onChange={(e) => handleExpenseChange(index, "overheadCategory", e.target.value)}
+                        className="text-xs font-bold border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-800 rounded-lg px-3 py-1.5 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
+                      >
+                        <optgroup label="ব্যবসায়িক সঞ্চয় ও তহবিল (২টি সংরক্ষিত ফান্ড)">
+                          <option value="savings_shop">🏪 সমিতি === দোকানে সঞ্চয় (In-Shop Savings)</option>
+                          <option value="savings_bank">🏦 ব্যাংকে সঞ্চয় / DPS (In-Bank Savings)</option>
+                        </optgroup>
+                        <optgroup label="সঞ্চয় হতে বিল পরিশোধ (Bill Paid from Savings)">
+                          <option value="bill_from_savings_shop">💸 দোকানে সঞ্চয় হতে বিল পরিশোধ</option>
+                          <option value="bill_from_savings_bank">💳 ব্যাংকে সঞ্চয় হতে বিল পরিশোধ</option>
+                        </optgroup>
+                        <optgroup label="কর্মচারী, দোকান ভাড়া ও অতিরিক্ত পরিচালন খরচ">
+                          <option value="employee">👨‍💼 কর্মচারী বেতন ও মজুরি (Employee Salary)</option>
+                          <option value="rent">🏢 দোকান ও গোডাউন ভাড়া (Shop Rent)</option>
+                          <option value="utilities">⚡ বিদ্যুৎ ও গ্যাস বিল (Utilities)</option>
+                          <option value="security">🛡️ মার্কেট সমিতি ও নাইটগার্ড (Security)</option>
+                          <option value="transport">🚚 গাড়ি/ভ্যান মেরামত ও জ্বালানি (Transport)</option>
+                          <option value="tax">📜 ট্রেড লাইসেন্স ও ট্যাক্স (Tax)</option>
+                          <option value="extra">🪙 অন্যান্য অতিরিক্ত পরিচালন খরচ (Extra Overhead)</option>
+                        </optgroup>
+                      </select>
+                    </div>
                   )}
                 </div>
               ))}
             </div>
+
+            {/* Live Overhead & Savings Breakdown Badge if any linked */}
+            {formLiveOverheadBreakdown.totalLinked > 0 && (
+              <div className="mt-3 p-3.5 bg-emerald-50/90 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800/70 rounded-xl space-y-2">
+                <div className="flex justify-between items-center text-xs font-black text-emerald-900 dark:text-emerald-200">
+                  <span className="flex items-center space-x-1.5">
+                    <Link2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>কর্মচারী, ভাড়া ও সঞ্চয় ফান্ডে স্বয়ংক্রিয় যুক্ত হবে ({formLiveOverheadBreakdown.totalLinkedCount} টি এন্ট্রি):</span>
+                  </span>
+                  <span className="text-sm font-black text-emerald-700 dark:text-emerald-300">
+                    ৳ {formLiveOverheadBreakdown.totalLinked.toLocaleString()}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[11px] font-semibold border-t border-emerald-200/60 dark:border-emerald-800/40">
+                  <div className="bg-white/70 dark:bg-slate-900/60 p-1.5 rounded-lg">
+                    <span className="text-slate-500 dark:text-slate-400 block text-[10px]">কর্মচারী ও ভাড়া:</span>
+                    <strong className="text-slate-900 dark:text-slate-100">৳ {formLiveOverheadBreakdown.overheadSum.toLocaleString()}</strong>
+                  </div>
+                  <div className="bg-white/70 dark:bg-slate-900/60 p-1.5 rounded-lg">
+                    <span className="text-emerald-600 dark:text-emerald-400 block text-[10px]">সমিতি / দোকানে সঞ্চয়:</span>
+                    <strong className="text-emerald-700 dark:text-emerald-300">৳ {formLiveOverheadBreakdown.savingsShopSum.toLocaleString()}</strong>
+                  </div>
+                  <div className="bg-white/70 dark:bg-slate-900/60 p-1.5 rounded-lg">
+                    <span className="text-blue-600 dark:text-blue-400 block text-[10px]">ব্যাংকে সঞ্চয়:</span>
+                    <strong className="text-blue-700 dark:text-blue-300">৳ {formLiveOverheadBreakdown.savingsBankSum.toLocaleString()}</strong>
+                  </div>
+                  <div className="bg-white/70 dark:bg-slate-900/60 p-1.5 rounded-lg">
+                    <span className="text-amber-600 dark:text-amber-400 block text-[10px]">সঞ্চয় হতে বিল পরিশোধ:</span>
+                    <strong className="text-amber-700 dark:text-amber-300">৳ {(formLiveOverheadBreakdown.billsFromShopSavingsSum + formLiveOverheadBreakdown.billsFromBankSavingsSum).toLocaleString()}</strong>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Section 4 Footer: মোট খরচ (B43) & Total (B44 = B25 + B43) matching spreadsheet format */}
             <div className="mt-4 pt-3.5 border-t border-slate-200 dark:border-slate-700/80 space-y-2">

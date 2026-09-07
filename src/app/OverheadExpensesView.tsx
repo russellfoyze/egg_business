@@ -25,12 +25,16 @@ import {
   ArrowUpDown,
   Download,
   Info,
+  Receipt,
+  ArrowDownRight,
 } from "lucide-react";
 import { OverheadExpenseItem } from "@/lib/googleSheets";
 
 const CATEGORIES = [
-  { id: "savings_shop", label: "🏪 দোকানে সঞ্চয় (In-Shop)", icon: Store, color: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/60", border: "border-emerald-200 dark:border-emerald-800" },
+  { id: "savings_shop", label: "🏪 সমিতি / দোকানে সঞ্চয় (In-Shop)", icon: Store, color: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/60", border: "border-emerald-200 dark:border-emerald-800" },
   { id: "savings_bank", label: "🏦 ব্যাংকে সঞ্চয় (In-Bank / DPS)", icon: Landmark, color: "text-blue-700 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-950/60", border: "border-blue-200 dark:border-blue-800" },
+  { id: "bill_from_savings_shop", label: "💸 দোকানে সঞ্চয় হতে বিল পরিশোধ", icon: Receipt, color: "text-amber-700 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/60", border: "border-amber-200 dark:border-amber-800" },
+  { id: "bill_from_savings_bank", label: "💳 ব্যাংকে সঞ্চয় হতে বিল পরিশোধ", icon: CreditCard, color: "text-purple-700 dark:text-purple-400", bg: "bg-purple-50 dark:bg-purple-950/60", border: "border-purple-200 dark:border-purple-800" },
   { id: "employee", label: "কর্মচারী বেতন ও মজুরি", icon: Users, color: "text-sky-700 dark:text-sky-400", bg: "bg-sky-50 dark:bg-sky-950/60", border: "border-sky-200 dark:border-sky-800" },
   { id: "rent", label: "দোকান ও গোডাউন ভাড়া", icon: Building2, color: "text-amber-700 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/60", border: "border-amber-200 dark:border-amber-800" },
   { id: "utilities", label: "বিদ্যুৎ ও গ্যাস বিল", icon: Zap, color: "text-yellow-700 dark:text-yellow-400", bg: "bg-yellow-50 dark:bg-yellow-950/60", border: "border-yellow-200 dark:border-yellow-800" },
@@ -128,14 +132,18 @@ export default function OverheadExpensesView() {
     });
   }, [expenses, selectedMonth, selectedCategory, searchQuery]);
 
-  // Aggregated Counters & Totals (including 2-part savings)
+  // Aggregated Counters & Totals (including 2-part savings & bill payments from savings)
   const totals = useMemo(() => {
     let employeeTotal = 0;
     let rentTotal = 0;
     let utilitiesTotal = 0;
     let extraTotal = 0;
+    let transportTotal = 0;
+    let taxTotal = 0;
     let savingsShopTotal = 0;
+    let savingsShopBillTotal = 0;
     let savingsBankTotal = 0;
+    let savingsBankBillTotal = 0;
     let grandTotal = 0;
 
     filteredExpenses.forEach((item) => {
@@ -145,28 +153,55 @@ export default function OverheadExpensesView() {
         savingsShopTotal += amt;
       } else if (item.category === "savings_bank") {
         savingsBankTotal += amt;
+      } else if (item.category === "bill_from_savings_shop") {
+        savingsShopBillTotal += amt;
+      } else if (item.category === "bill_from_savings_bank") {
+        savingsBankBillTotal += amt;
       } else if (item.category === "employee") {
         employeeTotal += amt;
       } else if (item.category === "rent") {
         rentTotal += amt;
       } else if (item.category === "utilities" || item.category === "security") {
         utilitiesTotal += amt;
+      } else if (item.category === "transport") {
+        transportTotal += amt;
+      } else if (item.category === "tax") {
+        taxTotal += amt;
       } else {
         extraTotal += amt;
       }
     });
 
-    const totalSavings = savingsShopTotal + savingsBankTotal;
-    const pureExpenseTotal = grandTotal - totalSavings;
+    const netShopSavings = savingsShopTotal - savingsShopBillTotal;
+    const netBankSavings = savingsBankTotal - savingsBankBillTotal;
+    const totalSavingsDeposited = savingsShopTotal + savingsBankTotal;
+    const totalSavingsWithdrawn = savingsShopBillTotal + savingsBankBillTotal;
+    const netTotalSavings = netShopSavings + netBankSavings;
+    const pureExpenseTotal =
+      employeeTotal +
+      rentTotal +
+      utilitiesTotal +
+      transportTotal +
+      taxTotal +
+      extraTotal +
+      totalSavingsWithdrawn;
 
     return {
       employeeTotal,
       rentTotal,
       utilitiesTotal,
+      transportTotal,
+      taxTotal,
       extraTotal,
       savingsShopTotal,
+      savingsShopBillTotal,
+      netShopSavings,
       savingsBankTotal,
-      totalSavings,
+      savingsBankBillTotal,
+      netBankSavings,
+      totalSavingsDeposited,
+      totalSavingsWithdrawn,
+      netTotalSavings,
       pureExpenseTotal,
       grandTotal,
       count: filteredExpenses.length,
@@ -362,9 +397,9 @@ export default function OverheadExpensesView() {
             </span>
           </div>
           <div>
-            <p className="text-xs font-semibold text-amber-100">সর্বমোট পরিচালন খরচ ও সঞ্চয়</p>
+            <p className="text-xs font-semibold text-amber-100">সর্বমোট পরিচালন ব্যয় (Pure Expenses)</p>
             <p className="text-2xl sm:text-3xl font-black text-white mt-0.5">
-              ৳ {totals.grandTotal.toLocaleString()}
+              ৳ {totals.pureExpenseTotal.toLocaleString()}
             </p>
           </div>
         </div>
@@ -387,18 +422,23 @@ export default function OverheadExpensesView() {
                 </span>
               </div>
               <p className="text-xs text-slate-300 font-medium">
-                দোকানের ক্যাশ ড্রয়ার ও ব্যাংক একাউন্টে জমা রাখা ব্যবসায়িক সঞ্চয়ের সার্বিক খতিয়ান
+                দোকানের ক্যাশ ড্রয়ার (সমিতি) ও ব্যাংক অ্যাকাউন্টে সংরক্ষিত সঞ্চয় এবং বিল পরিশোধের সার্বিক খতিয়ান
               </p>
             </div>
           </div>
 
-          {/* Combined Total Savings Badge */}
+          {/* Combined Net Savings Badge */}
           <div className="flex items-center space-x-2.5 bg-black/40 border border-emerald-500/40 px-4 py-2 rounded-2xl">
             <Wallet className="w-5 h-5 text-emerald-400 shrink-0" />
             <div className="text-right">
-              <span className="text-[10px] text-slate-400 block font-semibold leading-tight">সর্বমোট সঞ্চয় (দোকান+ব্যাংক)</span>
+              <span className="text-[10px] text-slate-400 block font-semibold leading-tight">
+                সর্বমোট নিট তহবিল (দোকান + ব্যাংক)
+              </span>
               <span className="text-base sm:text-lg font-black text-emerald-400 leading-none">
-                ৳ {totals.totalSavings.toLocaleString()}
+                ৳ {totals.netTotalSavings.toLocaleString()}
+              </span>
+              <span className="text-[9px] text-slate-400 block font-medium mt-0.5">
+                জমা ৳{totals.totalSavingsDeposited.toLocaleString()} | বিল ৳{totals.totalSavingsWithdrawn.toLocaleString()}
               </span>
             </div>
           </div>
@@ -406,7 +446,7 @@ export default function OverheadExpensesView() {
 
         {/* 2 Parts Grid: 1. In-Shop Savings | 2. In-Bank Savings */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
-          {/* Part 1: দোকানে সঞ্চয় (In-Shop Savings) */}
+          {/* Part 1: দোকানে সঞ্চয় (সমিতি === দোকানে সঞ্চয়) */}
           <div className="bg-white/5 hover:bg-white/10 transition-colors border border-emerald-500/30 rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-3">
             <div className="flex justify-between items-start">
               <div className="flex items-center space-x-2.5">
@@ -415,7 +455,7 @@ export default function OverheadExpensesView() {
                 </div>
                 <div>
                   <h4 className="text-sm font-black text-slate-100 flex items-center gap-1.5">
-                    <span>দোকানে সঞ্চয়</span>
+                    <span>সমিতি / দোকানে সঞ্চয়</span>
                     <span className="text-[10px] font-bold text-emerald-300 bg-emerald-950/80 px-2 py-0.5 rounded-md border border-emerald-600/40">
                       In-Shop
                     </span>
@@ -425,26 +465,52 @@ export default function OverheadExpensesView() {
               </div>
             </div>
 
-            <div className="pt-2 flex items-baseline justify-between border-t border-white/10">
-              <span className="text-xs text-slate-400 font-semibold">মোট সঞ্চিত ক্যাশ:</span>
-              <span className="text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight">
-                ৳ {totals.savingsShopTotal.toLocaleString()}
-              </span>
+            {/* In-Shop Financials breakdown */}
+            <div className="pt-2 space-y-1.5 border-t border-white/10 text-xs">
+              <div className="flex justify-between text-slate-300">
+                <span>মোট সঞ্চয় জমা:</span>
+                <span className="font-bold text-emerald-300">৳ {totals.savingsShopTotal.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between text-slate-400">
+                <span>সঞ্চয় হতে বিল পরিশোধ:</span>
+                <span className="font-bold text-amber-400">- ৳ {totals.savingsShopBillTotal.toLocaleString()}</span>
+              </div>
+              <div className="flex items-baseline justify-between pt-1 border-t border-white/10">
+                <span className="text-xs font-black text-slate-200">অবশিষ্ট নিট ফান্ড:</span>
+                <span className="text-xl sm:text-2xl font-black text-emerald-400 tracking-tight">
+                  ৳ {totals.netShopSavings.toLocaleString()}
+                </span>
+              </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                setFormCategory("savings_shop");
-                setFormPaymentMode("cash");
-                setFormTitle("দোকানে নগদ সঞ্চয় জমা");
-                setIsFormOpen(true);
-              }}
-              className="w-full py-2 bg-emerald-600/80 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer shadow-xs active:scale-98"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>+ দোকানে সঞ্চয় এন্ট্রি করুন</span>
-            </button>
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setFormCategory("savings_shop");
+                  setFormPaymentMode("cash");
+                  setFormTitle("দোকানে নগদ সঞ্চয় জমা");
+                  setIsFormOpen(true);
+                }}
+                className="py-2 bg-emerald-600/80 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1 cursor-pointer shadow-xs active:scale-98"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ সঞ্চয় জমা</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setFormCategory("bill_from_savings_shop");
+                  setFormPaymentMode("cash");
+                  setFormTitle("দোকানের সঞ্চয় হতে বিল পরিশোধ");
+                  setIsFormOpen(true);
+                }}
+                className="py-2 bg-amber-600/80 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1 cursor-pointer shadow-xs active:scale-98"
+              >
+                <Receipt className="w-3.5 h-3.5" />
+                <span>- বিল পরিশোধ</span>
+              </button>
+            </div>
           </div>
 
           {/* Part 2: ব্যাংকে সঞ্চয় (In-Bank Savings / DPS) */}
@@ -466,26 +532,52 @@ export default function OverheadExpensesView() {
               </div>
             </div>
 
-            <div className="pt-2 flex items-baseline justify-between border-t border-white/10">
-              <span className="text-xs text-slate-400 font-semibold">মোট ব্যাংক সঞ্চয়:</span>
-              <span className="text-2xl sm:text-3xl font-black text-blue-400 tracking-tight">
-                ৳ {totals.savingsBankTotal.toLocaleString()}
-              </span>
+            {/* Bank Financials breakdown */}
+            <div className="pt-2 space-y-1.5 border-t border-white/10 text-xs">
+              <div className="flex justify-between text-slate-300">
+                <span>মোট ব্যাংক জমা:</span>
+                <span className="font-bold text-blue-300">৳ {totals.savingsBankTotal.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between text-slate-400">
+                <span>ব্যাংক হতে বিল পরিশোধ:</span>
+                <span className="font-bold text-purple-300">- ৳ {totals.savingsBankBillTotal.toLocaleString()}</span>
+              </div>
+              <div className="flex items-baseline justify-between pt-1 border-t border-white/10">
+                <span className="text-xs font-black text-slate-200">অবশিষ্ট নিট ব্যাংক ফান্ড:</span>
+                <span className="text-xl sm:text-2xl font-black text-blue-400 tracking-tight">
+                  ৳ {totals.netBankSavings.toLocaleString()}
+                </span>
+              </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                setFormCategory("savings_bank");
-                setFormPaymentMode("bank");
-                setFormTitle("ব্যাংক অ্যাকাউন্টে সঞ্চয় / DPS কিস্তি জমা");
-                setIsFormOpen(true);
-              }}
-              className="w-full py-2 bg-blue-600/80 hover:bg-blue-600 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer shadow-xs active:scale-98"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>+ ব্যাংকে সঞ্চয় এন্ট্রি করুন</span>
-            </button>
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setFormCategory("savings_bank");
+                  setFormPaymentMode("bank");
+                  setFormTitle("ব্যাংক অ্যাকাউন্টে সঞ্চয় / DPS কিস্তি জমা");
+                  setIsFormOpen(true);
+                }}
+                className="py-2 bg-blue-600/80 hover:bg-blue-600 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1 cursor-pointer shadow-xs active:scale-98"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ সঞ্চয় জমা</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setFormCategory("bill_from_savings_bank");
+                  setFormPaymentMode("bank");
+                  setFormTitle("ব্যাংকের সঞ্চয় হতে বিল পরিশোধ");
+                  setIsFormOpen(true);
+                }}
+                className="py-2 bg-purple-600/80 hover:bg-purple-600 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1 cursor-pointer shadow-xs active:scale-98"
+              >
+                <CreditCard className="w-3.5 h-3.5" />
+                <span>- বিল পরিশোধ</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -554,6 +646,12 @@ export default function OverheadExpensesView() {
                   } else if (cat === "savings_bank") {
                     setFormPaymentMode("bank");
                     if (!formTitle) setFormTitle("ব্যাংক অ্যাকাউন্টে সঞ্চয় / DPS কিস্তি জমা");
+                  } else if (cat === "bill_from_savings_shop") {
+                    setFormPaymentMode("cash");
+                    if (!formTitle) setFormTitle("দোকানের সঞ্চয় হতে বিল পরিশোধ");
+                  } else if (cat === "bill_from_savings_bank") {
+                    setFormPaymentMode("bank");
+                    if (!formTitle) setFormTitle("ব্যাংকের সঞ্চয় হতে বিল পরিশোধ");
                   }
                 }}
                 className="w-full border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 bg-slate-50/50 dark:bg-slate-800/60 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
