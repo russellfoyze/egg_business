@@ -54,6 +54,9 @@ export default function OverheadExpensesView() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isFormOpen, setIsFormOpen] = useState(true);
 
+  const [latestShopCash, setLatestShopCash] = useState<number>(0);
+  const [latestShopCashDate, setLatestShopCashDate] = useState<string>("");
+
   // Form State
   const [formDate, setFormDate] = useState<string>(() => new Date().toISOString().split("T")[0]);
   const [formCategory, setFormCategory] = useState<OverheadExpenseItem["category"]>("savings_shop");
@@ -73,8 +76,17 @@ export default function OverheadExpensesView() {
       if (json.success && Array.isArray(json.data)) {
         const cleanData = json.data.filter((item: OverheadExpenseItem) => item && item.id && !item.id.startsWith("demo-"));
         setExpenses(cleanData);
+        if (json.latestShopCash !== undefined) {
+          setLatestShopCash(Number(json.latestShopCash) || 0);
+        }
+        if (json.latestShopCashDate) {
+          setLatestShopCashDate(json.latestShopCashDate);
+        }
         try {
           localStorage.setItem("yolkflow_overhead_expenses", JSON.stringify(cleanData));
+          if (json.latestShopCash !== undefined) {
+            localStorage.setItem("yolkflow_latest_shop_cash", String(json.latestShopCash));
+          }
         } catch (e) {}
       }
     } catch (err) {
@@ -86,6 +98,8 @@ export default function OverheadExpensesView() {
           const cleanData = JSON.parse(cached).filter((item: OverheadExpenseItem) => item && item.id && !item.id.startsWith("demo-"));
           setExpenses(cleanData);
         }
+        const cachedCash = localStorage.getItem("yolkflow_latest_shop_cash");
+        if (cachedCash) setLatestShopCash(Number(cachedCash) || 0);
       } catch (e) {}
     } finally {
       setLoading(false);
@@ -102,6 +116,8 @@ export default function OverheadExpensesView() {
         setExpenses(cleanData);
         setLoading(false);
       }
+      const cachedCash = localStorage.getItem("yolkflow_latest_shop_cash");
+      if (cachedCash) setLatestShopCash(Number(cachedCash) || 0);
     } catch (e) {}
     fetchExpenses();
   }, []);
@@ -348,76 +364,90 @@ export default function OverheadExpensesView() {
         </div>
       </div>
 
-      {/* 2. Top Summary Metric Cards (স্বয়ংক্রিয় যোগফল ও কাউন্টার) */}
+      {/* 2. Top Summary Metric Cards (সর্বমোট সঞ্চয় জমা, কর্মচারী বেতন, মাসিক খরচ ও দোকানের ক্যাশ) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
-        {/* Card 1: কর্মচারী ব্যয় */}
+        {/* Card 1: মোট সঞ্চয় জমা (Total Savings Given) */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-emerald-200/80 dark:border-emerald-800/60 space-y-2">
+          <div className="flex justify-between items-center">
+            <div className="p-2 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-xl border border-emerald-200 dark:border-emerald-800">
+              <PiggyBank className="w-5 h-5" />
+            </div>
+            <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+              দোকান + ব্যাংক
+            </span>
+          </div>
+          <div>
+            <p className="text-xs font-bold text-slate-500 dark:text-slate-400">মোট সঞ্চয় জমা (Total Savings)</p>
+            <p className="text-xl sm:text-2xl font-black text-emerald-700 dark:text-emerald-400 mt-0.5">
+              ৳ {totals.totalSavingsDeposited.toLocaleString()}
+            </p>
+            <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-1">
+              দোকানে ৳{totals.savingsShopTotal.toLocaleString()} | ব্যাংকে ৳{totals.savingsBankTotal.toLocaleString()}
+            </p>
+          </div>
+        </div>
+
+        {/* Card 2: কর্মচারী মোট বেতন (Employee Salary) */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-2">
           <div className="flex justify-between items-center">
             <div className="p-2 bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 rounded-xl border border-blue-200 dark:border-blue-800">
               <Users className="w-5 h-5" />
             </div>
             <span className="text-[11px] font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/80 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
-              বেতন ও হাজিরা
+              বেতন ও মজুরি
             </span>
           </div>
           <div>
-            <p className="text-xs font-bold text-slate-500 dark:text-slate-400">মোট কর্মচারী খরচ</p>
+            <p className="text-xs font-bold text-slate-500 dark:text-slate-400">কর্মচারী মোট বেতন (Salary)</p>
             <p className="text-xl sm:text-2xl font-black text-blue-900 dark:text-blue-300 mt-0.5">
               ৳ {totals.employeeTotal.toLocaleString()}
             </p>
+            <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-1">
+              হাজিরা ও নিয়মিত কর্মচারী খরচ
+            </p>
           </div>
         </div>
 
-        {/* Card 2: দোকান ও গোডাউন ভাড়া */}
+        {/* Card 3: সর্বমোট মাসিক খরচ (Total Monthly Cost) */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-2">
           <div className="flex justify-between items-center">
             <div className="p-2 bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 rounded-xl border border-amber-200 dark:border-amber-800">
-              <Building2 className="w-5 h-5" />
+              <Receipt className="w-5 h-5" />
             </div>
             <span className="text-[11px] font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/80 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
-              দোকান/আড়ত
-            </span>
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-500 dark:text-slate-400">দোকান ও গোডাউন ভাড়া</p>
-            <p className="text-xl sm:text-2xl font-black text-amber-800 dark:text-amber-300 mt-0.5">
-              ৳ {totals.rentTotal.toLocaleString()}
-            </p>
-          </div>
-        </div>
-
-        {/* Card 3: ইউটিলিটি ও বিল */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-2">
-          <div className="flex justify-between items-center">
-            <div className="p-2 bg-yellow-50 dark:bg-yellow-950/60 text-yellow-600 dark:text-yellow-400 rounded-xl border border-yellow-200 dark:border-yellow-800">
-              <Zap className="w-5 h-5" />
-            </div>
-            <span className="text-[11px] font-bold text-yellow-700 dark:text-yellow-300 bg-yellow-50 dark:bg-yellow-950/80 px-2 py-0.5 rounded-full border border-yellow-200 dark:border-yellow-800">
-              বিদ্যুৎ ও গার্ড
-            </span>
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-500 dark:text-slate-400">বিদ্যুৎ বিল ও নাইটগার্ড</p>
-            <p className="text-xl sm:text-2xl font-black text-yellow-800 dark:text-yellow-400 mt-0.5">
-              ৳ {totals.utilitiesTotal.toLocaleString()}
-            </p>
-          </div>
-        </div>
-
-        {/* Card 4: সর্বমোট পরিচালন খরচ */}
-        <div className="bg-gradient-to-br from-amber-600 to-amber-700 text-white rounded-2xl p-4 sm:p-5 shadow-md space-y-2">
-          <div className="flex justify-between items-center">
-            <div className="p-2 bg-white/20 rounded-xl">
-              <Coins className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-[11px] font-bold bg-white/20 text-white px-2.5 py-0.5 rounded-full">
               {totals.count} টি এন্ট্রি
             </span>
           </div>
           <div>
-            <p className="text-xs font-semibold text-amber-100">সর্বমোট পরিচালন ব্যয় (Pure Expenses)</p>
-            <p className="text-2xl sm:text-3xl font-black text-white mt-0.5">
+            <p className="text-xs font-bold text-slate-500 dark:text-slate-400">সর্বমোট মাসিক খরচ (Monthly Cost)</p>
+            <p className="text-xl sm:text-2xl font-black text-amber-800 dark:text-amber-300 mt-0.5">
               ৳ {totals.pureExpenseTotal.toLocaleString()}
+            </p>
+            <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-1">
+              বেতন, ভাড়া, বিল ও অতিরিক্ত খরচ সহ
+            </p>
+          </div>
+        </div>
+
+        {/* Card 4: দোকানের নগদ ক্যাশ (Cash in the Shop) */}
+        <div className="bg-gradient-to-br from-amber-600 to-amber-700 text-white rounded-2xl p-4 sm:p-5 shadow-md space-y-2">
+          <div className="flex justify-between items-center">
+            <div className="p-2 bg-white/20 rounded-xl">
+              <Store className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-[11px] font-bold bg-white/20 text-white px-2.5 py-0.5 rounded-full">
+              নগদ ক্যাশ ড্রয়ার
+            </span>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-amber-100">দোকানের নগদ ক্যাশ (Cash in Shop)</p>
+            <p className="text-2xl sm:text-3xl font-black text-white mt-0.5">
+              ৳ {(latestShopCash > 0 ? latestShopCash : totals.netShopSavings).toLocaleString()}
+            </p>
+            <p className="text-[10px] font-medium text-amber-100/90 mt-1">
+              {latestShopCash > 0
+                ? `দৈনিক ক্যাশ: ৳${latestShopCash.toLocaleString()} | দোকানে সঞ্চয়: ৳${totals.netShopSavings.toLocaleString()}`
+                : `দোকানের ক্যাশ ড্রয়ারে রক্ষিত নগদ ফান্ড`}
             </p>
           </div>
         </div>

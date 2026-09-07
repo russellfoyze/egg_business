@@ -3,6 +3,7 @@ import {
   getOverheadExpensesFromSheets,
   addOverheadExpenseToSheets,
   deleteOverheadExpenseFromSheets,
+  getLatestShopCash,
   OverheadExpenseItem,
 } from "@/lib/googleSheets";
 
@@ -39,10 +40,15 @@ export async function GET(request: NextRequest) {
     // Sort by date descending
     items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+    // Fetch latest shop cash in hand from Financials
+    const shopCashInfo = await getLatestShopCash();
+
     return NextResponse.json({
       success: true,
       data: items,
       count: items.length,
+      latestShopCash: shopCashInfo.cash,
+      latestShopCashDate: shopCashInfo.date,
     });
   } catch (err: any) {
     return NextResponse.json(

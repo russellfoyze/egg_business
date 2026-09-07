@@ -722,6 +722,24 @@ export async function deleteOverheadExpenseFromSheets(id: string): Promise<boole
   }
 }
 
+export async function getLatestShopCash(): Promise<{ cash: number; date: string }> {
+  try {
+    const isConfigured = await isGoogleSheetsConfigured();
+    if (!isConfigured) return { cash: 0, date: "" };
+    const rows = await readSheetValues("Financials");
+    if (!rows || rows.length <= 1) return { cash: 0, date: "" };
+    const dataRows = rows.slice(1).filter((r) => r && r[0]);
+    if (dataRows.length === 0) return { cash: 0, date: "" };
+    dataRows.sort((a, b) => String(b[0]).localeCompare(String(a[0])));
+    const latestRow = dataRows[0];
+    const date = latestRow[0] || "";
+    const cash = Number(String(latestRow[5]).replace(/,/g, "")) || 0;
+    return { cash, date };
+  } catch (e) {
+    return { cash: 0, date: "" };
+  }
+}
+
 export interface SavingsItem {
   id: string;
   date: string;
