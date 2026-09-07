@@ -48,14 +48,18 @@ jobs:
       - name: Build Android APK
         working-directory: ./mobile/android
         run: |
+          set -o pipefail
           ./gradlew assembleDebug --stacktrace --no-daemon 2>&1 | tee build.log
 
       - name: Prepare APK Output
         if: always()
         run: |
+          echo "=== GRADLE BUILD LOG (LAST 100 LINES) ==="
+          tail -n 100 mobile/android/build.log 2>/dev/null || true
           mkdir -p build-output
-          find mobile/android/app/build/outputs/ -name "*.apk" -exec cp {} build-output/MAKhalekSarker.apk \; || true
+          find mobile/android/app/build/ -name "*.apk" -exec cp {} build-output/MAKhalekSarker.apk \; 2>/dev/null || true
           cp mobile/android/build.log build-output/build.log 2>/dev/null || true
+          echo "=== FILES FOUND IN BUILD-OUTPUT ==="
           ls -la build-output/
 
       - name: Upload APK Artifact
