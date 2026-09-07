@@ -45,20 +45,23 @@ jobs:
         working-directory: ./mobile/android
         run: chmod +x gradlew
 
-      - name: Build Android Release APK
+      - name: Build Android APK
         working-directory: ./mobile/android
-        run: ./gradlew assembleRelease --stacktrace --no-daemon
+        run: |
+          ./gradlew assembleDebug --stacktrace --no-daemon 2>&1 | tee build.log
 
       - name: Prepare APK Output
         if: always()
         run: |
           mkdir -p build-output
-          find mobile/android/app/build/outputs/apk/ -name "*.apk" -exec cp {} build-output/MAKhalekSarker.apk \; || true
+          find mobile/android/app/build/outputs/ -name "*.apk" -exec cp {} build-output/MAKhalekSarker.apk \; || true
+          cp mobile/android/build.log build-output/build.log 2>/dev/null || true
           ls -la build-output/
 
       - name: Upload APK Artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: MAKhalekSarker-Android-APK
-          path: build-output/*.apk
+          path: build-output/
           retention-days: 30
