@@ -41,6 +41,8 @@ import OverheadExpensesView from "./OverheadExpensesView";
 import SavingsTrackerView from "./SavingsTrackerView";
 import LoginScreen from "./LoginScreen";
 import { UserAccount } from "@/lib/auth";
+import ThemeToggle from "./ThemeToggle";
+import ImageToJsonModal from "./ImageToJsonModal";
 
 interface YolkFlowClientProps {
   initialData: ComputedDayData[];
@@ -997,14 +999,48 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
   // Authentication Guard Screen
   if (authLoaded && !currentUser) {
     return (
-      <LoginScreen
-        onLoginSuccess={(u) => {
-          setCurrentUser(u);
-          if (u.allowedTabs && u.allowedTabs.length > 0) {
-            setActiveTab(u.allowedTabs[0]);
-          }
-        }}
-      />
+      <div className="min-h-screen flex flex-col">
+        {/* 🌟 Top Navigation Bar */}
+        <header className="bg-gradient-to-r from-amber-600 via-amber-600 to-amber-700 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 text-white shadow-md sticky top-0 z-50 backdrop-blur-md border-b border-amber-700/50 dark:border-slate-800 transition-colors duration-200">
+          <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex justify-between items-center">
+            <div className="flex items-center space-x-2.5">
+              <div className="w-9 h-9 bg-white/15 dark:bg-amber-500/20 rounded-xl flex items-center justify-center text-xl shadow-inner border border-white/20 dark:border-amber-400/30">
+                🍳
+              </div>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-lg sm:text-xl font-black tracking-tight leading-none">YolkFlow</span>
+                  <span className="bg-amber-500/40 dark:bg-amber-500/20 text-amber-100 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-400/30">
+                    v2.0
+                  </span>
+                </div>
+                <p className="text-[10px] text-amber-200/90 dark:text-slate-400 font-medium hidden sm:block">
+                  ডিম ব্যবসার ডিজিটাল হালখাতা ও লাইভ শিট ডাটাবেজ
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2 sm:space-x-2.5">
+              <ThemeToggle />
+              <span className="inline-flex items-center gap-1.5 bg-amber-500/20 dark:bg-slate-800 text-amber-100 dark:text-amber-300 text-xs font-bold px-2.5 py-1.5 rounded-xl border border-white/20">
+                <UserCheck className="w-3.5 h-3.5 text-amber-300" />
+                <span>লগইন পেজ</span>
+              </span>
+            </div>
+          </div>
+        </header>
+
+        <main className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-4 sm:py-6 w-full flex-1">
+          <LoginScreen
+            onLoginSuccess={(u) => {
+              setCurrentUser(u);
+              if (u.allowedTabs && u.allowedTabs.length > 0) {
+                setActiveTab(u.allowedTabs[0]);
+              }
+            }}
+          />
+        </main>
+      </div>
     );
   }
 
@@ -1014,158 +1050,169 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Sticky Top Navigation Controls (Desktop & Tablet Web View) */}
-      <div className="hidden sm:flex sticky top-[56px] sm:top-[64px] z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-2 sm:p-2.5 rounded-2xl shadow-md border border-slate-200/90 dark:border-slate-800/90 transition-all justify-between items-center gap-3">
-        {/* Tab Switcher (RBAC Filtered) */}
-        <div className="flex items-center p-1 bg-slate-100/90 dark:bg-slate-800/90 rounded-xl shrink-0">
-          {isAllowed("dashboard") && (
-            <button
-              onClick={() => handleSwitchTab("dashboard")}
-              className={`flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                activeTab === "dashboard"
-                  ? "bg-white dark:bg-slate-700 text-amber-800 dark:text-amber-300 shadow-sm font-black"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
-              }`}
-            >
-              <TrendingUp className="w-4 h-4" />
-              <span>ড্যাশবোর্ড</span>
-            </button>
-          )}
-
-          {isAllowed("entry") && (
-            <button
-              onClick={() => handleSwitchTab("entry")}
-              className={`flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                activeTab === "entry"
-                  ? "bg-white dark:bg-slate-700 text-amber-800 dark:text-amber-300 shadow-sm font-black"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
-              }`}
-            >
-              <FileText className="w-4 h-4" />
-              <span>হালখাতা এন্ট্রি</span>
-            </button>
-          )}
-
-          {isAllowed("overhead") && (
-            <button
-              onClick={() => handleSwitchTab("overhead")}
-              className={`flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                activeTab === "overhead"
-                  ? "bg-white dark:bg-slate-700 text-amber-800 dark:text-amber-300 shadow-sm font-black"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
-              }`}
-            >
-              <Building2 className="w-4 h-4" />
-              <span>কর্মচারী ও মাসিক খরচ</span>
-            </button>
-          )}
-
-          {isAllowed("savings") && (
-            <button
-              onClick={() => handleSwitchTab("savings")}
-              className={`flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                activeTab === "savings"
-                  ? "bg-white dark:bg-slate-700 text-emerald-800 dark:text-emerald-300 shadow-sm font-black"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
-              }`}
-            >
-              <PiggyBank className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <span>সঞ্চয় ও অতিরিক্ত আয়</span>
-            </button>
-          )}
-        </div>
-
-        {/* Unified Date Navigator Pill in Header (Web View) */}
-        {activeTab !== "overhead" &&
-          renderDateNavigatorPill(
-            activeDisplayDate,
-            activeDisplayDay,
-            handleUnifiedDateChange,
-            () => handleUnifiedDateStep(-1),
-            () => handleUnifiedDateStep(1),
-            activeDateIdx > 0,
-            activeDateIdx < data.length - 1
-          )}
-
-        {/* Quick Action Buttons & User Profile Badge */}
-        <div className="flex items-center space-x-2 shrink-0">
-          {activeTab === "dashboard" && currentViewDay && currentUser?.canEdit && (
-            <button
-              onClick={() => handleSwitchTab("entry")}
-              className="flex items-center space-x-1.5 px-3 py-2 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60 rounded-xl text-xs font-bold transition-colors shrink-0 cursor-pointer"
-            >
-              <Edit3 className="w-3.5 h-3.5" />
-              <span>সম্পাদনা</span>
-            </button>
-          )}
-
-          {currentUser?.canEdit && (
-            <button
-              onClick={handleCreateNewDay}
-              className="flex items-center space-x-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 shrink-0 cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>+ নতুন দিন</span>
-            </button>
-          )}
-
-          <button
-            onClick={handleRefreshData}
-            disabled={isRefreshing}
-            className="flex items-center justify-center space-x-1.5 px-2.5 py-2 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 transition-all disabled:opacity-50 active:scale-95 cursor-pointer"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-amber-600" : ""}`} />
-            <span className="hidden md:inline">{isRefreshing ? "..." : "রিফ্রেশ"}</span>
-          </button>
-
-          {/* Logged in User Profile Pill */}
-          {currentUser && (
-            <div className="flex items-center space-x-2 bg-slate-100/90 dark:bg-slate-800/90 border border-slate-300/80 dark:border-slate-700/80 px-2.5 py-1.5 rounded-xl text-xs font-bold shadow-2xs">
-              <span className="text-sm">{currentUser.avatarEmoji}</span>
-              <div className="hidden lg:flex flex-col text-left leading-tight">
-                <span className="text-slate-900 dark:text-slate-100 font-black">{currentUser.username}</span>
-                <span className="text-[10px] text-amber-700 dark:text-amber-400 font-semibold">{currentUser.roleLabel.split(" ")[1]}</span>
-              </div>
-              <button
-                type="button"
-                onClick={handleLogout}
-                title="লগআউট করুন"
-                className="p-1 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-              </button>
+    <div className="min-h-screen flex flex-col">
+      {/* 🌟 Top Navigation Bar with Refresh & Login/Profile */}
+      <header className="bg-gradient-to-r from-amber-600 via-amber-600 to-amber-700 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 text-white shadow-md sticky top-0 z-50 backdrop-blur-md border-b border-amber-700/50 dark:border-slate-800 transition-colors duration-200">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex justify-between items-center">
+          {/* Logo & Branding */}
+          <div className="flex items-center space-x-2.5">
+            <div className="w-9 h-9 bg-white/15 dark:bg-amber-500/20 rounded-xl flex items-center justify-center text-xl shadow-inner border border-white/20 dark:border-amber-400/30">
+              🍳
             </div>
-          )}
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="text-lg sm:text-xl font-black tracking-tight leading-none">YolkFlow</span>
+                <span className="bg-amber-500/40 dark:bg-amber-500/20 text-amber-100 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-400/30">
+                  v2.0
+                </span>
+              </div>
+              <p className="text-[10px] text-amber-200/90 dark:text-slate-400 font-medium hidden sm:block">
+                ডিম ব্যবসার ডিজিটাল হালখাতা ও লাইভ শিট ডাটাবেজ
+              </p>
+            </div>
+          </div>
+
+          {/* Right Action Controls: Refresh, Login/Profile, OCR, ThemeToggle, Live Sync */}
+          <div className="flex items-center space-x-1.5 sm:space-x-2">
+            {/* 🔄 রিফ্রেশ বাটন (Refresh in Top Bar) */}
+            <button
+              onClick={handleRefreshData}
+              disabled={isRefreshing}
+              className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 bg-white/15 hover:bg-white/25 active:scale-95 text-white rounded-xl text-xs font-bold border border-white/20 shadow-xs transition-all cursor-pointer disabled:opacity-50"
+              title="তথ্য রিফ্রেশ করুন"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-amber-300" : ""}`} />
+              <span className="hidden xs:inline">{isRefreshing ? "সিঙ্ক হচ্ছে..." : "রিফ্রেশ"}</span>
+            </button>
+
+            {/* 👤 লগইন ও ইউজার প্রোফাইল (Login / Profile in Top Bar) */}
+            {currentUser && (
+              <div className="flex items-center space-x-1.5 sm:space-x-2 bg-black/25 dark:bg-slate-800/90 border border-white/20 dark:border-slate-700/80 px-2 sm:px-2.5 py-1.5 rounded-xl text-xs font-bold shadow-xs">
+                <span className="text-sm">{currentUser.avatarEmoji}</span>
+                <span className="text-white font-black max-w-[85px] sm:max-w-[120px] truncate">{currentUser.username}</span>
+                <span className="hidden md:inline text-[10px] text-amber-200 bg-white/10 px-1.5 py-0.5 rounded-md font-semibold">
+                  {currentUser.roleLabel.split(" ")[1]}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  title="লগআউট করুন"
+                  className="p-1 text-amber-200 hover:text-rose-300 transition-colors cursor-pointer"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
+            {/* 📸 চালান OCR বাটন */}
+            <ImageToJsonModal />
+
+            {/* 🌓 থিম টগল */}
+            <ThemeToggle />
+
+            {/* 🟢 লাইভ সিঙ্ক ব্যাজ */}
+            <span className="hidden lg:inline-flex items-center gap-1.5 bg-emerald-500/20 dark:bg-emerald-950/50 text-emerald-100 dark:text-emerald-300 text-[11px] font-bold px-2.5 py-1.5 rounded-full border border-emerald-400/30 dark:border-emerald-700/50 shadow-xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>লাইভ সিঙ্ক</span>
+            </span>
+          </div>
         </div>
-      </div>
+      </header>
 
-      {/* Sticky Mobile Sub-Header (Date Navigator & Actions for Mobile Phone View) */}
-      <div className="sm:hidden sticky top-[54px] z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-1.5 rounded-2xl shadow-md border border-slate-200/90 dark:border-slate-800/90 flex items-center gap-1.5 w-full min-w-0">
-        {/* Unified Date Navigator Pill in Mobile Sub-Header */}
-        {renderDateNavigatorPill(
-          activeDisplayDate,
-          activeDisplayDay,
-          handleUnifiedDateChange,
-          () => handleUnifiedDateStep(-1),
-          () => handleUnifiedDateStep(1),
-          activeDateIdx > 0,
-          activeDateIdx < data.length - 1,
-          "flex-1 min-w-0"
-        )}
+      {/* Main Content Area */}
+      <main className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-4 sm:py-6 w-full flex-1">
+        <div className="space-y-4 sm:space-y-6">
+          {/* Sticky Secondary Navigation (Tabs on Left, Date Navigator on Right) */}
+          <div className="hidden sm:flex sticky top-[56px] sm:top-[64px] z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-2 sm:p-2.5 rounded-2xl shadow-md border border-slate-200/90 dark:border-slate-800/90 transition-all justify-between items-center gap-3">
+            {/* Tab Switcher (RBAC Filtered) */}
+            <div className="flex items-center p-1 bg-slate-100/90 dark:bg-slate-800/90 rounded-xl shrink-0">
+              {isAllowed("dashboard") && (
+                <button
+                  onClick={() => handleSwitchTab("dashboard")}
+                  className={`flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                    activeTab === "dashboard"
+                      ? "bg-white dark:bg-slate-700 text-amber-800 dark:text-amber-300 shadow-sm font-black"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                  }`}
+                >
+                  <TrendingUp className="w-4 h-4" />
+                  <span>ড্যাশবোর্ড</span>
+                </button>
+              )}
 
-        {/* Quick New Day Button on Mobile Header */}
-        <button
-          onClick={handleCreateNewDay}
-          className="h-9 w-9 flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl text-xs font-bold shadow-sm active:scale-95 shrink-0 cursor-pointer"
-          title="নতুন দিনের পাতা"
-        >
-          <Plus className="w-4 h-4" />
-        </button>
-      </div>
+              {isAllowed("entry") && (
+                <button
+                  onClick={() => handleSwitchTab("entry")}
+                  className={`flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                    activeTab === "entry"
+                      ? "bg-white dark:bg-slate-700 text-amber-800 dark:text-amber-300 shadow-sm font-black"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                  }`}
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>হালখাতা এন্ট্রি</span>
+                </button>
+              )}
 
-      {activeTab === "dashboard" ? (
-        /* ================= DASHBOARD TAB ================= */
+              {isAllowed("overhead") && (
+                <button
+                  onClick={() => handleSwitchTab("overhead")}
+                  className={`flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                    activeTab === "overhead"
+                      ? "bg-white dark:bg-slate-700 text-amber-800 dark:text-amber-300 shadow-sm font-black"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                  }`}
+                >
+                  <Building2 className="w-4 h-4" />
+                  <span>কর্মচারী ও মাসিক খরচ</span>
+                </button>
+              )}
+
+              {isAllowed("savings") && (
+                <button
+                  onClick={() => handleSwitchTab("savings")}
+                  className={`flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                    activeTab === "savings"
+                      ? "bg-white dark:bg-slate-700 text-emerald-800 dark:text-emerald-300 shadow-sm font-black"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                  }`}
+                >
+                  <PiggyBank className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <span>সঞ্চয় ও অতিরিক্ত আয়</span>
+                </button>
+              )}
+            </div>
+
+            {/* Unified Date Navigator Pill on the Right (Web View) */}
+            {activeTab !== "overhead" && activeTab !== "savings" &&
+              renderDateNavigatorPill(
+                activeDisplayDate,
+                activeDisplayDay,
+                handleUnifiedDateChange,
+                () => handleUnifiedDateStep(-1),
+                () => handleUnifiedDateStep(1),
+                activeDateIdx > 0,
+                activeDateIdx < data.length - 1
+              )}
+          </div>
+
+          {/* Sticky Mobile Sub-Header (Date Navigator for Mobile Phone View) */}
+          <div className="sm:hidden sticky top-[54px] z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-1.5 rounded-2xl shadow-md border border-slate-200/90 dark:border-slate-800/90 flex items-center gap-1.5 w-full min-w-0">
+            {activeTab !== "overhead" && activeTab !== "savings" &&
+              renderDateNavigatorPill(
+                activeDisplayDate,
+                activeDisplayDay,
+                handleUnifiedDateChange,
+                () => handleUnifiedDateStep(-1),
+                () => handleUnifiedDateStep(1),
+                activeDateIdx > 0,
+                activeDateIdx < data.length - 1,
+                "flex-1 min-w-0"
+              )}
+          </div>
+
+          {activeTab === "dashboard" ? (
+            /* ================= DASHBOARD TAB ================= */
         <div className="space-y-4 sm:space-y-6">
           {/* Dashboard Title Bar */}
           <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 flex justify-between items-center transition-colors">
@@ -3457,6 +3504,8 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
           <span className="text-[10px]">লগআউট</span>
         </button>
       </div>
+    </div>
+    </main>
     </div>
   );
 }
