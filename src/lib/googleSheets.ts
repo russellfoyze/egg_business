@@ -444,6 +444,16 @@ export interface OverheadExpenseItem {
   createdAt?: string;
 }
 
+function parseTabDate(tabName: string): string | null {
+  const match = tabName.match(/^(\d{1,2})[\/\.](\d{1,2})[\/\.](\d{2,4})$/);
+  if (!match) return null;
+  const day = match[1].padStart(2, "0");
+  const month = match[2].padStart(2, "0");
+  let year = match[3];
+  if (year.length === 2) year = `20${year}`;
+  return `${year}-${month}-${day}`;
+}
+
 export async function getOverheadExpensesFromSheets(): Promise<OverheadExpenseItem[]> {
   try {
     const isConfigured = await isGoogleSheetsConfigured();
@@ -472,29 +482,73 @@ export async function getOverheadExpensesFromSheets(): Promise<OverheadExpenseIt
       }))
       .filter((item: OverheadExpenseItem) => item.id && item.amount > 0);
 
-    // Auto-update all savings from the Expenses data sheet
+    // Auto-update all savings from Expenses data sheet & all daily tabs
     try {
-      const expRes = await sheets.spreadsheets.values.get({
-        spreadsheetId: SHEET_ID,
-        range: "Expenses!A2:E",
-      });
-      const expRows = expRes.data.values || [];
       const samityByDate = new Map<string, number>();
-      expRows.forEach((r: any[]) => {
-        const d = r[0];
-        const type = r[3];
-        const amt = Number(r[4]) || 0;
-        if (d && (type === "সমিতি" || String(type).includes("সমিতি")) && amt > 0) {
-          samityByDate.set(d, (samityByDate.get(d) || 0) + amt);
-        }
-      });
 
+      // 1. Scan Expenses tab
+      try {
+        const expRes = await sheets.spreadsheets.values.get({
+          spreadsheetId: SHEET_ID,
+          range: "Expenses!A2:E",
+        });
+        const expRows = expRes.data.values || [];
+        expRows.forEach((r: any[]) => {
+          const d = r[0];
+          const type = r[3];
+          const rawAmt = r[4];
+          if (rawAmt === undefined || rawAmt === null || rawAmt === "" || rawAmt === "0") return;
+          const amt = Number(String(rawAmt).replace(/,/g, "")) || 0;
+          if (d && (type === "সমিতি" || String(type).includes("সমিতি")) && amt > 0) {
+            samityByDate.set(d, amt);
+          }
+        });
+      } catch (expErr) {
+        console.warn("Could not read Expenses tab:", expErr);
+      }
+
+      // 2. Scan all daily tabs (DD/MM/YY) for any সমিতি entry with amount > 0
+      try {
+        const meta = await sheets.spreadsheets.get({ spreadsheetId: SHEET_ID });
+        const allSheetTitles = (meta.data.sheets || []).map((s: any) => s.properties.title);
+        for (const title of allSheetTitles) {
+          const parsedDate = parseTabDate(title);
+          if (parsedDate && !samityByDate.has(parsedDate)) {
+            const dailyRes = await sheets.spreadsheets.values.get({
+              spreadsheetId: SHEET_ID,
+              range: `'${title}'!A25:B50`,
+            });
+            const dRows = dailyRes.data.values || [];
+            for (const dRow of dRows) {
+              const name = dRow[0];
+              const rawAmt = dRow[1];
+              if (name && String(name).includes("সমিতি")) {
+                if (rawAmt !== undefined && rawAmt !== null && rawAmt !== "" && rawAmt !== "0") {
+                  const amt = Number(String(rawAmt).replace(/,/g, "")) || 0;
+                  if (amt > 0) {
+                    samityByDate.set(parsedDate, amt);
+                  }
+                }
+              }
+            }
+          }
+        }
+      } catch (dailyErr) {
+        console.warn("Could not scan daily tabs for samity:", dailyErr);
+      }
+
+      // 3. Upsert samity entries into items: strictly only if amount > 0
+      let hasNewOrUpdatedRows = false;
       for (const [sDate, sAmt] of samityByDate.entries()) {
+        if (sAmt <= 0) continue; // Do not input if 0 or no entry
         const existingIdx = items.findIndex(
           (it) => it.category === "savings_shop" && it.date === sDate
         );
         if (existingIdx >= 0) {
-          items[existingIdx].amount = sAmt;
+          if (items[existingIdx].amount !== sAmt) {
+            items[existingIdx].amount = sAmt;
+            hasNewOrUpdatedRows = true;
+          }
           if (!items[existingIdx].title || items[existingIdx].title === "সমিতি") {
             items[existingIdx].title = "সমিতি === দোকানে সঞ্চয়";
           }
@@ -510,16 +564,44 @@ export async function getOverheadExpensesFromSheets(): Promise<OverheadExpenseIt
             notes: "দৈনিক হালখাতা ডাটা শিট হতে স্বয়ংক্রিয় সিঙ্ক",
             createdAt: new Date().toISOString(),
           });
+          hasNewOrUpdatedRows = true;
         }
+      }
+
+      // 4. If samity entries were newly added/updated, sync back to OverheadExpenses sheet tab
+      if (hasNewOrUpdatedRows) {
+        const sheetRowsToSave = items
+          .filter((it) => it.id && it.amount > 0)
+          .map((it) => [
+            it.id,
+            it.date,
+            it.month || it.date.slice(0, 7),
+            it.category,
+            it.title,
+            it.amount,
+            it.paymentMode || "cash",
+            it.notes || "",
+            it.createdAt || new Date().toISOString(),
+          ]);
+
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: SHEET_ID,
+          range: `OverheadExpenses!A2:I${sheetRowsToSave.length + 1}`,
+          valueInputOption: "RAW",
+          requestBody: {
+            values: sheetRowsToSave,
+          },
+        });
       }
     } catch (sheetErr) {
       console.warn("Could not auto-fetch samity from Expenses sheet:", sheetErr);
     }
 
-    // Strict deduplication: ensure exactly ONE entry for savings_shop per date
+    // Strict deduplication: ensure exactly ONE entry for savings_shop per date, and only if amount > 0
     const seenShopDates = new Set<string>();
     const deduplicated: OverheadExpenseItem[] = [];
     for (const it of items) {
+      if (!it.amount || it.amount <= 0) continue; // Never input if 0 or no entry
       if (it.category === "savings_shop") {
         if (!seenShopDates.has(it.date)) {
           seenShopDates.add(it.date);
