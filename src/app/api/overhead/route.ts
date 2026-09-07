@@ -8,75 +8,8 @@ import {
 
 export const dynamic = "force-dynamic";
 
-// Fallback in-memory/file storage if Sheets is temporarily unavailable
-let localOverheadMemory: OverheadExpenseItem[] = [
-  {
-    id: "demo-rent-1",
-    date: "2026-08-01",
-    month: "2026-08",
-    category: "rent",
-    title: "দোকান ও আড়ত ভাড়া (আগস্ট)",
-    amount: 18000,
-    paymentMode: "bank",
-    notes: "মালিক: হাজি সাহেব",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "demo-emp-1",
-    date: "2026-08-15",
-    month: "2026-08",
-    category: "employee",
-    title: "মো: রহিম (ডেলিভারি ভ্যানচালক বেতন)",
-    amount: 12000,
-    paymentMode: "cash",
-    notes: "মাসিক বেতন পরিশোধ",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "demo-emp-2",
-    date: "2026-08-20",
-    month: "2026-08",
-    category: "employee",
-    title: "করিম (লেবার ও লোড-আনলোড মজুরি)",
-    amount: 8500,
-    paymentMode: "cash",
-    notes: "হাজিরা মজুরি",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "demo-util-1",
-    date: "2026-08-10",
-    month: "2026-08",
-    category: "utilities",
-    title: "পল্লী বিদ্যুৎ বিল (ফ্যান, লাইট ও কুলার)",
-    amount: 3200,
-    paymentMode: "mfs",
-    notes: "বিকাশ পে বিল",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "demo-sec-1",
-    date: "2026-08-05",
-    month: "2026-08",
-    category: "security",
-    title: "বাজার সমিতি ও নাইটগার্ড চার্জ",
-    amount: 1200,
-    paymentMode: "cash",
-    notes: "রসিদ নং #441",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "demo-trans-1",
-    date: "2026-08-22",
-    month: "2026-08",
-    category: "transport",
-    title: "পিকআপ ভ্যান চাকা ও সার্ভিসিং",
-    amount: 2500,
-    paymentMode: "cash",
-    notes: "টায়ার রিপেয়ার",
-    createdAt: new Date().toISOString(),
-  },
-];
+// Fallback in-memory storage for user-entered overhead expenses
+let localOverheadMemory: OverheadExpenseItem[] = [];
 
 export async function GET(request: NextRequest) {
   try {
@@ -86,9 +19,13 @@ export async function GET(request: NextRequest) {
 
     let items = await getOverheadExpensesFromSheets();
 
-    // If sheets returned empty, use fallback memory
-    if (items.length === 0) {
-      items = localOverheadMemory;
+    // Filter out any leftover demo items
+    items = items.filter((item) => !item.id.startsWith("demo-"));
+
+    if (items.length > 0) {
+      localOverheadMemory = items;
+    } else {
+      items = localOverheadMemory.filter((item) => !item.id.startsWith("demo-"));
     }
 
     if (month && month !== "all") {

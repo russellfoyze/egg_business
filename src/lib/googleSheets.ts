@@ -425,7 +425,7 @@ export interface OverheadExpenseItem {
   id: string;
   date: string;
   month: string;
-  category: "employee" | "rent" | "utilities" | "security" | "transport" | "tax" | "extra";
+  category: "employee" | "rent" | "utilities" | "security" | "transport" | "tax" | "extra" | "savings_shop" | "savings_bank";
   title: string;
   amount: number;
   paymentMode: "cash" | "mfs" | "bank";

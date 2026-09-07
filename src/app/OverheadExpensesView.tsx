@@ -9,6 +9,10 @@ import {
   Truck,
   FileSpreadsheet,
   Coins,
+  Store,
+  Landmark,
+  PiggyBank,
+  Wallet,
   Plus,
   Trash2,
   Search,
@@ -25,10 +29,12 @@ import {
 import { OverheadExpenseItem } from "@/lib/googleSheets";
 
 const CATEGORIES = [
-  { id: "employee", label: "কর্মচারী বেতন ও মজুরি", icon: Users, color: "text-blue-700 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-950/60", border: "border-blue-200 dark:border-blue-800" },
+  { id: "savings_shop", label: "🏪 দোকানে সঞ্চয় (In-Shop)", icon: Store, color: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/60", border: "border-emerald-200 dark:border-emerald-800" },
+  { id: "savings_bank", label: "🏦 ব্যাংকে সঞ্চয় (In-Bank / DPS)", icon: Landmark, color: "text-blue-700 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-950/60", border: "border-blue-200 dark:border-blue-800" },
+  { id: "employee", label: "কর্মচারী বেতন ও মজুরি", icon: Users, color: "text-sky-700 dark:text-sky-400", bg: "bg-sky-50 dark:bg-sky-950/60", border: "border-sky-200 dark:border-sky-800" },
   { id: "rent", label: "দোকান ও গোডাউন ভাড়া", icon: Building2, color: "text-amber-700 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/60", border: "border-amber-200 dark:border-amber-800" },
   { id: "utilities", label: "বিদ্যুৎ ও গ্যাস বিল", icon: Zap, color: "text-yellow-700 dark:text-yellow-400", bg: "bg-yellow-50 dark:bg-yellow-950/60", border: "border-yellow-200 dark:border-yellow-800" },
-  { id: "security", label: "মার্কেট সমিতি ও নাইটগার্ড", icon: Shield, color: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/60", border: "border-emerald-200 dark:border-emerald-800" },
+  { id: "security", label: "মার্কেট সমিতি ও নাইটগার্ড", icon: Shield, color: "text-teal-700 dark:text-teal-400", bg: "bg-teal-50 dark:bg-teal-950/60", border: "border-teal-200 dark:border-teal-800" },
   { id: "transport", label: "গাড়ি/ভ্যান মেরামত ও ফুয়েল", icon: Truck, color: "text-purple-700 dark:text-purple-400", bg: "bg-purple-50 dark:bg-purple-950/60", border: "border-purple-200 dark:border-purple-800" },
   { id: "tax", label: "ট্রেড লাইসেন্স ও ট্যাক্স", icon: FileSpreadsheet, color: "text-indigo-700 dark:text-indigo-400", bg: "bg-indigo-50 dark:bg-indigo-950/60", border: "border-indigo-200 dark:border-indigo-800" },
   { id: "extra", label: "অন্যান্য বিবিধ অতিরিক্ত খরচ", icon: Coins, color: "text-rose-700 dark:text-rose-400", bg: "bg-rose-50 dark:bg-rose-950/60", border: "border-rose-200 dark:border-rose-800" },
@@ -45,7 +51,7 @@ export default function OverheadExpensesView() {
 
   // Form State
   const [formDate, setFormDate] = useState<string>(() => new Date().toISOString().split("T")[0]);
-  const [formCategory, setFormCategory] = useState<OverheadExpenseItem["category"]>("employee");
+  const [formCategory, setFormCategory] = useState<OverheadExpenseItem["category"]>("savings_shop");
   const [formTitle, setFormTitle] = useState("");
   const [formAmount, setFormAmount] = useState("");
   const [formPaymentMode, setFormPaymentMode] = useState<OverheadExpenseItem["paymentMode"]>("cash");
@@ -53,24 +59,28 @@ export default function OverheadExpensesView() {
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  // Fetch from API with local cache
+  // Fetch from API with local cache - removing any demo items
   const fetchExpenses = async () => {
     try {
       setRefreshing(true);
       const res = await fetch("/api/overhead");
       const json = await res.json();
       if (json.success && Array.isArray(json.data)) {
-        setExpenses(json.data);
+        const cleanData = json.data.filter((item: OverheadExpenseItem) => item && item.id && !item.id.startsWith("demo-"));
+        setExpenses(cleanData);
         try {
-          localStorage.setItem("yolkflow_overhead_expenses", JSON.stringify(json.data));
+          localStorage.setItem("yolkflow_overhead_expenses", JSON.stringify(cleanData));
         } catch (e) {}
       }
     } catch (err) {
       console.error("Failed to load overhead expenses:", err);
-      // Try local cache
+      // Try local cache without demo items
       try {
         const cached = localStorage.getItem("yolkflow_overhead_expenses");
-        if (cached) setExpenses(JSON.parse(cached));
+        if (cached) {
+          const cleanData = JSON.parse(cached).filter((item: OverheadExpenseItem) => item && item.id && !item.id.startsWith("demo-"));
+          setExpenses(cleanData);
+        }
       } catch (e) {}
     } finally {
       setLoading(false);
@@ -79,11 +89,12 @@ export default function OverheadExpensesView() {
   };
 
   useEffect(() => {
-    // Immediate load from localStorage first
+    // Immediate load from localStorage first, filtering out any demo items
     try {
       const cached = localStorage.getItem("yolkflow_overhead_expenses");
       if (cached) {
-        setExpenses(JSON.parse(cached));
+        const cleanData = JSON.parse(cached).filter((item: OverheadExpenseItem) => item && item.id && !item.id.startsWith("demo-"));
+        setExpenses(cleanData);
         setLoading(false);
       }
     } catch (e) {}
@@ -117,18 +128,24 @@ export default function OverheadExpensesView() {
     });
   }, [expenses, selectedMonth, selectedCategory, searchQuery]);
 
-  // Aggregated Counters & Totals
+  // Aggregated Counters & Totals (including 2-part savings)
   const totals = useMemo(() => {
     let employeeTotal = 0;
     let rentTotal = 0;
     let utilitiesTotal = 0;
     let extraTotal = 0;
+    let savingsShopTotal = 0;
+    let savingsBankTotal = 0;
     let grandTotal = 0;
 
     filteredExpenses.forEach((item) => {
       const amt = Number(item.amount) || 0;
       grandTotal += amt;
-      if (item.category === "employee") {
+      if (item.category === "savings_shop") {
+        savingsShopTotal += amt;
+      } else if (item.category === "savings_bank") {
+        savingsBankTotal += amt;
+      } else if (item.category === "employee") {
         employeeTotal += amt;
       } else if (item.category === "rent") {
         rentTotal += amt;
@@ -139,11 +156,18 @@ export default function OverheadExpensesView() {
       }
     });
 
+    const totalSavings = savingsShopTotal + savingsBankTotal;
+    const pureExpenseTotal = grandTotal - totalSavings;
+
     return {
       employeeTotal,
       rentTotal,
       utilitiesTotal,
       extraTotal,
+      savingsShopTotal,
+      savingsBankTotal,
+      totalSavings,
+      pureExpenseTotal,
       grandTotal,
       count: filteredExpenses.length,
     };
@@ -338,7 +362,7 @@ export default function OverheadExpensesView() {
             </span>
           </div>
           <div>
-            <p className="text-xs font-semibold text-amber-100">সর্বমোট পরিচালন খরচ</p>
+            <p className="text-xs font-semibold text-amber-100">সর্বমোট পরিচালন খরচ ও সঞ্চয়</p>
             <p className="text-2xl sm:text-3xl font-black text-white mt-0.5">
               ৳ {totals.grandTotal.toLocaleString()}
             </p>
@@ -346,7 +370,127 @@ export default function OverheadExpensesView() {
         </div>
       </div>
 
-      {/* 3. Expense Entry Form (ইনপুট ফরম) */}
+      {/* 🌟 3. Dedicated Savings Section with 2 Parts (দোকানে সঞ্চয় ও ব্যাংকে সঞ্চয়) */}
+      <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950 text-white rounded-3xl p-5 sm:p-6 shadow-xl border border-emerald-800/50 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-emerald-800/40 pb-3.5">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-emerald-500/20 border border-emerald-500/40 rounded-2xl flex items-center justify-center text-emerald-400 shadow-inner">
+              <PiggyBank className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <h3 className="text-base sm:text-lg font-black tracking-tight text-slate-100">
+                  ব্যবসায়িক সঞ্চয় ও তহবিল (Business Savings)
+                </h3>
+                <span className="text-[10px] font-black bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+                  ২টি সংরক্ষিত ফান্ড
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 font-medium">
+                দোকানের ক্যাশ ড্রয়ার ও ব্যাংক একাউন্টে জমা রাখা ব্যবসায়িক সঞ্চয়ের সার্বিক খতিয়ান
+              </p>
+            </div>
+          </div>
+
+          {/* Combined Total Savings Badge */}
+          <div className="flex items-center space-x-2.5 bg-black/40 border border-emerald-500/40 px-4 py-2 rounded-2xl">
+            <Wallet className="w-5 h-5 text-emerald-400 shrink-0" />
+            <div className="text-right">
+              <span className="text-[10px] text-slate-400 block font-semibold leading-tight">সর্বমোট সঞ্চয় (দোকান+ব্যাংক)</span>
+              <span className="text-base sm:text-lg font-black text-emerald-400 leading-none">
+                ৳ {totals.totalSavings.toLocaleString()}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* 2 Parts Grid: 1. In-Shop Savings | 2. In-Bank Savings */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
+          {/* Part 1: দোকানে সঞ্চয় (In-Shop Savings) */}
+          <div className="bg-white/5 hover:bg-white/10 transition-colors border border-emerald-500/30 rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-3">
+            <div className="flex justify-between items-start">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center justify-center">
+                  <Store className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-black text-slate-100 flex items-center gap-1.5">
+                    <span>দোকানে সঞ্চয়</span>
+                    <span className="text-[10px] font-bold text-emerald-300 bg-emerald-950/80 px-2 py-0.5 rounded-md border border-emerald-600/40">
+                      In-Shop
+                    </span>
+                  </h4>
+                  <p className="text-[11px] text-slate-400 font-medium">দোকানের ক্যাশ ড্রয়ার বা আড়তে রক্ষিত নগদ সঞ্চয়</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2 flex items-baseline justify-between border-t border-white/10">
+              <span className="text-xs text-slate-400 font-semibold">মোট সঞ্চিত ক্যাশ:</span>
+              <span className="text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight">
+                ৳ {totals.savingsShopTotal.toLocaleString()}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setFormCategory("savings_shop");
+                setFormPaymentMode("cash");
+                setFormTitle("দোকানে নগদ সঞ্চয় জমা");
+                setIsFormOpen(true);
+              }}
+              className="w-full py-2 bg-emerald-600/80 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer shadow-xs active:scale-98"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>+ দোকানে সঞ্চয় এন্ট্রি করুন</span>
+            </button>
+          </div>
+
+          {/* Part 2: ব্যাংকে সঞ্চয় (In-Bank Savings / DPS) */}
+          <div className="bg-white/5 hover:bg-white/10 transition-colors border border-blue-500/30 rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-3">
+            <div className="flex justify-between items-start">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-9 h-9 rounded-xl bg-blue-500/20 text-blue-300 border border-blue-500/30 flex items-center justify-center">
+                  <Landmark className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-black text-slate-100 flex items-center gap-1.5">
+                    <span>ব্যাংকে সঞ্চয়</span>
+                    <span className="text-[10px] font-bold text-blue-300 bg-blue-950/80 px-2 py-0.5 rounded-md border border-blue-600/40">
+                      In-Bank / DPS
+                    </span>
+                  </h4>
+                  <p className="text-[11px] text-slate-400 font-medium">ব্যাংক অ্যাকাউন্ট, ডিপিএস বা এফডিআর-এ সঞ্চয়</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2 flex items-baseline justify-between border-t border-white/10">
+              <span className="text-xs text-slate-400 font-semibold">মোট ব্যাংক সঞ্চয়:</span>
+              <span className="text-2xl sm:text-3xl font-black text-blue-400 tracking-tight">
+                ৳ {totals.savingsBankTotal.toLocaleString()}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setFormCategory("savings_bank");
+                setFormPaymentMode("bank");
+                setFormTitle("ব্যাংক অ্যাকাউন্টে সঞ্চয় / DPS কিস্তি জমা");
+                setIsFormOpen(true);
+              }}
+              className="w-full py-2 bg-blue-600/80 hover:bg-blue-600 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer shadow-xs active:scale-98"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>+ ব্যাংকে সঞ্চয় এন্ট্রি করুন</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Expense Entry Form (ইনপুট ফরম) */}
       {isFormOpen && (
         <form
           onSubmit={handleSubmit}
@@ -355,7 +499,7 @@ export default function OverheadExpensesView() {
           <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
             <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 flex items-center space-x-2">
               <Plus className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-              <span>নতুন খরচ এন্ট্রি ফরম (Expense Input)</span>
+              <span>নতুন খরচ ও সঞ্চয় এন্ট্রি ফরম (Input Form)</span>
             </h3>
             <span className="text-xs text-slate-500 dark:text-slate-400">
               * গুগল শিটে স্বয়ংক্রিয় সিঙ্ক হবে
@@ -397,11 +541,21 @@ export default function OverheadExpensesView() {
             {/* Category */}
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                খরচের খাত (Category) *
+                খাত / ক্যাটাগরি (Category) *
               </label>
               <select
                 value={formCategory}
-                onChange={(e) => setFormCategory(e.target.value as any)}
+                onChange={(e) => {
+                  const cat = e.target.value as any;
+                  setFormCategory(cat);
+                  if (cat === "savings_shop") {
+                    setFormPaymentMode("cash");
+                    if (!formTitle) setFormTitle("দোকানে নগদ সঞ্চয় জমা");
+                  } else if (cat === "savings_bank") {
+                    setFormPaymentMode("bank");
+                    if (!formTitle) setFormTitle("ব্যাংক অ্যাকাউন্টে সঞ্চয় / DPS কিস্তি জমা");
+                  }
+                }}
                 className="w-full border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 bg-slate-50/50 dark:bg-slate-800/60 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
               >
                 {CATEGORIES.map((c) => (
