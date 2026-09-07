@@ -303,6 +303,54 @@ async function runFullSQASuite() {
   assertTest("Unknown username rejected", invalidUser2 === null);
 
   // -------------------------------------------------------------
+  // 9. BUSINESS SAVINGS & EXTRA INCOME TRACKER TESTS
+  // -------------------------------------------------------------
+  console.log(`\n${bold}9. Business Savings & Extra Income Tracker Tests:${reset}`);
+  let createdSavingId = "";
+  try {
+    const getRes = await fetch(`${baseUrl}/api/savings`);
+    assertTest("GET /api/savings returns HTTP 200 OK", getRes.status === 200);
+    const getJson = await getRes.json();
+    assertTest("Savings response contains success: true", getJson.success === true);
+    assertTest("Savings data is an array", Array.isArray(getJson.data));
+
+    // Test POST adding a new tray sale extra income
+    const testSaving = {
+      date: "2026-09-07",
+      type: "extra",
+      category: "খাঁচা / ট্রে বিক্রয়",
+      title: "SQA Test Tray Sales (৫০০ পিস ট্রে বিক্রয়)",
+      amount: 3500,
+      paymentMode: "cash",
+      notes: "SQA automated test entry",
+    };
+    const postRes = await fetch(`${baseUrl}/api/savings`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(testSaving),
+    });
+    const postJson = await postRes.json();
+    assertTest("POST /api/savings creates new extra income successfully", postRes.status === 200 && postJson.success === true);
+    assertTest("Created record has valid ID and amount", postJson.data?.amount === 3500 && postJson.data?.type === "extra");
+    createdSavingId = postJson.data?.id;
+
+    // Test Admin & Manager have access to savings tab
+    assertTest("Admin has access to savings tab", adminUser?.allowedTabs.includes("savings"));
+    assertTest("Manager (billal) has access to savings tab", managerUser?.allowedTabs.includes("savings"));
+
+    // Test DELETE cleaning up the test item
+    if (createdSavingId) {
+      const delRes = await fetch(`${baseUrl}/api/savings?id=${encodeURIComponent(createdSavingId)}`, {
+        method: "DELETE",
+      });
+      const delJson = await delRes.json();
+      assertTest("DELETE /api/savings deletes record cleanly", delRes.status === 200 && delJson.success === true);
+    }
+  } catch (err) {
+    assertTest("Savings & Extra Income API test", false, err.message);
+  }
+
+  // -------------------------------------------------------------
   // SUMMARY REPORT
   // -------------------------------------------------------------
   console.log(`\n${bold}${cyan}================================================================${reset}`);

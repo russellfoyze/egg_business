@@ -34,9 +34,11 @@ import {
   Building2,
   LogOut,
   UserCheck,
+  PiggyBank,
 } from "lucide-react";
 import { ComputedDayData, saveLedgerEntryAction } from "./actions";
 import OverheadExpensesView from "./OverheadExpensesView";
+import SavingsTrackerView from "./SavingsTrackerView";
 import LoginScreen from "./LoginScreen";
 import { UserAccount } from "@/lib/auth";
 
@@ -121,7 +123,7 @@ export const getBanglaDay = (dayStr?: string): string => {
 
 export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
   const [data, setData] = useState<ComputedDayData[]>(initialData);
-  const [activeTab, setActiveTab] = useState<"dashboard" | "entry" | "overhead">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "entry" | "overhead" | "savings">("dashboard");
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [authLoaded, setAuthLoaded] = useState<boolean>(false);
 
@@ -899,7 +901,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
     }
   };
 
-  const handleSwitchTab = (tab: "dashboard" | "entry" | "overhead") => {
+  const handleSwitchTab = (tab: "dashboard" | "entry" | "overhead" | "savings") => {
     if (tab === "entry") {
       const targetDate = selectedDashboardDate || currentViewDay?.date || (data.length > 0 ? data[data.length - 1].date : "");
       if (targetDate) {
@@ -1006,7 +1008,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
     );
   }
 
-  const isAllowed = (tab: "dashboard" | "entry" | "overhead") => {
+  const isAllowed = (tab: "dashboard" | "entry" | "overhead" | "savings") => {
     if (!currentUser) return true;
     return currentUser.allowedTabs.includes(tab);
   };
@@ -1056,6 +1058,20 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
             >
               <Building2 className="w-4 h-4" />
               <span>কর্মচারী ও মাসিক খরচ</span>
+            </button>
+          )}
+
+          {isAllowed("savings") && (
+            <button
+              onClick={() => handleSwitchTab("savings")}
+              className={`flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                activeTab === "savings"
+                  ? "bg-white dark:bg-slate-700 text-emerald-800 dark:text-emerald-300 shadow-sm font-black"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+              }`}
+            >
+              <PiggyBank className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <span>সঞ্চয় ও অতিরিক্ত আয়</span>
             </button>
           )}
         </div>
@@ -3365,17 +3381,20 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
             </button>
           </div>
         </form>
-      ) : (
+      ) : activeTab === "overhead" ? (
         /* ================= OVERHEAD EXPENSES & EMPLOYEE COSTS TAB ================= */
         <OverheadExpensesView />
+      ) : (
+        /* ================= BUSINESS SAVINGS & EXTRA INFLOWS TAB ================= */
+        <SavingsTrackerView />
       )}
 
       {/* Floating Bottom Nav for Mobile Screens */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 sm:hidden px-2 py-2 flex justify-around items-center shadow-lg transition-colors">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 sm:hidden px-1.5 py-2 flex justify-around items-center shadow-lg transition-colors">
         {isAllowed("dashboard") && (
           <button
             onClick={() => handleSwitchTab("dashboard")}
-            className={`flex flex-col items-center space-y-1 py-1 px-2 rounded-xl transition-all cursor-pointer ${
+            className={`flex flex-col items-center space-y-1 py-1 px-1.5 rounded-xl transition-all cursor-pointer ${
               activeTab === "dashboard" ? "text-amber-600 dark:text-amber-400 font-black" : "text-slate-500 dark:text-slate-400 font-semibold"
             }`}
           >
@@ -3387,7 +3406,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
         {isAllowed("entry") && (
           <button
             onClick={() => handleSwitchTab("entry")}
-            className={`flex flex-col items-center space-y-1 py-1 px-2 rounded-xl transition-all cursor-pointer ${
+            className={`flex flex-col items-center space-y-1 py-1 px-1.5 rounded-xl transition-all cursor-pointer ${
               activeTab === "entry" ? "text-amber-600 dark:text-amber-400 font-black" : "text-slate-500 dark:text-slate-400 font-semibold"
             }`}
           >
@@ -3399,12 +3418,24 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
         {isAllowed("overhead") && (
           <button
             onClick={() => handleSwitchTab("overhead")}
-            className={`flex flex-col items-center space-y-1 py-1 px-2 rounded-xl transition-all cursor-pointer ${
+            className={`flex flex-col items-center space-y-1 py-1 px-1.5 rounded-xl transition-all cursor-pointer ${
               activeTab === "overhead" ? "text-amber-600 dark:text-amber-400 font-black" : "text-slate-500 dark:text-slate-400 font-semibold"
             }`}
           >
             <Building2 className="w-5 h-5" />
             <span className="text-[10px]">মাসিক খরচ</span>
+          </button>
+        )}
+
+        {isAllowed("savings") && (
+          <button
+            onClick={() => handleSwitchTab("savings")}
+            className={`flex flex-col items-center space-y-1 py-1 px-1.5 rounded-xl transition-all cursor-pointer ${
+              activeTab === "savings" ? "text-emerald-600 dark:text-emerald-400 font-black" : "text-slate-500 dark:text-slate-400 font-semibold"
+            }`}
+          >
+            <PiggyBank className="w-5 h-5" />
+            <span className="text-[10px]">সঞ্চয়</span>
           </button>
         )}
 

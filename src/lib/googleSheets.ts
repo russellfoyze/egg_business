@@ -84,6 +84,21 @@ const REQUIRED_SHEETS = [
       "CreatedAt",
     ],
   },
+  {
+    name: "SavingsAndExtras",
+    headers: [
+      "Id",
+      "Date",
+      "Month",
+      "Type",
+      "Category",
+      "Title",
+      "Amount",
+      "PaymentMode",
+      "Notes",
+      "CreatedAt",
+    ],
+  },
 ];
 
 let sheetsClient: any = null;
@@ -516,4 +531,120 @@ export async function deleteOverheadExpenseFromSheets(id: string): Promise<boole
     return false;
   }
 }
+
+export interface SavingsItem {
+  id: string;
+  date: string;
+  month: string;
+  type: "deposit" | "extra" | "withdraw";
+  category: string;
+  title: string;
+  amount: number;
+  paymentMode: string;
+  notes?: string;
+  createdAt: string;
+}
+
+export async function getSavingsFromSheets(): Promise<SavingsItem[]> {
+  try {
+    const isConfigured = await isGoogleSheetsConfigured();
+    if (!isConfigured) return [];
+
+    await initializeSpreadsheet();
+    const sheets = await getSheetsClient();
+
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: "SavingsAndExtras!A2:J",
+    });
+
+    const rows = res.data.values || [];
+    return rows
+      .filter((row: any[]) => row && row[0] && row[0].trim() !== "")
+      .map((row: any[]) => ({
+        id: String(row[0] || ""),
+        date: String(row[1] || ""),
+        month: String(row[2] || (row[1] ? row[1].slice(0, 7) : "")),
+        type: (row[3] as "deposit" | "extra" | "withdraw") || "deposit",
+        category: String(row[4] || "অন্যান্য"),
+        title: String(row[5] || ""),
+        amount: Number(row[6]) || 0,
+        paymentMode: String(row[7] || "cash"),
+        notes: String(row[8] || ""),
+        createdAt: String(row[9] || ""),
+      }));
+  } catch (err: any) {
+    console.error("Error reading Savings from Sheets:", err.message || err);
+    return [];
+  }
+}
+
+export async function addSavingToSheets(item: SavingsItem): Promise<boolean> {
+  try {
+    const isConfigured = await isGoogleSheetsConfigured();
+    if (!isConfigured) return false;
+
+    await initializeSpreadsheet();
+    const sheets = await getSheetsClient();
+
+    const row = [
+      item.id,
+      item.date,
+      item.month || item.date.slice(0, 7),
+      item.type || "deposit",
+      item.category,
+      item.title,
+      item.amount,
+      item.paymentMode || "cash",
+      item.notes || "",
+      item.createdAt || new Date().toISOString(),
+    ];
+
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: SHEET_ID,
+      range: "SavingsAndExtras!A2:J",
+      valueInputOption: "USER_ENTERED",
+      requestBody: {
+        values: [row],
+      },
+    });
+
+    return true;
+  } catch (err: any) {
+    console.error("Error adding Savings to Sheets:", err.message || err);
+    return false;
+  }
+}
+
+export async function deleteSavingFromSheets(id: string): Promise<boolean> {
+  try {
+    const isConfigured = await isGoogleSheetsConfigured();
+    if (!isConfigured) return false;
+
+    await initializeSpreadsheet();
+    const sheets = await getSheetsClient();
+
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: "SavingsAndExtras!A2:J",
+    });
+
+    const rows = res.data.values || [];
+    const rowIndex = rows.findIndex((row: any[]) => row[0] === id);
+
+    if (rowIndex === -1) return false;
+
+    const actualSheetRow = rowIndex + 2;
+    await sheets.spreadsheets.values.clear({
+      spreadsheetId: SHEET_ID,
+      range: `SavingsAndExtras!A${actualSheetRow}:J${actualSheetRow}`,
+    });
+
+    return true;
+  } catch (err: any) {
+    console.error("Error deleting Savings from Sheets:", err.message || err);
+    return false;
+  }
+}
+
 
