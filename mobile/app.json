@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "M.A Khalek Sarker",
+    "slug": "m-a-khalek-sarker",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#090d16"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#090d16"
+      },
+      "package": "com.makhaleksarker.eggapp"
+    },
+    "web": {
+      "favicon": "./assets/icon.png"
+    }
+  }
+}

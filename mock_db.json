@@ -1262,7 +1262,7 @@
     },
     {
       "date": "2026-09-06",
-      "day": "বৃহস্পতিবার",
+      "day": "রবিবার",
       "pageNo": "110",
       "eggType": "সাদা (White Egg)",
       "currentStock": 1582,
@@ -1272,7 +1272,7 @@
     },
     {
       "date": "2026-09-06",
-      "day": "বৃহস্পতিবার",
+      "day": "রবিবার",
       "pageNo": "110",
       "eggType": "লাল (Red Egg)",
       "currentStock": 14339,
@@ -1282,7 +1282,7 @@
     },
     {
       "date": "2026-09-06",
-      "day": "বৃহস্পতিবার",
+      "day": "রবিবার",
       "pageNo": "110",
       "eggType": "হাঁস (Duck Egg)",
       "currentStock": 119,
@@ -1292,7 +1292,7 @@
     },
     {
       "date": "2026-09-06",
-      "day": "বৃহস্পতিবার",
+      "day": "রবিবার",
       "pageNo": "110",
       "eggType": "মুরগী (Chicken Egg)",
       "currentStock": 0,
@@ -1302,7 +1302,7 @@
     },
     {
       "date": "2026-09-06",
-      "day": "বৃহস্পতিবার",
+      "day": "রবিবার",
       "pageNo": "110",
       "eggType": "কোয়েল (Quail Egg)",
       "currentStock": 1162,
@@ -1312,7 +1312,7 @@
     },
     {
       "date": "2026-09-06",
-      "day": "বৃহস্পতিবার",
+      "day": "রবিবার",
       "pageNo": "110",
       "eggType": "L.M",
       "currentStock": 0,
@@ -1322,7 +1322,7 @@
     },
     {
       "date": "2026-09-07",
-      "day": "শনিবার",
+      "day": "সোমবার",
       "pageNo": "111",
       "eggType": "সাদা (White Egg)",
       "currentStock": 3582,
@@ -1332,7 +1332,7 @@
     },
     {
       "date": "2026-09-07",
-      "day": "শনিবার",
+      "day": "সোমবার",
       "pageNo": "111",
       "eggType": "লাল (Red Egg)",
       "currentStock": 8359,
@@ -1342,7 +1342,7 @@
     },
     {
       "date": "2026-09-07",
-      "day": "শনিবার",
+      "day": "সোমবার",
       "pageNo": "111",
       "eggType": "হাঁস (Duck Egg)",
       "currentStock": 23,
@@ -1352,7 +1352,7 @@
     },
     {
       "date": "2026-09-07",
-      "day": "শনিবার",
+      "day": "সোমবার",
       "pageNo": "111",
       "eggType": "মুরগী (Chicken Egg)",
       "currentStock": 370,
@@ -1362,7 +1362,7 @@
     },
     {
       "date": "2026-09-07",
-      "day": "শনিবার",
+      "day": "সোমবার",
       "pageNo": "111",
       "eggType": "কোয়েল (Quail Egg)",
       "currentStock": 950,
@@ -1372,7 +1372,7 @@
     },
     {
       "date": "2026-09-07",
-      "day": "শনিবার",
+      "day": "সোমবার",
       "pageNo": "111",
       "eggType": "L.M",
       "currentStock": 0,
@@ -2070,7 +2070,7 @@
     },
     {
       "date": "2026-09-06",
-      "day": "বৃহস্পতিবার",
+      "day": "রবিবার",
       "pageNo": "110",
       "totalDue": 662756,
       "extraDue": 3650,
@@ -2091,7 +2091,7 @@
           "amount": 1000
         },
         {
-          "label": "",
+          "label": "অন্যান্য আদায়",
           "amount": 1150
         }
       ],
@@ -2118,7 +2118,7 @@
     },
     {
       "date": "2026-09-07",
-      "day": "শনিবার",
+      "day": "সোমবার",
       "pageNo": "111",
       "totalDue": 658451,
       "extraDue": 3830,
@@ -2139,11 +2139,11 @@
           "amount": 1000
         },
         {
-          "label": "",
+          "label": "অন্যান্য আদায়",
           "amount": 1150
         },
         {
-          "label": "",
+          "label": "অন্যান্য আদায়",
           "amount": 180
         }
       ],
@@ -3363,7 +3363,7 @@
     },
     {
       "date": "2026-09-06",
-      "day": "বৃহস্পতিবার",
+      "day": "রবিবার",
       "pageNo": "110",
       "expenseType": "ভাঙ্গা",
       "amount": 900,
@@ -3372,7 +3372,7 @@
     },
     {
       "date": "2026-09-06",
-      "day": "বৃহস্পতিবার",
+      "day": "রবিবার",
       "pageNo": "110",
       "expenseType": "রিকসা+ফকির",
       "amount": 150,
@@ -3381,7 +3381,7 @@
     },
     {
       "date": "2026-09-06",
-      "day": "বৃহস্পতিবার",
+      "day": "রবিবার",
       "pageNo": "110",
       "expenseType": "poli",
       "amount": 850,
@@ -3390,7 +3390,7 @@
     },
     {
       "date": "2026-09-06",
-      "day": "বৃহস্পতিবার",
+      "day": "রবিবার",
       "pageNo": "110",
       "expenseType": "salawddin",
       "amount": 3000,
@@ -3399,7 +3399,7 @@
     },
     {
       "date": "2026-09-06",
-      "day": "বৃহস্পতিবার",
+      "day": "রবিবার",
       "pageNo": "110",
       "expenseType": "saimon",
       "amount": 94500,
@@ -3408,7 +3408,7 @@
     },
     {
       "date": "2026-09-06",
-      "day": "বৃহস্পতিবার",
+      "day": "রবিবার",
       "pageNo": "110",
       "expenseType": "rokon",
       "amount": 60000,
@@ -3417,7 +3417,7 @@
     },
     {
       "date": "2026-09-06",
-      "day": "বৃহস্পতিবার",
+      "day": "রবিবার",
       "pageNo": "110",
       "expenseType": "সমিতি",
       "amount": 2000,
@@ -3426,7 +3426,7 @@
     },
     {
       "date": "2026-09-06",
-      "day": "বৃহস্পতিবার",
+      "day": "রবিবার",
       "pageNo": "110",
       "expenseType": "ট্রে-ফের",
       "amount": 100,
@@ -3435,7 +3435,7 @@
     },
     {
       "date": "2026-09-06",
-      "day": "বৃহস্পতিবার",
+      "day": "রবিবার",
       "pageNo": "110",
       "expenseType": "নাস্তা-চা",
       "amount": 260,
@@ -3444,61 +3444,7 @@
     },
     {
       "date": "2026-09-07",
-      "day": "শনিবার",
-      "pageNo": "111",
-      "expenseType": "রিকসা+ফকির",
-      "amount": 50,
-      "wastedEggQty": 0,
-      "wastedEggCost": 0
-    },
-    {
-      "date": "2026-09-07",
-      "day": "শনিবার",
-      "pageNo": "111",
-      "expenseType": "ভাঙ্গা",
-      "amount": 1020,
-      "wastedEggQty": 90,
-      "wastedEggCost": 981
-    },
-    {
-      "date": "2026-09-07",
-      "day": "শনিবার",
-      "pageNo": "111",
-      "expenseType": "bishu",
-      "amount": 5350,
-      "wastedEggQty": 0,
-      "wastedEggCost": 0
-    },
-    {
-      "date": "2026-09-07",
-      "day": "শনিবার",
-      "pageNo": "111",
-      "expenseType": "rokon",
-      "amount": 21000,
-      "wastedEggQty": 0,
-      "wastedEggCost": 0
-    },
-    {
-      "date": "2026-09-07",
-      "day": "শনিবার",
-      "pageNo": "111",
-      "expenseType": "md ali",
-      "amount": 38000,
-      "wastedEggQty": 0,
-      "wastedEggCost": 0
-    },
-    {
-      "date": "2026-09-07",
-      "day": "শনিবার",
-      "pageNo": "111",
-      "expenseType": "rohim",
-      "amount": 6880,
-      "wastedEggQty": 0,
-      "wastedEggCost": 0
-    },
-    {
-      "date": "2026-09-07",
-      "day": "শনিবার",
+      "day": "সোমবার",
       "pageNo": "111",
       "expenseType": "সমিতি",
       "amount": 2000,
@@ -3507,7 +3453,61 @@
     },
     {
       "date": "2026-09-07",
-      "day": "শনিবার",
+      "day": "সোমবার",
+      "pageNo": "111",
+      "expenseType": "রিকসা+ফকির",
+      "amount": 50,
+      "wastedEggQty": 0,
+      "wastedEggCost": 0
+    },
+    {
+      "date": "2026-09-07",
+      "day": "সোমবার",
+      "pageNo": "111",
+      "expenseType": "ভাঙ্গা",
+      "amount": 1020,
+      "wastedEggQty": 90,
+      "wastedEggCost": 981
+    },
+    {
+      "date": "2026-09-07",
+      "day": "সোমবার",
+      "pageNo": "111",
+      "expenseType": "bishu",
+      "amount": 5350,
+      "wastedEggQty": 0,
+      "wastedEggCost": 0
+    },
+    {
+      "date": "2026-09-07",
+      "day": "সোমবার",
+      "pageNo": "111",
+      "expenseType": "rokon",
+      "amount": 21000,
+      "wastedEggQty": 0,
+      "wastedEggCost": 0
+    },
+    {
+      "date": "2026-09-07",
+      "day": "সোমবার",
+      "pageNo": "111",
+      "expenseType": "md ali",
+      "amount": 38000,
+      "wastedEggQty": 0,
+      "wastedEggCost": 0
+    },
+    {
+      "date": "2026-09-07",
+      "day": "সোমবার",
+      "pageNo": "111",
+      "expenseType": "rohim",
+      "amount": 6880,
+      "wastedEggQty": 0,
+      "wastedEggCost": 0
+    },
+    {
+      "date": "2026-09-07",
+      "day": "সোমবার",
       "pageNo": "111",
       "expenseType": "নিজ",
       "amount": 1000,
@@ -3516,7 +3516,7 @@
     },
     {
       "date": "2026-09-07",
-      "day": "শনিবার",
+      "day": "সোমবার",
       "pageNo": "111",
       "expenseType": "ট্রে-ফের",
       "amount": 60,
@@ -3525,7 +3525,7 @@
     },
     {
       "date": "2026-09-07",
-      "day": "শনিবার",
+      "day": "সোমবার",
       "pageNo": "111",
       "expenseType": "নাস্তা-চা",
       "amount": 350,
