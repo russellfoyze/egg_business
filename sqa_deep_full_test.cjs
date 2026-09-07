@@ -221,7 +221,7 @@ async function runFullSQASuite() {
     const htmlRes = await fetch(baseUrl);
     const html = await htmlRes.text();
     assertTest("Root page returns valid HTML payload", html.includes("<!DOCTYPE html>"));
-    assertTest("App title 'YolkFlow' is rendered in SSR shell", html.includes("YolkFlow"));
+    assertTest("App title 'M.A Khalek Sarker' is rendered in SSR shell", html.includes("M.A Khalek Sarker"));
     assertTest("Bengali branding 'হালখাতা' is rendered in SSR shell", html.includes("হালখাতা"));
     assertTest("Theme toggle & responsive layouts rendered", html.includes("dark") || html.includes("theme") || html.includes("button"));
   } catch (e) {

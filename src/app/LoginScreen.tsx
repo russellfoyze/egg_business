@@ -70,19 +70,26 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
     <div className="min-h-[85vh] flex items-center justify-center p-3 sm:p-6 animate-fadeIn">
       <div className="w-full max-w-md space-y-6">
         {/* Branding & Logo */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center p-3 bg-gradient-to-tr from-amber-500 via-amber-600 to-amber-700 rounded-3xl text-white shadow-lg shadow-amber-500/20">
-            <Egg className="w-9 h-9" />
+        <div className="text-center space-y-3">
+          <div className="inline-flex items-center justify-center p-1 bg-gradient-to-tr from-amber-500 via-amber-600 to-amber-700 rounded-3xl text-white shadow-xl shadow-amber-500/25 ring-4 ring-amber-500/20">
+            <img
+              src="/logo.png"
+              alt="M.A Khalek Sarker Logo"
+              className="w-20 h-20 rounded-2xl object-cover shadow-inner"
+            />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight flex items-center justify-center gap-1.5">
-              <span>YolkFlow</span>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight flex items-center justify-center gap-2">
+              <span>M.A Khalek Sarker</span>
               <span className="text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/80 px-2.5 py-0.5 rounded-full border border-amber-300 dark:border-amber-700/60">
                 হালখাতা
               </span>
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-              ডিম ব্যবসার আধুনিক দৈনিক খতিয়ান ও স্মার্ট হিসাবরক্ষণ
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-semibold mt-1">
+              এম. এ. খালেক সরকার — ডিমের আড়ত ও পাইকারি খতিয়ান
+            </p>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+              Wholesale Egg Merchant & Real-time Financial Ledger
             </p>
           </div>
         </div>

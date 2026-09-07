@@ -2,8 +2,12 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "YolkFlow - Egg Ledger & Dashboard",
-  description: "Real-time Google Sheets database application for egg stocks and sales.",
+  title: "M.A Khalek Sarker - ডিম ব্যবসার হালখাতা (YolkFlow)",
+  description: "M.A Khalek Sarker (এম. এ. খালেক সরকার) - Wholesale Egg Merchant & Real-time Digital Ledger System.",
+  icons: {
+    icon: "/icon.png",
+    apple: "/apple-icon.png",
+  },
 };
 
 export default function RootLayout({

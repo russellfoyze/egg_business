@@ -1118,18 +1118,22 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
         <header className="bg-gradient-to-r from-amber-600 via-amber-600 to-amber-700 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 text-white shadow-md sticky top-0 z-50 backdrop-blur-md border-b border-amber-700/50 dark:border-slate-800 transition-colors duration-200">
           <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex justify-between items-center">
             <div className="flex items-center space-x-2.5">
-              <div className="w-9 h-9 bg-white/15 dark:bg-amber-500/20 rounded-xl flex items-center justify-center text-xl shadow-inner border border-white/20 dark:border-amber-400/30">
-                🍳
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden shadow-md border-2 border-amber-300/40 dark:border-amber-400/30 shrink-0 bg-slate-900 flex items-center justify-center">
+                <img
+                  src="/logo.png"
+                  alt="M.A Khalek Sarker Logo"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div>
                 <div className="flex items-center space-x-2">
-                  <span className="text-lg sm:text-xl font-black tracking-tight leading-none">YolkFlow</span>
+                  <span className="text-base sm:text-lg font-black tracking-tight leading-none">M.A Khalek Sarker</span>
                   <span className="bg-amber-500/40 dark:bg-amber-500/20 text-amber-100 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-400/30">
-                    v2.0
+                    হালখাতা
                   </span>
                 </div>
                 <p className="text-[10px] text-amber-200/90 dark:text-slate-400 font-medium hidden sm:block">
-                  ডিম ব্যবসার ডিজিটাল হালখাতা ও লাইভ শিট ডাটাবেজ
+                  এম. এ. খালেক সরকার — ডিমের পাইকারি আড়ত ও ডিজিটাল খতিয়ান
                 </p>
               </div>
             </div>
@@ -1170,18 +1174,22 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex justify-between items-center">
           {/* Logo & Branding */}
           <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 bg-white/15 dark:bg-amber-500/20 rounded-xl flex items-center justify-center text-xl shadow-inner border border-white/20 dark:border-amber-400/30">
-              🍳
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden shadow-md border-2 border-amber-300/40 dark:border-amber-400/30 shrink-0 bg-slate-900 flex items-center justify-center">
+              <img
+                src="/logo.png"
+                alt="M.A Khalek Sarker Logo"
+                className="w-full h-full object-cover"
+              />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="text-lg sm:text-xl font-black tracking-tight leading-none">YolkFlow</span>
+                <span className="text-base sm:text-lg font-black tracking-tight leading-none">M.A Khalek Sarker</span>
                 <span className="bg-amber-500/40 dark:bg-amber-500/20 text-amber-100 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-400/30">
-                  v2.0
+                  হালখাতা
                 </span>
               </div>
               <p className="text-[10px] text-amber-200/90 dark:text-slate-400 font-medium hidden sm:block">
-                ডিম ব্যবসার ডিজিটাল হালখাতা ও লাইভ শিট ডাটাবেজ
+                এম. এ. খালেক সরকার — ডিমের পাইকারি আড়ত ও ডিজিটাল খতিয়ান
               </p>
             </div>
           </div>
