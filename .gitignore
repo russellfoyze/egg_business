@@ -44,3 +44,4 @@ next-env.d.ts
 # mobile
 mobile/node_modules/
 mobile/.expo/
+*.apk
