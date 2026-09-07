@@ -150,14 +150,29 @@ export default function OverheadExpensesView() {
     filteredExpenses.forEach((item) => {
       const amt = Number(item.amount) || 0;
       grandTotal += amt;
+
+      // Check if this expense cuts from shop savings or bank savings
+      const isPaidFromShopSavings =
+        (item.paymentMode === "savings_shop" && item.category !== "savings_shop") ||
+        item.category === "bill_from_savings_shop";
+
+      const isPaidFromBankSavings =
+        (item.paymentMode === "savings_bank" && item.category !== "savings_bank") ||
+        item.category === "bill_from_savings_bank";
+
+      if (isPaidFromShopSavings) {
+        savingsShopBillTotal += amt;
+      }
+      if (isPaidFromBankSavings) {
+        savingsBankBillTotal += amt;
+      }
+
       if (item.category === "savings_shop") {
         savingsShopTotal += amt;
       } else if (item.category === "savings_bank") {
         savingsBankTotal += amt;
-      } else if (item.category === "bill_from_savings_shop") {
-        savingsShopBillTotal += amt;
-      } else if (item.category === "bill_from_savings_bank") {
-        savingsBankBillTotal += amt;
+      } else if (item.category === "bill_from_savings_shop" || item.category === "bill_from_savings_bank") {
+        // Handled above via isPaidFromShopSavings / isPaidFromBankSavings
       } else if (item.category === "employee") {
         employeeTotal += amt;
       } else if (item.category === "rent") {
@@ -178,14 +193,7 @@ export default function OverheadExpensesView() {
     const totalSavingsDeposited = savingsShopTotal + savingsBankTotal;
     const totalSavingsWithdrawn = savingsShopBillTotal + savingsBankBillTotal;
     const netTotalSavings = netShopSavings + netBankSavings;
-    const pureExpenseTotal =
-      employeeTotal +
-      rentTotal +
-      utilitiesTotal +
-      transportTotal +
-      taxTotal +
-      extraTotal +
-      totalSavingsWithdrawn;
+    const pureExpenseTotal = Math.max(0, grandTotal - (savingsShopTotal + savingsBankTotal));
 
     return {
       employeeTotal,
@@ -511,7 +519,7 @@ export default function OverheadExpensesView() {
                 type="button"
                 onClick={() => {
                   setFormCategory("bill_from_savings_shop");
-                  setFormPaymentMode("cash");
+                  setFormPaymentMode("savings_shop");
                   setFormTitle("দোকানের সঞ্চয় হতে বিল পরিশোধ");
                   setIsFormOpen(true);
                 }}
@@ -578,7 +586,7 @@ export default function OverheadExpensesView() {
                 type="button"
                 onClick={() => {
                   setFormCategory("bill_from_savings_bank");
-                  setFormPaymentMode("bank");
+                  setFormPaymentMode("savings_bank");
                   setFormTitle("ব্যাংকের সঞ্চয় হতে বিল পরিশোধ");
                   setIsFormOpen(true);
                 }}
@@ -652,10 +660,10 @@ export default function OverheadExpensesView() {
                     setFormPaymentMode("bank");
                     if (!formTitle) setFormTitle("ব্যাংক অ্যাকাউন্টে সঞ্চয় / DPS কিস্তি জমা");
                   } else if (cat === "bill_from_savings_shop") {
-                    setFormPaymentMode("cash");
+                    setFormPaymentMode("savings_shop");
                     if (!formTitle) setFormTitle("দোকানের সঞ্চয় হতে বিল পরিশোধ");
                   } else if (cat === "bill_from_savings_bank") {
-                    setFormPaymentMode("bank");
+                    setFormPaymentMode("savings_bank");
                     if (!formTitle) setFormTitle("ব্যাংকের সঞ্চয় হতে বিল পরিশোধ");
                   }
                 }}
@@ -711,10 +719,26 @@ export default function OverheadExpensesView() {
                 onChange={(e) => setFormPaymentMode(e.target.value as any)}
                 className="w-full border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 bg-slate-50/50 dark:bg-slate-800/60 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
               >
-                <option value="cash">💵 নগদ (Cash)</option>
-                <option value="mfs">📱 বিকাশ / নগদ (MFS)</option>
-                <option value="bank">🏦 ব্যাংক চেক / ট্রান্সফার</option>
+                <optgroup label="সাধারণ পেমেন্ট মাধ্যম (Regular Payment)">
+                  <option value="cash">💵 নগদ (Cash)</option>
+                  <option value="mfs">📱 বিকাশ / নগদ (MFS)</option>
+                  <option value="bank">🏦 সাধারণ ব্যাংক চেক / ট্রান্সফার</option>
+                </optgroup>
+                <optgroup label="সঞ্চয় ফান্ড হতে কর্তন (Cut / Deduct from Savings)">
+                  <option value="savings_shop">🏪 দোকানে সঞ্চয় হতে পরিশোধ (Cut from Shop Savings)</option>
+                  <option value="savings_bank">🏦 ব্যাংকে সঞ্চয় হতে পরিশোধ (Cut from Bank Savings)</option>
+                </optgroup>
               </select>
+              {formPaymentMode === "savings_shop" && (
+                <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
+                  <span>✂️ এই খরচের টাকা সরাসরি <strong>দোকানে সঞ্চয় ফান্ড</strong> হতে স্বয়ংক্রিয় কর্তন হবে।</span>
+                </p>
+              )}
+              {formPaymentMode === "savings_bank" && (
+                <p className="text-[11px] font-bold text-blue-600 dark:text-blue-400 mt-1 flex items-center gap-1">
+                  <span>✂️ এই খরচের টাকা সরাসরি <strong>ব্যাংকে সঞ্চয় ফান্ড</strong> হতে স্বয়ংক্রিয় কর্তন হবে।</span>
+                </p>
+              )}
             </div>
 
             {/* Notes */}
@@ -870,13 +894,23 @@ export default function OverheadExpensesView() {
                       </td>
 
                       <td className="py-3 px-4 whitespace-nowrap">
-                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                          {item.paymentMode === "cash"
-                            ? "💵 নগদ"
-                            : item.paymentMode === "mfs"
-                            ? "📱 বিকাশ/নগদ"
-                            : "🏦 ব্যাংক"}
-                        </span>
+                        {item.paymentMode === "savings_shop" ? (
+                          <span className="inline-flex items-center space-x-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                            <span>🏪 দোকানে সঞ্চয় কর্তন</span>
+                          </span>
+                        ) : item.paymentMode === "savings_bank" ? (
+                          <span className="inline-flex items-center space-x-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-800">
+                            <span>🏦 ব্যাংকে সঞ্চয় কর্তন</span>
+                          </span>
+                        ) : (
+                          <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                            {item.paymentMode === "cash"
+                              ? "💵 নগদ"
+                              : item.paymentMode === "mfs"
+                              ? "📱 বিকাশ/নগদ"
+                              : "🏦 ব্যাংক"}
+                          </span>
+                        )}
                       </td>
 
                       <td className="py-3 px-4 text-right whitespace-nowrap font-black text-amber-900 dark:text-amber-300 text-sm">

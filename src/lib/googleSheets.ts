@@ -439,7 +439,7 @@ export interface OverheadExpenseItem {
     | "bill_from_savings_bank";
   title: string;
   amount: number;
-  paymentMode: "cash" | "mfs" | "bank";
+  paymentMode: "cash" | "mfs" | "bank" | "savings_shop" | "savings_bank";
   notes?: string;
   createdAt?: string;
 }
