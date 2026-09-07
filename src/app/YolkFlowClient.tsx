@@ -47,6 +47,7 @@ import LoginScreen from "./LoginScreen";
 import { UserAccount } from "@/lib/auth";
 import ThemeToggle from "./ThemeToggle";
 import ImageToJsonModal from "./ImageToJsonModal";
+import DateTimePicker, { formatToDayMonthYear } from "./DateTimePicker";
 
 interface YolkFlowClientProps {
   initialData: ComputedDayData[];
@@ -1031,16 +1032,9 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
     setActiveTab(tab);
   };
 
-  // Date Formatting Helper (YYYY-MM-DD -> MM/DD/YYYY)
+  // Date Formatting Helper (YYYY-MM-DD -> DD/MM/YYYY)
   const formatDisplayDate = (dateStr: string) => {
-    if (!dateStr) return "MM/DD/YYYY";
-    if (dateStr.includes("-")) {
-      const parts = dateStr.split("-");
-      if (parts.length === 3) {
-        return `${parts[1]}/${parts[2]}/${parts[0]}`;
-      }
-    }
-    return dateStr;
+    return formatToDayMonthYear(dateStr);
   };
 
   // Reusable Date Navigator Pill matching user design
@@ -1054,10 +1048,8 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
     canNext: boolean = true,
     className: string = ""
   ) => {
-    const formatted = formatDisplayDate(currentDateStr);
-
     return (
-      <div className={`flex items-center justify-between bg-slate-900 dark:bg-slate-900 border border-slate-700/80 rounded-2xl px-1.5 sm:px-3 py-1 sm:py-1.5 shadow-md min-w-0 select-none ${className}`}>
+      <div className={`flex items-center justify-between bg-slate-900 dark:bg-slate-900 border border-slate-700/80 rounded-2xl px-1 sm:px-2 py-1 shadow-md min-w-0 select-none ${className}`}>
         <button
           type="button"
           title="পূর্ববর্তী দিন"
@@ -1068,26 +1060,18 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
           <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
         </button>
 
-        <div className="relative flex items-center space-x-1 sm:space-x-2 px-1 sm:px-2 cursor-pointer group min-w-0 justify-center">
-          <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 shrink-0 pointer-events-none" />
-          <span className="text-[11px] sm:text-sm font-black text-white tracking-tight truncate">
-            {formatted}
-          </span>
-          <Calendar className="hidden md:block w-3.5 h-3.5 text-slate-400 group-hover:text-amber-400 shrink-0 pointer-events-none transition-colors" />
-
-          {/* Hidden native Date Picker Input covering the entire pill */}
-          <input
-            type="date"
-            value={currentDateStr || ""}
-            onChange={(e) => {
-              if (e.target.value) onDateChange(e.target.value);
+        <div className="flex items-center space-x-1 sm:space-x-1.5 px-0.5 sm:px-1 min-w-0 justify-center">
+          <DateTimePicker
+            value={currentDateStr}
+            onChange={(newDate) => {
+              if (newDate) onDateChange(newDate);
             }}
-            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full [color-scheme:dark]"
+            compact={true}
           />
 
           {/* Bengali Day Badge */}
           {currentDayName && (
-            <span className="text-[10px] sm:text-xs font-black text-amber-200 bg-amber-950/90 group-hover:bg-amber-900/90 px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-lg sm:rounded-xl border border-amber-600/60 shadow-inner shrink-0 block transition-colors leading-tight">
+            <span className="text-[10px] sm:text-xs font-black text-amber-200 bg-amber-950/90 hover:bg-amber-900/90 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-lg sm:rounded-xl border border-amber-600/60 shadow-inner shrink-0 block transition-colors leading-tight">
               {getBanglaDay(currentDayName)}
             </span>
           )}
@@ -1348,7 +1332,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                 )}
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-                {currentViewDay ? `নির্বাচিত তারিখ: ${currentViewDay.date} (${getBanglaDay(currentViewDay.day)})` : "তথ্য নেই"}
+                {currentViewDay ? `নির্বাচিত তারিখ: ${formatDisplayDate(currentViewDay.date)} (${getBanglaDay(currentViewDay.day)})` : "তথ্য নেই"}
               </p>
             </div>
           </div>
@@ -2892,20 +2876,19 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                   onClick={handleSetToday}
                   className="text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/70 hover:bg-amber-100 dark:hover:bg-amber-900/50 px-3 py-1.5 rounded-xl border border-amber-200 dark:border-amber-800/60 transition-colors cursor-pointer shrink-0"
                 >
-                  আজকের দিন
+                  আজকের দিন (Today)
                 </button>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">তারিখ (Date)</label>
-                <input
-                  type="date"
+                <DateTimePicker
+                  label="তারিখ (দিন/মাস/বছর - DD/MM/YYYY) *"
                   value={formDate}
-                  onChange={(e) => setFormDate(e.target.value)}
-                  className="w-full border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 bg-slate-50/50 dark:bg-slate-800/60 text-sm font-bold text-slate-900 dark:text-slate-100 [color-scheme:light] dark:[color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white dark:focus:bg-slate-800"
-                  required
+                  onChange={(newDate) => {
+                    if (newDate) handleUnifiedDateChange(newDate);
+                  }}
                 />
               </div>
 

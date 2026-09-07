@@ -22,6 +22,7 @@ import {
   Layers,
 } from "lucide-react";
 import { saveLedgerEntryAction } from "./actions";
+import DateTimePicker from "./DateTimePicker";
 
 interface StockItem {
   eggType: string;
@@ -553,14 +554,10 @@ Return ONLY the raw valid JSON without markdown wrapping or comments.`;
                   {/* Date, Day, Page */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700">
                     <div>
-                      <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
-                        তারিখ (Date)
-                      </label>
-                      <input
-                        type="date"
+                      <DateTimePicker
+                        label="তারিখ (দিন/মাস/বছর - DD/MM/YYYY)"
                         value={date}
-                        onChange={(e) => setDate(e.target.value)}
-                        className="w-full border border-slate-300 dark:border-slate-600 rounded-lg p-1.5 bg-white dark:bg-slate-900 font-bold text-slate-800 dark:text-slate-100"
+                        onChange={(newDate) => setDate(newDate)}
                       />
                     </div>
                     <div>

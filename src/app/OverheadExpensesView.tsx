@@ -29,6 +29,7 @@ import {
   ArrowDownRight,
 } from "lucide-react";
 import { OverheadExpenseItem } from "@/lib/googleSheets";
+import DateTimePicker, { formatToDayMonthYear } from "./DateTimePicker";
 
 const CATEGORIES = [
   { id: "savings_shop", label: "🏪 সমিতি / দোকানে সঞ্চয় (In-Shop)", icon: Store, color: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/60", border: "border-emerald-200 dark:border-emerald-800" },
@@ -618,15 +619,10 @@ export default function OverheadExpensesView() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {/* Date */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                তারিখ (Date) *
-              </label>
-              <input
-                type="date"
+              <DateTimePicker
+                label="তারিখ (দিন/মাস/বছর - DD/MM/YYYY) *"
                 value={formDate}
-                onChange={(e) => setFormDate(e.target.value)}
-                required
-                className="w-full border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 bg-slate-50/50 dark:bg-slate-800/60 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                onChange={(newDate) => setFormDate(newDate)}
               />
             </div>
 
@@ -848,7 +844,7 @@ export default function OverheadExpensesView() {
                       className="hover:bg-amber-50/40 dark:hover:bg-slate-800/50 transition-colors"
                     >
                       <td className="py-3 px-4 whitespace-nowrap font-bold text-slate-700 dark:text-slate-300">
-                        {item.date}
+                        {formatToDayMonthYear(item.date)}
                       </td>
 
                       <td className="py-3 px-4 whitespace-nowrap">
