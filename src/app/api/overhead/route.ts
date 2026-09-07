@@ -79,8 +79,19 @@ export async function POST(request: NextRequest) {
     // Save to Google Sheets
     await addOverheadExpenseToSheets(newItem);
 
-    // Save to local memory
-    localOverheadMemory.unshift(newItem);
+    // Save to local memory (upsert for savings_shop by date)
+    if (category === "savings_shop") {
+      const existingIdx = localOverheadMemory.findIndex(
+        (it) => it.category === "savings_shop" && it.date === date
+      );
+      if (existingIdx >= 0) {
+        localOverheadMemory[existingIdx] = newItem;
+      } else {
+        localOverheadMemory.unshift(newItem);
+      }
+    } else {
+      localOverheadMemory.unshift(newItem);
+    }
 
     return NextResponse.json({
       success: true,

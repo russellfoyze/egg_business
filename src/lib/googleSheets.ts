@@ -458,17 +458,79 @@ export async function getOverheadExpensesFromSheets(): Promise<OverheadExpenseIt
     });
 
     const rows = res.data.values || [];
-    return rows.map((row: any[]) => ({
-      id: row[0] || "",
-      date: row[1] || "",
-      month: row[2] || (row[1] ? row[1].slice(0, 7) : ""),
-      category: (row[3] as any) || "extra",
-      title: row[4] || "",
-      amount: Number(row[5]) || 0,
-      paymentMode: (row[6] as any) || "cash",
-      notes: row[7] || "",
-      createdAt: row[8] || "",
-    })).filter((item: OverheadExpenseItem) => item.id && item.amount > 0);
+    let items: OverheadExpenseItem[] = rows
+      .map((row: any[]) => ({
+        id: row[0] || "",
+        date: row[1] || "",
+        month: row[2] || (row[1] ? row[1].slice(0, 7) : ""),
+        category: (row[3] as any) || "extra",
+        title: row[4] || "",
+        amount: Number(row[5]) || 0,
+        paymentMode: (row[6] as any) || "cash",
+        notes: row[7] || "",
+        createdAt: row[8] || "",
+      }))
+      .filter((item: OverheadExpenseItem) => item.id && item.amount > 0);
+
+    // Auto-update all savings from the Expenses data sheet
+    try {
+      const expRes = await sheets.spreadsheets.values.get({
+        spreadsheetId: SHEET_ID,
+        range: "Expenses!A2:E",
+      });
+      const expRows = expRes.data.values || [];
+      const samityByDate = new Map<string, number>();
+      expRows.forEach((r: any[]) => {
+        const d = r[0];
+        const type = r[3];
+        const amt = Number(r[4]) || 0;
+        if (d && (type === "সমিতি" || String(type).includes("সমিতি")) && amt > 0) {
+          samityByDate.set(d, (samityByDate.get(d) || 0) + amt);
+        }
+      });
+
+      for (const [sDate, sAmt] of samityByDate.entries()) {
+        const existingIdx = items.findIndex(
+          (it) => it.category === "savings_shop" && it.date === sDate
+        );
+        if (existingIdx >= 0) {
+          items[existingIdx].amount = sAmt;
+          if (!items[existingIdx].title || items[existingIdx].title === "সমিতি") {
+            items[existingIdx].title = "সমিতি === দোকানে সঞ্চয়";
+          }
+        } else {
+          items.push({
+            id: `exp-sheet-${sDate}`,
+            date: sDate,
+            month: sDate.slice(0, 7),
+            category: "savings_shop",
+            title: "সমিতি === দোকানে সঞ্চয়",
+            amount: sAmt,
+            paymentMode: "cash",
+            notes: "দৈনিক হালখাতা ডাটা শিট হতে স্বয়ংক্রিয় সিঙ্ক",
+            createdAt: new Date().toISOString(),
+          });
+        }
+      }
+    } catch (sheetErr) {
+      console.warn("Could not auto-fetch samity from Expenses sheet:", sheetErr);
+    }
+
+    // Strict deduplication: ensure exactly ONE entry for savings_shop per date
+    const seenShopDates = new Set<string>();
+    const deduplicated: OverheadExpenseItem[] = [];
+    for (const it of items) {
+      if (it.category === "savings_shop") {
+        if (!seenShopDates.has(it.date)) {
+          seenShopDates.add(it.date);
+          deduplicated.push(it);
+        }
+      } else {
+        deduplicated.push(it);
+      }
+    }
+
+    return deduplicated;
   } catch (err: any) {
     console.error("Error fetching OverheadExpenses from Sheets:", err.message || err);
     return [];
@@ -482,6 +544,41 @@ export async function addOverheadExpenseToSheets(item: OverheadExpenseItem): Pro
 
     await initializeSpreadsheet();
     const sheets = await getSheetsClient();
+
+    // If category is savings_shop, check if entry for this date already exists to prevent duplicate entries
+    if (item.category === "savings_shop") {
+      const res = await sheets.spreadsheets.values.get({
+        spreadsheetId: SHEET_ID,
+        range: "OverheadExpenses!A2:I",
+      });
+      const rows = res.data.values || [];
+      const existingRowIndex = rows.findIndex(
+        (r: any[]) => r[1] === item.date && r[3] === "savings_shop"
+      );
+
+      if (existingRowIndex >= 0) {
+        // Update existing row (Row existingRowIndex + 2 in 1-based indexing)
+        const sheetRowNum = existingRowIndex + 2;
+        const updatedRow = [
+          rows[existingRowIndex][0] || item.id,
+          item.date,
+          item.month || item.date.slice(0, 7),
+          item.category,
+          item.title || "সমিতি === দোকানে সঞ্চয়",
+          item.amount,
+          item.paymentMode || "cash",
+          item.notes || "হালখাতা হতে আপডেট",
+          item.createdAt || new Date().toISOString(),
+        ];
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: SHEET_ID,
+          range: `OverheadExpenses!A${sheetRowNum}:I${sheetRowNum}`,
+          valueInputOption: "USER_ENTERED",
+          requestBody: { values: [updatedRow] },
+        });
+        return true;
+      }
+    }
 
     const row = [
       item.id,

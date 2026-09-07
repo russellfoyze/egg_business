@@ -238,11 +238,20 @@ export default function OverheadExpensesView() {
       const json = await res.json();
 
       if (json.success && json.data) {
-        const updated = [json.data, ...expenses];
+        let updated: OverheadExpenseItem[];
+        if (json.data.category === "savings_shop") {
+          const filtered = expenses.filter(
+            (it) => !(it.category === "savings_shop" && it.date === json.data.date)
+          );
+          updated = [json.data, ...filtered];
+        } else {
+          updated = [json.data, ...expenses];
+        }
         setExpenses(updated);
         try {
           localStorage.setItem("yolkflow_overhead_expenses", JSON.stringify(updated));
         } catch (e) {}
+        fetchExpenses();
 
         setFeedback({ type: "success", text: "খরচ সফলভাবে এন্ট্রি ও গুগল শিটে সেভ হয়েছে!" });
         setFormTitle("");
