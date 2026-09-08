@@ -131,6 +131,30 @@ export const getBanglaDay = (dayStr?: string): string => {
   return BANGLA_DAYS_MAP[cleaned] || BANGLA_DAYS_MAP[dayStr.trim()] || dayStr.trim();
 };
 
+function getSplinePath(points: { x: number; y: number }[]): string {
+  if (points.length === 0) return "";
+  if (points.length === 1) return `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}`;
+  if (points.length === 2) {
+    return `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)} L ${points[1].x.toFixed(2)} ${points[1].y.toFixed(2)}`;
+  }
+
+  let path = `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}`;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[Math.max(0, i - 1)];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[Math.min(points.length - 1, i + 2)];
+
+    const cp1x = p1.x + (p2.x - p0.x) / 6;
+    const cp1y = p1.y + (p2.y - p0.y) / 6;
+    const cp2x = p2.x - (p3.x - p1.x) / 6;
+    const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+    path += ` C ${cp1x.toFixed(2)} ${cp1y.toFixed(2)}, ${cp2x.toFixed(2)} ${cp2y.toFixed(2)}, ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`;
+  }
+  return path;
+}
+
 export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
   const [data, setData] = useState<ComputedDayData[]>(initialData);
   const [activeTab, setActiveTab] = useState<"dashboard" | "entry" | "overhead" | "savings">("dashboard");
@@ -808,6 +832,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
         totalQty: 0,
         totalVal: 0,
         activeMetricTotal: 0,
+        topItem: null as { eggType: string; percent: number } | null,
       };
     }
 
@@ -857,10 +882,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
         midAngle = (startAngle + endAngle) / 2;
         runningAngle += sliceAngle;
 
-        const cx = 80;
-        const cy = 80;
-        const rOuter = 66;
-        const rInner = 43;
+        const cx = 130;
+        const cy = 90;
+        const rOuter = 65.5;
+        const rInner = 43.5;
 
         const x1 = cx + rOuter * Math.cos(startAngle);
         const y1 = cy + rOuter * Math.sin(startAngle);
@@ -886,11 +911,19 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
       };
     });
 
+    const topItem = items.reduce<{ eggType: string; percent: number } | null>((acc, it) => {
+      if (it.percent > 0 && (!acc || it.percent > acc.percent)) {
+        return { eggType: it.eggType, percent: it.percent };
+      }
+      return acc;
+    }, null);
+
     return {
       items,
       totalQty,
       totalVal,
       activeMetricTotal,
+      topItem,
     };
   }, [currentViewDay, itemSellPieMetric]);
 
@@ -1077,7 +1110,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
     });
 
     // Compute yMin starting from 2 and yMax keeping +2 above average/peak
-    let yMin = 2;
+    const yMin = 2;
     let yMax = Math.ceil((Math.max(rawMax, avgPrice + 2) + 0.5) * 2) / 2;
 
     if (yMax < 18 && selectedEggPriceFilter === "all") {
@@ -1226,7 +1259,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
       : points[points.length - 1];
 
     // Calculate nice Y scale ticks
-    let yMin = 0;
+    const yMin = 0;
     let yMax = rawMax > 0 ? Math.ceil(rawMax * 1.15) : 100;
     const span = yMax - yMin;
 
@@ -2361,6 +2394,680 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
             </div>
           )}
 
+          {/* ================= ROW: 70% ITEM SALES BREAKDOWN (DONUT + TABLE IN 1 SECTION) & 30% PRICE TREND ================= */}
+          {currentViewDay && (
+            <div className="flex flex-col lg:flex-row gap-4 sm:gap-5 lg:gap-6 items-stretch">
+              {/* Left 70%: Merged Donut Chart & Graph Table in 1 Unified Section */}
+              <div className="w-full lg:w-[70%] bg-white dark:bg-slate-900/95 backdrop-blur-sm rounded-3xl p-4 sm:p-5 lg:p-6 shadow-xl shadow-slate-900/5 dark:shadow-2xl dark:shadow-black/40 border border-slate-200/90 dark:border-slate-800 flex flex-col justify-between space-y-4 transition-colors min-w-0">
+                <div className="space-y-4">
+                  {/* Top Unified Header */}
+                  <div className="flex flex-wrap justify-between items-center gap-2.5 border-b border-slate-200/80 dark:border-slate-800/80 pb-3">
+                    <div className="flex items-center space-x-2.5 min-w-0">
+                      <div className="bg-amber-500/10 dark:bg-amber-950/70 p-2 rounded-xl border border-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0">
+                        <PieChart className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100 truncate">
+                          ডিম অনুযায়ী বিক্রি ও বিস্তারিত বিবরণী
+                        </h4>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate">
+                          আইটেম অনুযায়ী বিক্রয় দর, সংখ্যা, মোট টাকা ও অনুপাত
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center flex-wrap gap-2">
+                      {/* Metric Toggle: Qty vs Value */}
+                      <div className="inline-flex p-0.5 rounded-xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 text-[11px] font-bold">
+                        <button
+                          type="button"
+                          onClick={() => setItemSellPieMetric("qty")}
+                          className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                            itemSellPieMetric === "qty"
+                              ? "bg-white dark:bg-slate-700 text-amber-800 dark:text-amber-300 shadow-2xs font-black"
+                              : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                          }`}
+                          title="সংখ্যা অনুপাতে পাই চার্ট"
+                        >
+                          সংখ্যা
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setItemSellPieMetric("value")}
+                          className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                            itemSellPieMetric === "value"
+                              ? "bg-white dark:bg-slate-700 text-amber-800 dark:text-amber-300 shadow-2xs font-black"
+                              : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                          }`}
+                          title="টাকার মূল্যে পাই চার্ট"
+                        >
+                          মূল্য (৳)
+                        </button>
+                      </div>
+
+                      <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/90 px-2.5 py-1 rounded-xl border border-slate-200/80 dark:border-slate-700/80 flex items-center space-x-1">
+                        <Calendar className="w-3 h-3 text-amber-500" />
+                        <span>{currentViewDay ? currentViewDay.date.slice(5) : ""}</span>
+                      </span>
+
+                      <span className="text-[11px] font-black text-blue-800 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 px-2.5 py-1 rounded-xl border border-blue-200/80 dark:border-blue-800/60 flex items-center space-x-1">
+                        <ShoppingCart className="w-3 h-3" />
+                        <span>সর্বমোট {itemSellPieData.totalQty.toLocaleString()} টি</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Inner Content Grid: Donut Chart (Left ~42%) + Table (Right ~58%) */}
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
+                    {/* Donut Chart & Legend */}
+                    <div className="md:col-span-5 flex flex-col items-center justify-center space-y-3">
+                      {/* SVG Donut Chart with Exploded Slice & Dotted Callout Line */}
+                      <div className="w-full max-w-[240px] aspect-[260/180] relative">
+                        <svg viewBox="0 0 260 180" className="w-full h-full select-none block overflow-visible">
+                          {/* Background track ring */}
+                          <circle
+                            cx="130"
+                            cy="90"
+                            r="54.5"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="22"
+                            className="text-slate-100 dark:text-slate-800/70"
+                          />
+
+                          {/* Slices */}
+                          {itemSellPieData.activeMetricTotal > 0 &&
+                            (() => {
+                              const activeTargetEgg = hoveredSellEgg || itemSellPieData.topItem?.eggType || null;
+                              return (
+                                <g>
+                                  {itemSellPieData.items.map((item) => {
+                                    if (!item.path) return null;
+                                    const isTarget = activeTargetEgg === item.eggType;
+                                    const isHovered = hoveredSellEgg === item.eggType;
+                                    const shift = isTarget ? 7 : 0;
+                                    const shiftX = Math.cos(item.midAngle) * shift;
+                                    const shiftY = Math.sin(item.midAngle) * shift;
+
+                                    return (
+                                      <g
+                                        key={`pie-slice-${item.eggType}`}
+                                        style={{
+                                          transform: shift ? `translate(${shiftX.toFixed(2)}px, ${shiftY.toFixed(2)}px)` : undefined,
+                                          transition: "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s",
+                                        }}
+                                        className="cursor-pointer"
+                                        onMouseEnter={() => setHoveredSellEgg(item.eggType)}
+                                        onMouseLeave={() => setHoveredSellEgg(null)}
+                                      >
+                                        <path
+                                          d={item.path}
+                                          fill={item.color.stroke}
+                                          stroke="currentColor"
+                                          strokeWidth={isTarget ? 2.5 : 1.5}
+                                          className="text-white dark:text-slate-900 transition-all duration-150"
+                                          style={{
+                                            opacity: hoveredSellEgg && !isHovered ? 0.35 : 1,
+                                            filter: isTarget ? `drop-shadow(0 3px 8px ${item.color.stroke}80)` : undefined,
+                                          }}
+                                        />
+                                      </g>
+                                    );
+                                  })}
+
+                                  {/* Dotted Callout Line & External Label */}
+                                  {(() => {
+                                    const targetItem = itemSellPieData.items.find((it) => it.eggType === activeTargetEgg);
+                                    if (!targetItem || targetItem.percent <= 0) return null;
+
+                                    const shift = 7;
+                                    const cos = Math.cos(targetItem.midAngle);
+                                    const sin = Math.sin(targetItem.midAngle);
+                                    const lineStartX = 130 + (65 + shift + 2) * cos;
+                                    const lineStartY = 90 + (65 + shift + 2) * sin;
+                                    const isRight = cos >= 0;
+                                    const lineEndX = isRight ? Math.min(252, lineStartX + 26) : Math.max(8, lineStartX - 26);
+                                    const labelX = isRight ? lineEndX + 4 : lineEndX - 4;
+                                    const clampedY = Math.max(16, Math.min(164, lineStartY));
+
+                                    return (
+                                      <g className="transition-all duration-200 pointer-events-none">
+                                        <line
+                                          x1={lineStartX}
+                                          y1={lineStartY}
+                                          x2={lineEndX}
+                                          y2={clampedY}
+                                          stroke={targetItem.color.stroke}
+                                          strokeWidth="1.5"
+                                          strokeDasharray="2 3"
+                                        />
+                                        <circle cx={lineEndX} cy={clampedY} r="2" fill={targetItem.color.stroke} />
+                                        <text
+                                          x={labelX}
+                                          y={clampedY + 3.5}
+                                          textAnchor={isRight ? "start" : "end"}
+                                          className="text-[9.5px] font-black fill-slate-800 dark:fill-slate-100 select-none tracking-tight"
+                                        >
+                                          {targetItem.shortName} ({targetItem.percent.toFixed(0)}%)
+                                        </text>
+                                      </g>
+                                    );
+                                  })()}
+                                </g>
+                              );
+                            })()}
+
+                          {/* Center Statistics */}
+                          {activeHoveredEggData && activeHoveredEggData.metricVal > 0 ? (
+                            <g className="pointer-events-none transition-all duration-200">
+                              <text
+                                x="130"
+                                y="75"
+                                textAnchor="middle"
+                                className="text-[10px] font-bold fill-slate-500 dark:fill-slate-400"
+                              >
+                                {activeHoveredEggData.shortName}
+                              </text>
+                              <text
+                                x="130"
+                                y="93"
+                                textAnchor="middle"
+                                className="text-sm sm:text-base font-black fill-slate-900 dark:fill-white"
+                              >
+                                {itemSellPieMetric === "qty"
+                                  ? `${activeHoveredEggData.soldQty.toLocaleString()} টি`
+                                  : `৳ ${activeHoveredEggData.soldVal.toLocaleString()}`}
+                              </text>
+                              <text
+                                x="130"
+                                y="108"
+                                textAnchor="middle"
+                                className="text-[9.5px] font-black"
+                                fill={activeHoveredEggData.color.stroke}
+                              >
+                                {activeHoveredEggData.percent.toFixed(1)}% অংশ
+                              </text>
+                            </g>
+                          ) : (
+                            <g className="pointer-events-none transition-all duration-200">
+                              <text
+                                x="130"
+                                y="75"
+                                textAnchor="middle"
+                                className="text-[9px] font-bold fill-slate-400 dark:fill-slate-500 uppercase tracking-widest"
+                              >
+                                {itemSellPieMetric === "qty" ? "মোট ডিম বিক্রি" : "বিক্রি মূল্য"}
+                              </text>
+                              <text
+                                x="130"
+                                y="93"
+                                textAnchor="middle"
+                                className="text-base sm:text-lg font-black fill-slate-900 dark:fill-white"
+                              >
+                                {itemSellPieMetric === "qty"
+                                  ? `${itemSellPieData.totalQty.toLocaleString()} টি`
+                                  : `৳ ${itemSellPieData.totalVal.toLocaleString()}`}
+                              </text>
+                              <text
+                                x="130"
+                                y="108"
+                                textAnchor="middle"
+                                className="text-[9.5px] font-bold fill-amber-600 dark:fill-amber-400"
+                              >
+                                {itemSellPieData.activeMetricTotal > 0 ? "সর্বমোট ১০০%" : "বিক্রি নেই"}
+                              </text>
+                            </g>
+                          )}
+                        </svg>
+                      </div>
+
+                      {/* Clean Category Legend Pills */}
+                      <div className="flex flex-wrap justify-center items-center gap-1.5 pt-1 text-xs">
+                        {itemSellPieData.items.map((item) => {
+                          const isHovered = hoveredSellEgg === item.eggType;
+                          return (
+                            <div
+                              key={`legend-${item.eggType}`}
+                              onMouseEnter={() => setHoveredSellEgg(item.eggType)}
+                              onMouseLeave={() => setHoveredSellEgg(null)}
+                              className={`flex items-center space-x-1.5 px-2 py-0.5 rounded-lg transition-all cursor-pointer border ${
+                                isHovered
+                                  ? "bg-amber-50 dark:bg-slate-800 border-amber-300 dark:border-slate-700 shadow-2xs font-bold"
+                                  : "bg-slate-50/70 dark:bg-slate-800/40 border-slate-200/60 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                              }`}
+                            >
+                              <span
+                                className="w-2 h-2 rounded-sm shrink-0"
+                                style={{ backgroundColor: item.color.stroke }}
+                              />
+                              <span className="text-[10.5px] font-semibold">{item.shortName}</span>
+                              <span className="text-[9.5px] font-bold text-slate-400 dark:text-slate-500">
+                                ({item.percent.toFixed(0)}%)
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Right: The Graph Table */}
+                    <div className="md:col-span-7 overflow-x-auto">
+                      <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800/80 overflow-hidden">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead>
+                            <tr className="bg-slate-100/70 dark:bg-slate-800/70 text-slate-600 dark:text-slate-400 font-bold text-[10px] sm:text-[11px] uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
+                              <th className="py-2 px-2.5">ডিমের ধরন</th>
+                              <th className="py-2 px-2 text-right whitespace-nowrap">দর (৳)</th>
+                              <th className="py-2 px-2 text-right whitespace-nowrap">বিক্রি (সংখ্যা)</th>
+                              <th className="py-2 px-2 text-right whitespace-nowrap">মোট মূল্য (৳)</th>
+                              <th className="py-2 px-2.5 text-right whitespace-nowrap">অনুপাত</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 font-medium">
+                            {itemSellPieData.items.map((item) => {
+                              const isHovered = hoveredSellEgg === item.eggType;
+                              return (
+                                <tr
+                                  key={`tbl-row-${item.eggType}`}
+                                  onMouseEnter={() => setHoveredSellEgg(item.eggType)}
+                                  onMouseLeave={() => setHoveredSellEgg(null)}
+                                  className={`cursor-pointer transition-colors ${
+                                    isHovered
+                                      ? "bg-amber-50/80 dark:bg-slate-800/90 text-slate-900 dark:text-white"
+                                      : "hover:bg-slate-50 dark:hover:bg-slate-800/40 text-slate-700 dark:text-slate-300"
+                                  }`}
+                                >
+                                  <td className="py-2 px-2.5 whitespace-nowrap">
+                                    <div className="flex items-center space-x-1.5">
+                                      <span
+                                        className="w-2 h-2 rounded-full shrink-0"
+                                        style={{ backgroundColor: item.color.stroke }}
+                                      />
+                                      <span className="font-bold text-[11px]">{item.shortName}</span>
+                                    </div>
+                                  </td>
+                                  <td className="py-2 px-2 text-right text-slate-500 dark:text-slate-400 whitespace-nowrap text-[11px]">
+                                    ৳{item.rate}
+                                  </td>
+                                  <td className="py-2 px-2 text-right font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap text-[11px]">
+                                    {item.soldQty > 0 ? `${item.soldQty.toLocaleString()} টি` : "০"}
+                                  </td>
+                                  <td className="py-2 px-2 text-right font-black text-amber-700 dark:text-amber-400 whitespace-nowrap text-[11px]">
+                                    {item.soldVal > 0 ? `৳${item.soldVal.toLocaleString()}` : "৳০"}
+                                  </td>
+                                  <td className="py-2 px-2.5 text-right">
+                                    <div className="flex items-center justify-end space-x-1.5">
+                                      <div className="w-10 bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden hidden sm:block">
+                                        <div
+                                          className="h-full rounded-full transition-all duration-300"
+                                          style={{
+                                            width: `${item.percent}%`,
+                                            backgroundColor: item.color.stroke,
+                                          }}
+                                        />
+                                      </div>
+                                      <span
+                                        className="text-[9.5px] font-black px-1.5 py-0.5 rounded-md min-w-[28px] text-center"
+                                        style={{
+                                          backgroundColor: `${item.color.stroke}20`,
+                                          color: item.color.stroke,
+                                        }}
+                                      >
+                                        {item.percent.toFixed(0)}%
+                                      </span>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                          <tfoot className="border-t-2 border-slate-200 dark:border-slate-700 font-black text-xs text-slate-900 dark:text-slate-100 bg-slate-50 dark:bg-slate-800/60">
+                            <tr>
+                              <td className="py-2 px-2.5">সর্বমোট</td>
+                              <td className="py-2 px-2 text-right text-slate-400 dark:text-slate-500">—</td>
+                              <td className="py-2 px-2 text-right text-slate-900 dark:text-white">
+                                {itemSellPieData.totalQty.toLocaleString()} টি
+                              </td>
+                              <td className="py-2 px-2 text-right text-amber-800 dark:text-amber-300 font-black">
+                                ৳{itemSellPieData.totalVal.toLocaleString()}
+                              </td>
+                              <td className="py-2 px-2.5 text-right text-emerald-600 dark:text-emerald-400 font-black">
+                                ১০০%
+                              </td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right 30%: Egg Price Trend Graph fitted neatly */}
+              <div className="w-full lg:w-[30%] bg-white dark:bg-slate-900/95 backdrop-blur-sm rounded-3xl p-4 sm:p-5 shadow-xl shadow-slate-900/5 dark:shadow-2xl dark:shadow-black/40 border border-slate-200/90 dark:border-slate-800 flex flex-col justify-between space-y-3.5 transition-colors min-w-0">
+                <div className="space-y-3">
+                  {/* Header Title + Timeframe Selector */}
+                  <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row justify-between items-start xl:items-center gap-2 border-b border-slate-200/80 dark:border-slate-800/80 pb-2.5">
+                    <div className="flex items-center space-x-2 min-w-0">
+                      <div className="bg-amber-500/10 dark:bg-amber-950/70 p-1.5 rounded-xl border border-amber-500/20 text-amber-500 shrink-0">
+                        <TrendingUp className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100 truncate">
+                          দরের পরিবর্তন ও ট্রেন্ড গ্রাফ
+                        </h4>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate">
+                          Price Trend & Wave Graph
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Timeframe Selector Pills */}
+                    <div className="inline-flex items-center gap-0.5 p-0.5 bg-slate-100/90 dark:bg-slate-800/90 rounded-xl border border-slate-200/60 dark:border-slate-700/50 text-[10px]">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedDateRange("weekly")}
+                        className={`px-2 py-0.5 rounded-lg font-black transition-all cursor-pointer ${
+                          selectedDateRange === "weekly" || selectedDateRange === "7"
+                            ? "bg-white dark:bg-slate-700 text-amber-900 dark:text-amber-300 shadow-xs font-black"
+                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                        }`}
+                      >
+                        ৭ দিন
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedDateRange("monthly")}
+                        className={`px-2 py-0.5 rounded-lg font-black transition-all cursor-pointer ${
+                          selectedDateRange === "monthly" || selectedDateRange === "30"
+                            ? "bg-white dark:bg-slate-700 text-amber-900 dark:text-amber-300 shadow-xs font-black"
+                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                        }`}
+                      >
+                        ৩০ দিন
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedDateRange("yearly")}
+                        className={`px-2 py-0.5 rounded-lg font-black transition-all cursor-pointer ${
+                          selectedDateRange === "yearly" || selectedDateRange === "365"
+                            ? "bg-white dark:bg-slate-700 text-amber-900 dark:text-amber-300 shadow-xs font-black"
+                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                        }`}
+                      >
+                        ১ বছর
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedDateRange("all")}
+                        className={`px-2 py-0.5 rounded-lg font-black transition-all cursor-pointer ${
+                          selectedDateRange === "all"
+                            ? "bg-white dark:bg-slate-700 text-amber-900 dark:text-amber-300 shadow-xs font-black"
+                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                        }`}
+                      >
+                        সব
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Minimalist SVG Graph Fitted for 30% Width */}
+                  <div className="w-full overflow-hidden bg-slate-50/70 dark:bg-slate-950/70 rounded-2xl border border-slate-200/90 dark:border-slate-800/80 p-2 sm:p-2.5 backdrop-blur-sm">
+                    <svg viewBox="0 0 400 210" className="w-full h-auto select-none block">
+                      <defs>
+                        {Object.entries(EGG_COLORS).map(([eggName, color]) => (
+                          <linearGradient key={`grad-compact-${eggName}`} id={`grad-compact-${eggName.replace(/[^a-zA-Z0-9]/g, "")}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={color.stroke} stopOpacity="0.30" />
+                            <stop offset="85%" stopColor={color.stroke} stopOpacity="0.03" />
+                            <stop offset="100%" stopColor={color.stroke} stopOpacity="0.0" />
+                          </linearGradient>
+                        ))}
+                      </defs>
+
+                      {(() => {
+                        const yMin = eggPriceStats.yMin;
+                        const yMax = eggPriceStats.yMax;
+                        const plotTop = 22;
+                        const plotHeight = 145;
+                        const leftMargin = 38;
+                        const rightMargin = 388;
+                        const plotWidth = rightMargin - leftMargin;
+
+                        const getY = (v: number) => {
+                          const clamped = Math.max(yMin, Math.min(yMax, v));
+                          return plotTop + plotHeight - ((clamped - yMin) / Math.max(1, yMax - yMin)) * plotHeight;
+                        };
+
+                        const getX = (index: number, total: number) => {
+                          if (total <= 1) return leftMargin + plotWidth / 2;
+                          return leftMargin + (index / (total - 1)) * plotWidth;
+                        };
+
+                        return (
+                          <g>
+                            {/* Faint Horizontal Y Grid Lines & Y-axis Ticks */}
+                            {eggPriceStats.yTicks.map((tickVal) => {
+                              const yP = getY(tickVal);
+                              return (
+                                <g key={`compact-tick-${tickVal}`}>
+                                  <line
+                                    x1={leftMargin}
+                                    y1={yP}
+                                    x2={rightMargin}
+                                    y2={yP}
+                                    className="stroke-slate-200/60 dark:stroke-slate-800/70"
+                                    strokeWidth="1"
+                                    strokeDasharray="3 3"
+                                  />
+                                  <text
+                                    x={leftMargin - 6}
+                                    y={yP + 3.5}
+                                    textAnchor="end"
+                                    className="text-[9px] font-bold fill-slate-400 dark:fill-slate-500"
+                                  >
+                                    ৳{tickVal % 1 === 0 ? tickVal.toFixed(0) : tickVal.toFixed(1)}
+                                  </text>
+                                </g>
+                              );
+                            })}
+
+                            {/* Selected Day Guide Line */}
+                            {(() => {
+                              if (!currentViewDay) return null;
+                              const curIdx = filteredData.findIndex((d) => d.date === currentViewDay.date);
+                              if (curIdx < 0) return null;
+                              const curX = getX(curIdx, filteredData.length);
+                              return (
+                                <line
+                                  x1={curX}
+                                  y1={plotTop}
+                                  x2={curX}
+                                  y2={plotTop + plotHeight}
+                                  stroke="rgba(245, 158, 11, 0.45)"
+                                  strokeWidth="1.5"
+                                  strokeDasharray="3 3"
+                                />
+                              );
+                            })()}
+
+                            {/* Spline Wave Curves & Gradient Fills */}
+                            {(selectedEggPriceFilter === "all" ? EGG_TYPES : [selectedEggPriceFilter]).map((eggType) => {
+                              const color =
+                                EGG_COLORS[eggType] || { stroke: "#d97706", fill: "rgba(217, 119, 6, 0.12)", label: eggType };
+                              const totalDays = filteredData.length;
+                              const pts = filteredData.map((d, i) => {
+                                const rate = d.stock[eggType]?.purchaseRate || DEFAULT_RATES[eggType] || 0;
+                                const x = getX(i, totalDays);
+                                const y = getY(rate);
+                                return { x, y, rate, date: d.date, day: d.day };
+                              });
+
+                              const splineD = getSplinePath(pts);
+                              const areaD =
+                                pts.length > 0
+                                  ? `${splineD} L ${pts[pts.length - 1].x.toFixed(2)} ${plotTop + plotHeight} L ${pts[0].x.toFixed(2)} ${plotTop + plotHeight} Z`
+                                  : "";
+
+                              return (
+                                <g key={`compact-series-${eggType}`}>
+                                  {/* Area Fill Gradient */}
+                                  {(selectedEggPriceFilter !== "all" || eggType === "লাল (Red Egg)") && (
+                                    <path
+                                      d={areaD}
+                                      fill={`url(#grad-compact-${eggType.replace(/[^a-zA-Z0-9]/g, "")})`}
+                                      opacity={selectedEggPriceFilter === "all" ? 0.35 : 0.85}
+                                    />
+                                  )}
+
+                                  {/* Clean Wave Spline Curve Line */}
+                                  <path
+                                    d={splineD}
+                                    fill="none"
+                                    stroke={color.stroke}
+                                    strokeWidth={selectedEggPriceFilter === eggType ? "3" : "2"}
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    style={{
+                                      filter: selectedEggPriceFilter === eggType || eggType === "লাল (Red Egg)" ? `drop-shadow(0 2px 6px ${color.stroke}50)` : undefined,
+                                    }}
+                                  />
+                                </g>
+                              );
+                            })}
+
+                            {/* Peak Price Glowing Callout Pill */}
+                            {eggPriceStats.peakPoint && (
+                              (() => {
+                                const peak = eggPriceStats.peakPoint;
+                                const peakX = getX(peak.index, filteredData.length);
+                                const peakY = getY(peak.price);
+                                const peakColor = EGG_COLORS[peak.eggType]?.stroke || "#f43f5e";
+                                const calloutWidth = 98;
+                                const calloutY = Math.max(4, peakY - 26);
+                                const calloutX = Math.max(leftMargin + 2, Math.min(rightMargin - calloutWidth - 2, peakX - calloutWidth / 2));
+                                const peakEggShort = peak.eggType.split(" (")[0];
+
+                                return (
+                                  <g className="transition-all duration-300 pointer-events-none">
+                                    <line
+                                      x1={peakX}
+                                      y1={peakY - 4}
+                                      x2={peakX}
+                                      y2={calloutY + 18}
+                                      stroke={peakColor}
+                                      strokeWidth="1.2"
+                                      strokeDasharray="2 2"
+                                      opacity="0.85"
+                                    />
+                                    <circle cx={peakX} cy={peakY} r="6" fill={peakColor} opacity="0.3" className="animate-ping" />
+                                    <circle cx={peakX} cy={peakY} r="3.5" fill="#ffffff" stroke={peakColor} strokeWidth="2" />
+
+                                    <rect
+                                      x={calloutX}
+                                      y={calloutY}
+                                      width={calloutWidth}
+                                      height="19"
+                                      rx="5"
+                                      className="fill-slate-950/95 dark:fill-slate-900/95 stroke-slate-700/80 shadow-lg"
+                                      strokeWidth="1"
+                                    />
+                                    <circle cx={calloutX + 9} cy={calloutY + 9.5} r="2.5" fill="#10b981" />
+                                    <text
+                                      x={calloutX + 16}
+                                      y={calloutY + 13}
+                                      textAnchor="start"
+                                      className="text-[9px] font-black fill-white tracking-tight"
+                                    >
+                                      সর্বোচ্চ: ৳{peak.price} ({peakEggShort})
+                                    </text>
+                                  </g>
+                                );
+                              })()
+                            )}
+
+                            {/* Minimal X-Axis Date Markers */}
+                            {filteredData.map((d, i) => {
+                              const total = filteredData.length;
+                              const isFirst = i === 0;
+                              const isLast = i === total - 1;
+                              const isCurrent = currentViewDay && currentViewDay.date === d.date;
+                              const step = total > 14 ? 4 : total > 7 ? 2 : 1;
+                              const showLabel = isFirst || isLast || isCurrent || (i % step === 0);
+
+                              if (!showLabel) return null;
+                              const xP = getX(i, total);
+
+                              return (
+                                <g
+                                  key={`compact-x-axis-${d.date}`}
+                                  className="cursor-pointer"
+                                  onClick={() => setSelectedDashboardDate(d.date)}
+                                >
+                                  <text
+                                    x={xP}
+                                    y="186"
+                                    textAnchor="middle"
+                                    className={`text-[9px] font-bold transition-colors ${
+                                      isCurrent ? "fill-amber-500 dark:fill-amber-400 font-black text-[10px]" : "fill-slate-400 dark:fill-slate-500 hover:fill-slate-300"
+                                    }`}
+                                  >
+                                    {d.date.slice(8)}/{d.date.slice(5, 7)}
+                                  </text>
+                                </g>
+                              );
+                            })}
+                          </g>
+                        );
+                      })()}
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Egg Series Filter Buttons */}
+                <div className="flex flex-wrap justify-center items-center gap-1 sm:gap-1.5 pt-1 text-xs font-bold text-slate-700 dark:text-slate-300">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedEggPriceFilter("all")}
+                    className={`flex items-center space-x-1 cursor-pointer hover:opacity-90 transition-all px-2 py-1 rounded-lg border shadow-2xs text-[10.5px] ${
+                      selectedEggPriceFilter === "all"
+                        ? "bg-amber-600 dark:bg-amber-500 text-white border-amber-600 dark:border-amber-500 ring-1 ring-amber-300"
+                        : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60"
+                    }`}
+                  >
+                    <span>🌈</span>
+                    <span>সব ডিম</span>
+                  </button>
+
+                  {EGG_TYPES.map((eggType) => {
+                    const color = EGG_COLORS[eggType] || { stroke: "#d97706", label: eggType };
+                    const isSelected = selectedEggPriceFilter === eggType;
+                    return (
+                      <button
+                        key={eggType}
+                        type="button"
+                        onClick={() =>
+                          setSelectedEggPriceFilter(selectedEggPriceFilter === eggType ? "all" : eggType)
+                        }
+                        className={`flex items-center space-x-1 cursor-pointer hover:opacity-90 transition-all px-2 py-1 rounded-lg border shadow-2xs text-[10.5px] ${
+                          isSelected
+                            ? "bg-slate-900 dark:bg-slate-700 text-white border-slate-900 dark:border-slate-600 ring-1 ring-amber-400"
+                            : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60"
+                        }`}
+                      >
+                        {eggType === "সাদা (White Egg)" ? (
+                          <span className="w-2.5 h-1.5 rounded-full inline-block bg-white border border-slate-400 shadow-2xs" />
+                        ) : (
+                          <span className="w-2.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: color.stroke }} />
+                        )}
+                        <span>{color.label || eggType.split(" (")[0]}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ================= HISTORICAL SALES VS MARGIN SECTION (35% GRAPH / 65% DATA TABLE) ================= */}
           {currentViewDay && (
             <div className="grid grid-cols-1 landscape:grid-cols-12 sm:landscape:grid-cols-12 lg:grid-cols-12 gap-3 sm:gap-4 lg:gap-5 items-stretch">
@@ -3123,716 +3830,6 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
               </div>
             </div>
           )}
-
-          {/* ================= SECTION 2: EGG PRICE TRENDS & ITEM SALES GRID ================= */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-stretch">
-            {/* 70% SECTION: X-Y Egg Price Trend Graph */}
-            <div className="lg:col-span-8 xl:col-span-8 bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-4 flex flex-col justify-between transition-colors">
-              {/* Header Title & Subtitle */}
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
-                <div>
-                  <h3 className="text-base font-black text-slate-800 dark:text-slate-100 flex items-center space-x-2">
-                    <TrendingUp className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                    <span>X-Y ডিমের দরের পরিবর্তন ও ট্রেন্ড গ্রাফ (Price Trend)</span>
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-                    সাপ্তাহিক, মাসিক ও বাৎসরিক দরের ওঠানামা (০.৫ ব্যবধানে নির্ভুল Y-অক্ষ ও X-অক্ষ বিশ্লেষণ)
-                  </p>
-                </div>
-              </div>
-
-              {/* Timeframe Selector Bar (Weekly, Monthly, Yearly, All) */}
-              <div className="flex flex-wrap items-center gap-2 p-1.5 bg-slate-100/90 dark:bg-slate-800/90 rounded-2xl">
-                <button
-                  type="button"
-                  onClick={() => setSelectedDateRange("weekly")}
-                  className={`flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer text-center flex items-center justify-center space-x-1.5 ${
-                    selectedDateRange === "weekly" || selectedDateRange === "7"
-                      ? "bg-white dark:bg-slate-700 text-amber-900 dark:text-amber-300 shadow-md ring-1 ring-slate-200/60 dark:ring-slate-600 font-black"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white/60 dark:hover:bg-slate-700/50"
-                  }`}
-                >
-                  <span>📅</span>
-                  <span>সাপ্তাহিক (7D)</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedDateRange("monthly")}
-                  className={`flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer text-center flex items-center justify-center space-x-1.5 ${
-                    selectedDateRange === "monthly" || selectedDateRange === "30"
-                      ? "bg-white dark:bg-slate-700 text-amber-900 dark:text-amber-300 shadow-md ring-1 ring-slate-200/60 dark:ring-slate-600 font-black"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white/60 dark:hover:bg-slate-700/50"
-                  }`}
-                >
-                  <span>🗓️</span>
-                  <span>মাসিক (30D)</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedDateRange("yearly")}
-                  className={`flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer text-center flex items-center justify-center space-x-1.5 ${
-                    selectedDateRange === "yearly" || selectedDateRange === "365"
-                      ? "bg-white dark:bg-slate-700 text-amber-900 dark:text-amber-300 shadow-md ring-1 ring-slate-200/60 dark:ring-slate-600 font-black"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white/60 dark:hover:bg-slate-700/50"
-                  }`}
-                >
-                  <span>📊</span>
-                  <span>বাৎসরিক (1Y)</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedDateRange("all")}
-                  className={`flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer text-center flex items-center justify-center space-x-1.5 ${
-                    selectedDateRange === "all"
-                      ? "bg-white dark:bg-slate-700 text-amber-900 dark:text-amber-300 shadow-md ring-1 ring-slate-200/60 dark:ring-slate-600 font-black"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white/60 dark:hover:bg-slate-700/50"
-                  }`}
-                >
-                  <span>📋</span>
-                  <span>সম্পূর্ণ (All)</span>
-                </button>
-              </div>
-
-              {/* Key Price Summary Badges */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 pt-1">
-                <div className="bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-900/50 rounded-xl p-3">
-                  <span className="text-[11px] font-bold text-amber-800 dark:text-amber-400 block">সর্বোচ্চ দর (Peak Price)</span>
-                  <span className="text-base font-black text-amber-950 dark:text-amber-200 mt-0.5 block">
-                    ৳ {eggPriceStats.maxPrice}
-                    {eggPriceStats.peakPoint && (
-                      <span className="text-[10px] text-amber-700 dark:text-amber-400 font-semibold ml-1 block">
-                        ({eggPriceStats.peakPoint.date.slice(5)})
-                      </span>
-                    )}
-                  </span>
-                </div>
-                <div className="bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-3">
-                  <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-400 block">সর্বনিম্ন দর (Lowest Price)</span>
-                  <span className="text-base font-black text-emerald-950 dark:text-emerald-200 mt-0.5 block">
-                    ৳ {eggPriceStats.minPrice}
-                    {eggPriceStats.lowestPoint && (
-                      <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold ml-1 block">
-                        ({eggPriceStats.lowestPoint.date.slice(5)})
-                      </span>
-                    )}
-                  </span>
-                </div>
-                <div className="bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-900/50 rounded-xl p-3">
-                  <span className="text-[11px] font-bold text-blue-800 dark:text-blue-400 block">গড় বাজার দর (Avg Price)</span>
-                  <span className="text-base font-black text-blue-950 dark:text-blue-200 mt-0.5 block">৳ {eggPriceStats.avgPrice}</span>
-                </div>
-                <div className="bg-purple-50/70 dark:bg-purple-950/40 border border-purple-200/80 dark:border-purple-900/50 rounded-xl p-3">
-                  <span className="text-[11px] font-bold text-purple-800 dark:text-purple-400 block">মোট ডাটা পয়েন্ট</span>
-                  <span className="text-base font-black text-purple-950 dark:text-purple-200 mt-0.5 block">{filteredData.length} দিন</span>
-                </div>
-              </div>
-
-              {/* Interactive SVG X-Y Coordinate Graph with 0.5 Intervals */}
-              <div className="pt-2">
-                <div className="w-full overflow-hidden bg-slate-50/80 dark:bg-slate-950/60 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-1.5 sm:p-4">
-                  <svg viewBox="0 0 840 330" className="w-full h-auto select-none block">
-                    <defs>
-                      {/* Linear gradients for area fill */}
-                      {Object.entries(EGG_COLORS).map(([eggName, color]) => (
-                        <linearGradient key={`grad-${eggName}`} id={`grad-${eggName.replace(/[^a-zA-Z0-9]/g, "")}`} x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor={color.stroke} stopOpacity="0.25" />
-                          <stop offset="100%" stopColor={color.stroke} stopOpacity="0.0" />
-                        </linearGradient>
-                      ))}
-                    </defs>
-
-                    {/* Y-Axis Coordinate Helpers */}
-                    {(() => {
-                      const yMin = eggPriceStats.yMin;
-                      const yMax = eggPriceStats.yMax;
-                      const plotTop = 38;
-                      const plotHeight = 220;
-                      const leftMargin = 66;
-                      const rightMargin = 808;
-                      const plotWidth = rightMargin - leftMargin;
-
-                      const getY = (v: number) => {
-                        const clamped = Math.max(yMin, Math.min(yMax, v));
-                        return plotTop + plotHeight - ((clamped - yMin) / Math.max(1, yMax - yMin)) * plotHeight;
-                      };
-
-                      const getX = (index: number, total: number) => {
-                        if (total <= 1) return leftMargin + plotWidth / 2;
-                        return leftMargin + (index / (total - 1)) * plotWidth;
-                      };
-
-                      const avgY = getY(eggPriceStats.avgPrice);
-
-                      return (
-                        <g>
-                          {/* Y-Axis 0.5 Sub-Tick Background Lines */}
-                          {eggPriceStats.ySubTicks.map((subVal) => {
-                            const yP = getY(subVal);
-                            return (
-                              <line
-                                key={`sub-${subVal}`}
-                                x1={leftMargin}
-                                y1={yP}
-                                x2={rightMargin}
-                                y2={yP}
-                                className="stroke-slate-100 dark:stroke-slate-800/80"
-                                strokeWidth="0.8"
-                                strokeDasharray="2 2"
-                              />
-                            );
-                          })}
-
-                          {/* Y-Axis Main Ticks & Labels */}
-                          {eggPriceStats.yTicks.map((tickVal) => {
-                            const yP = getY(tickVal);
-                            return (
-                              <g key={`tick-${tickVal}`}>
-                                <line
-                                  x1={leftMargin}
-                                  y1={yP}
-                                  x2={rightMargin}
-                                  y2={yP}
-                                  className={tickVal === yMin ? "stroke-slate-600 dark:stroke-slate-500" : "stroke-slate-200 dark:stroke-slate-800"}
-                                  strokeWidth={tickVal === yMin ? "1.5" : "1"}
-                                  strokeDasharray={tickVal === yMin ? undefined : "4 4"}
-                                />
-                                <text
-                                  x={leftMargin - 8}
-                                  y={yP + 4}
-                                  textAnchor="end"
-                                  className="text-[10px] sm:text-[11px] font-bold fill-slate-500 dark:fill-slate-400"
-                                >
-                                  ৳{tickVal % 1 === 0 ? tickVal.toFixed(0) : tickVal.toFixed(1)}
-                                </text>
-                              </g>
-                            );
-                          })}
-
-                          {/* Left Y-Axis Solid Line */}
-                          <line x1={leftMargin} y1="30" x2={leftMargin} y2="260" className="stroke-slate-600 dark:stroke-slate-400" strokeWidth="1.5" />
-
-                          {/* Y-Axis Title (Left) */}
-                          <text x={leftMargin} y="16" textAnchor="start" className="text-[10px] font-black fill-slate-600 dark:fill-slate-400 uppercase tracking-wider">
-                            Y: দর (৳/পিস) ↑
-                          </text>
-
-                          {/* X-Axis Title (Cleanly at Top Right) */}
-                          <text x={rightMargin} y="16" textAnchor="end" className="text-[10px] font-black fill-slate-600 dark:fill-slate-400 uppercase tracking-wider">
-                            X: সময়কাল (তারিখ) →
-                          </text>
-
-                          {/* Average Price Dotted Reference Line */}
-                          {eggPriceStats.avgPrice >= yMin && eggPriceStats.avgPrice <= yMax && (
-                            <g>
-                              <line
-                                x1={leftMargin}
-                                y1={avgY}
-                                x2={rightMargin}
-                                y2={avgY}
-                                className="stroke-slate-400 dark:stroke-slate-500"
-                                strokeWidth="1.5"
-                                strokeDasharray="4 4"
-                              />
-                              {/* Dotted Average Label on Left Side */}
-                              <rect x={leftMargin + 6} y={avgY - 9} width="85" height="17" rx="4" className="fill-slate-900/90 dark:fill-slate-800/90 stroke-slate-500" strokeWidth="1" />
-                              <text
-                                x={leftMargin + 48}
-                                y={avgY + 3}
-                                textAnchor="middle"
-                                className="text-[9px] font-black fill-slate-100 dark:fill-slate-200 pointer-events-none"
-                              >
-                                গড়: ৳{eggPriceStats.avgPrice}
-                              </text>
-                            </g>
-                          )}
-
-                          {/* X-Axis Vertical Day Ticks & Labels */}
-                          {filteredData.map((d, i) => {
-                            const xP = getX(i, filteredData.length);
-                            const isCurrentDay = currentViewDay && currentViewDay.date === d.date;
-                            return (
-                              <g
-                                key={`x-axis-${d.date}`}
-                                className="cursor-pointer"
-                                onClick={() => setSelectedDashboardDate(d.date)}
-                              >
-                                <line
-                                  x1={xP}
-                                  y1="30"
-                                  x2={xP}
-                                  y2="260"
-                                  stroke={isCurrentDay ? "rgba(245, 158, 11, 0.4)" : undefined}
-                                  className={isCurrentDay ? undefined : "stroke-slate-200/50 dark:stroke-slate-800/40"}
-                                  strokeWidth={isCurrentDay ? "2" : "1"}
-                                  strokeDasharray={isCurrentDay ? "2 2" : undefined}
-                                />
-                                <line x1={xP} y1="260" x2={xP} y2="266" className="stroke-slate-600 dark:stroke-slate-400" strokeWidth="1.5" />
-                                <text
-                                  x={xP}
-                                  y="280"
-                                  textAnchor="middle"
-                                  className={`text-[10px] font-bold ${
-                                    isCurrentDay ? "fill-amber-600 dark:fill-amber-400 font-black text-xs" : "fill-slate-700 dark:fill-slate-300"
-                                  }`}
-                                >
-                                  {d.date.slice(8)}/{d.date.slice(5, 7)}
-                                </text>
-                                <text
-                                  x={xP}
-                                  y="294"
-                                  textAnchor="middle"
-                                  className={`text-[9px] font-semibold ${
-                                    isCurrentDay ? "fill-amber-600 dark:fill-amber-400 font-bold" : "fill-slate-400 dark:fill-slate-500"
-                                  }`}
-                                >
-                                  {getBanglaDay(d.day).replace("বার", "")}
-                                </text>
-                              </g>
-                            );
-                          })}
-
-                          {/* Multi-Color Series Curves */}
-                          {(selectedEggPriceFilter === "all" ? EGG_TYPES : [selectedEggPriceFilter]).map((eggType) => {
-                            const color =
-                              EGG_COLORS[eggType] || { stroke: "#d97706", fill: "rgba(217, 119, 6, 0.12)", label: eggType };
-                            const totalDays = filteredData.length;
-                            const pts = filteredData.map((d, i) => {
-                              const rate = d.stock[eggType]?.purchaseRate || DEFAULT_RATES[eggType] || 0;
-                              const x = getX(i, totalDays);
-                              const y = getY(rate);
-                              return { x, y, rate, date: d.date, day: d.day };
-                            });
-
-                            const pathD = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
-                            const areaD =
-                              pts.length > 0
-                                ? `${pathD} L ${pts[pts.length - 1].x} 260 L ${pts[0].x} 260 Z`
-                                : "";
-
-                            return (
-                              <g key={`series-${eggType}`}>
-                                {/* Area Fill Gradient for single egg */}
-                                {selectedEggPriceFilter !== "all" && (
-                                  <path d={areaD} fill={`url(#grad-${eggType.replace(/[^a-zA-Z0-9]/g, "")})`} />
-                                )}
-
-                                {/* Multi-Color Line */}
-                                <path
-                                  d={pathD}
-                                  fill="none"
-                                  stroke={color.stroke}
-                                  strokeWidth={selectedEggPriceFilter === eggType ? "3.5" : "2.5"}
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-
-                                {/* Data Point Dots */}
-                                {pts.map((p) => {
-                                  const isCurrent = currentViewDay && currentViewDay.date === p.date;
-                                  const isPeak =
-                                    eggPriceStats.peakPoint &&
-                                    eggPriceStats.peakPoint.date === p.date &&
-                                    eggPriceStats.peakPoint.eggType === eggType;
-                                  return (
-                                    <g
-                                      key={`pt-${eggType}-${p.date}`}
-                                      onClick={() => setSelectedDashboardDate(p.date)}
-                                      className="cursor-pointer group"
-                                    >
-                                      {isCurrent && (
-                                        <circle
-                                          cx={p.x}
-                                          cy={p.y}
-                                          r="8"
-                                          fill={color.stroke}
-                                          opacity="0.25"
-                                          className="animate-ping"
-                                        />
-                                      )}
-                                      <circle
-                                        cx={p.x}
-                                        cy={p.y}
-                                        r={isCurrent ? "5.5" : "4"}
-                                        fill="white"
-                                        stroke={color.stroke}
-                                        strokeWidth={isCurrent ? "3" : "2"}
-                                      />
-                                      {/* Exact Price on dot (hide if peak to prevent overlap) */}
-                                      {!isPeak && (selectedEggPriceFilter !== "all" || isCurrent) && (
-                                        <text
-                                          x={p.x}
-                                          y={p.y - 8}
-                                          textAnchor="middle"
-                                          className="text-[10px] font-black fill-slate-800 dark:fill-slate-100 pointer-events-none"
-                                        >
-                                          ৳{p.rate}
-                                        </text>
-                                      )}
-                                    </g>
-                                  );
-                                })}
-                              </g>
-                            );
-                          })}
-
-                          {/* Peak Price Callout Annotation */}
-                          {eggPriceStats.peakPoint && (
-                            (() => {
-                              const peak = eggPriceStats.peakPoint;
-                              const peakX = getX(peak.index, filteredData.length);
-                              const peakY = getY(peak.price);
-                              const calloutY = Math.max(6, peakY - 32);
-                              return (
-                                <g>
-                                  <line
-                                    x1={peakX}
-                                    y1={peakY - 6}
-                                    x2={peakX}
-                                    y2={calloutY + 18}
-                                    stroke="#e11d48"
-                                    strokeWidth="1.5"
-                                    strokeDasharray="2 2"
-                                  />
-                                  <rect
-                                    x={Math.max(8, Math.min(740, peakX - 44))}
-                                    y={calloutY}
-                                    width="88"
-                                    height="19"
-                                    rx="5"
-                                    fill="#0f172a"
-                                    stroke="#e11d48"
-                                    strokeWidth="1.2"
-                                  />
-                                  <text
-                                    x={Math.max(52, Math.min(784, peakX))}
-                                    y={calloutY + 13}
-                                    textAnchor="middle"
-                                    className="text-[9.5px] font-black fill-amber-300 pointer-events-none"
-                                  >
-                                    ★ সর্বোচ্চ: ৳{peak.price}
-                                  </text>
-                                </g>
-                              );
-                            })()
-                          )}
-                        </g>
-                      );
-                    })()}
-                  </svg>
-                </div>
-
-                {/* Multi-Color Legend with All Eggs + Individual Egg Toggles */}
-                <div className="flex flex-wrap justify-center items-center gap-2 sm:gap-3 mt-3 text-xs font-bold text-slate-700 dark:text-slate-300">
-                  {/* ALL EGGS BUTTON */}
-                  <button
-                    type="button"
-                    onClick={() => setSelectedEggPriceFilter("all")}
-                    className={`flex items-center space-x-1.5 cursor-pointer hover:opacity-90 transition-all px-3 py-1.5 rounded-xl border shadow-2xs ${
-                      selectedEggPriceFilter === "all"
-                        ? "bg-amber-600 dark:bg-amber-500 text-white border-amber-600 dark:border-amber-500 ring-2 ring-amber-300"
-                        : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60"
-                    }`}
-                  >
-                    <span>🌈</span>
-                    <span>সবগুলো ডিম (All Eggs)</span>
-                  </button>
-
-                  {/* Individual Egg Color Toggles */}
-                  {EGG_TYPES.map((eggType) => {
-                    const color = EGG_COLORS[eggType] || { stroke: "#d97706", label: eggType };
-                    const isSelected = selectedEggPriceFilter === eggType;
-                    return (
-                      <button
-                        key={eggType}
-                        type="button"
-                        onClick={() =>
-                          setSelectedEggPriceFilter(selectedEggPriceFilter === eggType ? "all" : eggType)
-                        }
-                        className={`flex items-center space-x-1.5 cursor-pointer hover:opacity-90 transition-all px-2.5 py-1.5 rounded-xl border shadow-2xs ${
-                          isSelected
-                            ? "bg-slate-900 dark:bg-slate-700 text-white border-slate-900 dark:border-slate-600 ring-2 ring-amber-400"
-                            : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60"
-                        }`}
-                      >
-                        {eggType === "সাদা (White Egg)" ? (
-                          <span className="w-3.5 h-1.5 rounded-full inline-block bg-white border border-slate-400 shadow-2xs" />
-                        ) : (
-                          <span className="w-3.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: color.stroke }} />
-                        )}
-                        <span>{color.label || eggType.split(" (")[0]}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            {/* 30% SECTION: Per Item Sell & Daily Egg Sales Widget Sidebar */}
-            <div className="lg:col-span-4 xl:col-span-4 flex flex-col justify-between gap-3 sm:gap-4 h-full">
-              {/* Item-wise Sell Card with Interactive Pie/Donut Chart */}
-              <div className="flex-1 bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 flex flex-col justify-between space-y-3 transition-colors">
-                <div className="space-y-3">
-                  {/* Header: Title, Metric Toggle, Date Badge */}
-                  <div className="flex flex-wrap justify-between items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2.5">
-                    <div className="flex items-center space-x-2">
-                      <div className="bg-amber-50 dark:bg-amber-950/70 p-1.5 rounded-xl border border-amber-100 dark:border-amber-800/60 text-amber-700 dark:text-amber-400">
-                        <PieChart className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <h4 className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100">
-                          ডিম অনুযায়ী বিক্রি
-                        </h4>
-                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">পাই চার্ট ও বিক্রির হার</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center space-x-1.5">
-                      {/* Metric Toggle: Qty vs Value */}
-                      <div className="inline-flex p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px]">
-                        <button
-                          type="button"
-                          onClick={() => setItemSellPieMetric("qty")}
-                          className={`px-2 py-0.5 rounded-md font-bold transition-all cursor-pointer ${
-                            itemSellPieMetric === "qty"
-                              ? "bg-white dark:bg-slate-700 text-amber-700 dark:text-amber-300 shadow-2xs"
-                              : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
-                          }`}
-                          title="সংখ্যা অনুপাতে পাই চার্ট"
-                        >
-                          সংখ্যা
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setItemSellPieMetric("value")}
-                          className={`px-2 py-0.5 rounded-md font-bold transition-all cursor-pointer ${
-                            itemSellPieMetric === "value"
-                              ? "bg-white dark:bg-slate-700 text-amber-700 dark:text-amber-300 shadow-2xs"
-                              : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
-                          }`}
-                          title="টাকার মূল্যে পাই চার্ট"
-                        >
-                          মূল্য (৳)
-                        </button>
-                      </div>
-
-                      <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
-                        {currentViewDay ? currentViewDay.date.slice(5) : ""}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Interactive SVG Pie / Donut Chart */}
-                  <div className="flex justify-center items-center py-1">
-                    <div className="w-40 h-40 sm:w-44 sm:h-44 relative">
-                      <svg viewBox="0 0 160 160" className="w-full h-full select-none block overflow-visible">
-                        {/* Empty background ring */}
-                        <circle
-                          cx="80"
-                          cy="80"
-                          r="54.5"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="23"
-                          className="text-slate-100 dark:text-slate-800/70"
-                        />
-
-                        {/* Donut Slices */}
-                        {itemSellPieData.activeMetricTotal > 0 &&
-                          itemSellPieData.items.map((item) => {
-                            if (!item.path) return null;
-                            const isHovered = hoveredSellEgg === item.eggType;
-                            const shift = isHovered ? 3.5 : 0;
-                            const shiftX = Math.cos(item.midAngle) * shift;
-                            const shiftY = Math.sin(item.midAngle) * shift;
-
-                            return (
-                              <g
-                                key={`pie-slice-${item.eggType}`}
-                                style={{
-                                  transform: shift ? `translate(${shiftX.toFixed(2)}px, ${shiftY.toFixed(2)}px)` : undefined,
-                                  transition: "transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s",
-                                }}
-                                className="cursor-pointer"
-                                onMouseEnter={() => setHoveredSellEgg(item.eggType)}
-                                onMouseLeave={() => setHoveredSellEgg(null)}
-                              >
-                                <path
-                                  d={item.path}
-                                  fill={item.color.stroke}
-                                  stroke="currentColor"
-                                  strokeWidth={isHovered ? 2.5 : 1.5}
-                                  className="text-white dark:text-slate-900 transition-all duration-150"
-                                  style={{
-                                    opacity: hoveredSellEgg && !isHovered ? 0.4 : 1,
-                                    filter: isHovered ? `drop-shadow(0 2px 6px ${item.color.stroke}90)` : undefined,
-                                  }}
-                                />
-                              </g>
-                            );
-                          })}
-
-                        {/* Center Statistics */}
-                        {activeHoveredEggData && activeHoveredEggData.metricVal > 0 ? (
-                          <g className="pointer-events-none transition-all duration-200">
-                            <text
-                              x="80"
-                              y="66"
-                              textAnchor="middle"
-                              className="text-[10px] font-bold fill-slate-500 dark:fill-slate-400"
-                            >
-                              {activeHoveredEggData.shortName}
-                            </text>
-                            <text
-                              x="80"
-                              y="81"
-                              textAnchor="middle"
-                              className="text-xs font-black fill-slate-900 dark:fill-white"
-                            >
-                              {itemSellPieMetric === "qty"
-                                ? `${activeHoveredEggData.soldQty.toLocaleString()} টি`
-                                : `৳ ${activeHoveredEggData.soldVal.toLocaleString()}`}
-                            </text>
-                            <text
-                              x="80"
-                              y="95"
-                              textAnchor="middle"
-                              className="text-[9.5px] font-black fill-amber-600 dark:fill-amber-400"
-                            >
-                              {activeHoveredEggData.percent.toFixed(1)}%
-                            </text>
-                          </g>
-                        ) : (
-                          <g className="pointer-events-none transition-all duration-200">
-                            <text
-                              x="80"
-                              y="67"
-                              textAnchor="middle"
-                              className="text-[9.5px] font-bold fill-slate-400 dark:fill-slate-500"
-                            >
-                              মোট {itemSellPieMetric === "qty" ? "ডিম বিক্রি" : "বিক্রি মূল্য"}
-                            </text>
-                            <text
-                              x="80"
-                              y="82"
-                              textAnchor="middle"
-                              className="text-xs font-black fill-slate-900 dark:fill-white"
-                            >
-                              {itemSellPieMetric === "qty"
-                                ? `${itemSellPieData.totalQty.toLocaleString()} টি`
-                                : `৳ ${itemSellPieData.totalVal.toLocaleString()}`}
-                            </text>
-                            <text
-                              x="80"
-                              y="95"
-                              textAnchor="middle"
-                              className="text-[9px] font-bold fill-slate-400 dark:fill-slate-500"
-                            >
-                              {itemSellPieData.activeMetricTotal > 0 ? "সর্বমোট ১০০%" : "বিক্রি নেই"}
-                            </text>
-                          </g>
-                        )}
-                      </svg>
-                    </div>
-                  </div>
-
-                  {/* List breakdown with mini progress indicators */}
-                  <div className="grid grid-cols-1 gap-1 divide-y divide-slate-100 dark:divide-slate-800/80 text-xs">
-                    {itemSellPieData.items.map((item) => {
-                      const isHovered = hoveredSellEgg === item.eggType;
-
-                      return (
-                        <div
-                          key={`sell-${item.eggType}`}
-                          onMouseEnter={() => setHoveredSellEgg(item.eggType)}
-                          onMouseLeave={() => setHoveredSellEgg(null)}
-                          className={`flex flex-col py-1 px-1.5 rounded-lg transition-all cursor-pointer ${
-                            isHovered
-                              ? "bg-amber-50/90 dark:bg-amber-950/40 ring-1 ring-amber-300 dark:ring-amber-700/60"
-                              : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                          }`}
-                        >
-                          <div className="flex justify-between items-center">
-                            <div className="flex items-center space-x-1.5">
-                              <span
-                                className="w-2.5 h-2.5 rounded-full shrink-0 transition-transform"
-                                style={{
-                                  backgroundColor: item.color.stroke,
-                                  transform: isHovered ? "scale(1.25)" : "scale(1)",
-                                }}
-                              />
-                              <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                                {item.shortName}
-                              </span>
-                              {item.percent > 0 && (
-                                <span
-                                  className="text-[9.5px] font-black px-1.5 py-0.2 rounded-full leading-none"
-                                  style={{
-                                    backgroundColor: `${item.color.stroke}20`,
-                                    color: item.color.stroke,
-                                  }}
-                                >
-                                  {item.percent.toFixed(0)}%
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center space-x-2 text-[11px]">
-                              <span className="font-bold text-slate-900 dark:text-slate-100">
-                                {item.soldQty > 0 ? `${item.soldQty.toLocaleString()} টি` : "০ টি"}
-                              </span>
-                              <span className="text-slate-400 dark:text-slate-500 font-medium">@ ৳{item.rate}</span>
-                              <span className="font-black text-amber-800 dark:text-amber-300 w-16 text-right">
-                                {item.soldVal > 0 ? `৳ ${item.soldVal.toLocaleString()}` : "৳ ০"}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Proportion progress bar */}
-                          {item.percent > 0 && (
-                            <div className="w-full bg-slate-100 dark:bg-slate-800 h-1 rounded-full mt-1 overflow-hidden">
-                              <div
-                                className="h-full rounded-full transition-all duration-300"
-                                style={{
-                                  width: `${item.percent}%`,
-                                  backgroundColor: item.color.stroke,
-                                }}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              {/* Today's Total Egg Sales Widget */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-2.5 transition-colors">
-                <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-2">
-                  <div className="flex items-center space-x-1.5">
-                    <ShoppingCart className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                    <h4 className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100">আজকের মোট ডিম বিক্রি</h4>
-                  </div>
-                  <span className="text-[11px] font-black text-blue-800 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800/60">
-                    সর্বমোট {viewTotalSoldQty.toLocaleString()} টি
-                  </span>
-                </div>
-                <div className="space-y-1.5 text-xs">
-                  <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800">
-                    <span className="text-slate-600 dark:text-slate-400 font-medium">ডিম বিক্রির ক্রয়মূল্য:</span>
-                    <span className="font-bold text-slate-900 dark:text-slate-200">৳ {viewSoldStockCost.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800">
-                    <span className="text-slate-600 dark:text-slate-400 font-medium">দিনের মোট লাভ (মার্জিন):</span>
-                    <span className="font-bold text-emerald-700 dark:text-emerald-400">৳ {viewProfit.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between items-center pt-1 text-slate-900 dark:text-slate-100 font-black">
-                    <span className="text-xs sm:text-sm">মোট বিক্রি (Sales):</span>
-                    <span className="text-blue-900 dark:text-blue-300 text-sm sm:text-base font-black">৳ {viewDailySalesAmount.toLocaleString()}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Detailed Financial Breakdowns with Name & Amount (Placed at the bottom) */}
           {currentViewDay && (
