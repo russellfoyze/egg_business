@@ -1201,6 +1201,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
         yMin: 0,
         yMax: 10000,
         yTicks: [0, 2500, 5000, 7500, 10000],
+        ySalesMax: 10000,
+        ySalesTicks: [0, 2500, 5000, 7500, 10000],
+        yMarginMax: 5000,
+        yMarginTicks: [0, 1000, 2000, 3000, 4000, 5000],
       };
     }
 
@@ -1247,25 +1251,44 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
       ? points.find((p) => p.date === currentViewDay.date) || points[points.length - 1]
       : points[points.length - 1];
 
-    const topVal = Math.max(maxSales, maxMargin, 1000);
-    let yMin = 0;
-    let yMax = Math.ceil(topVal * 1.15);
-    const span = yMax - yMin;
+    // Sales Y-scale
+    let ySalesMax = Math.ceil(Math.max(maxSales, 1000) * 1.15);
+    let stepSales = 5000;
+    if (ySalesMax <= 10000) stepSales = 2000;
+    else if (ySalesMax <= 25000) stepSales = 5000;
+    else if (ySalesMax <= 50000) stepSales = 10000;
+    else if (ySalesMax <= 100000) stepSales = 20000;
+    else stepSales = 25000;
 
-    let step = 5000;
-    if (span <= 10000) step = 2000;
-    else if (span <= 25000) step = 5000;
-    else if (span <= 50000) step = 10000;
-    else if (span <= 100000) step = 20000;
-    else step = 25000;
+    ySalesMax = Math.ceil(ySalesMax / stepSales) * stepSales;
+    if (ySalesMax === 0) ySalesMax = stepSales;
 
-    yMax = Math.ceil(yMax / step) * step;
-    if (yMax === 0) yMax = step;
-
-    const yTicks: number[] = [];
-    for (let t = yMin; t <= yMax + 0.001; t += step) {
-      yTicks.push(t);
+    const ySalesTicks: number[] = [];
+    for (let t = 0; t <= ySalesMax + 0.001; t += stepSales) {
+      ySalesTicks.push(t);
     }
+
+    // Margin Dedicated Y-scale (High Resolution Margin Scale)
+    let yMarginMax = Math.ceil(Math.max(maxMargin, 500) * 1.25);
+    let stepMargin = 1000;
+    if (yMarginMax <= 1000) stepMargin = 200;
+    else if (yMarginMax <= 2500) stepMargin = 500;
+    else if (yMarginMax <= 7000) stepMargin = 1500;
+    else if (yMarginMax <= 15000) stepMargin = 2500;
+    else if (yMarginMax <= 30000) stepMargin = 5000;
+    else stepMargin = 10000;
+
+    yMarginMax = Math.ceil(yMarginMax / stepMargin) * stepMargin;
+    if (yMarginMax === 0) yMarginMax = stepMargin;
+
+    const yMarginTicks: number[] = [];
+    for (let t = 0; t <= yMarginMax + 0.001; t += stepMargin) {
+      yMarginTicks.push(t);
+    }
+
+    const yMin = 0;
+    const yMax = salesGraphMetric === "margin" ? yMarginMax : ySalesMax;
+    const yTicks = salesGraphMetric === "margin" ? yMarginTicks : ySalesTicks;
 
     return {
       points,
@@ -1283,8 +1306,12 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
       yMin,
       yMax,
       yTicks,
+      ySalesMax,
+      ySalesTicks,
+      yMarginMax,
+      yMarginTicks,
     };
-  }, [salesFilteredData, currentViewDay]);
+  }, [salesFilteredData, currentViewDay, salesGraphMetric]);
 
   // Auto-scroll sales table to the bottom on load/filter change so last/latest data is visible first
   useEffect(() => {
@@ -2336,24 +2363,70 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
 
                   {/* Minimal Sales & Margin Summary (2 Compact Cards) */}
                   <div className="grid grid-cols-2 gap-2 pt-0.5">
-                    <div className="bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-900/50 rounded-xl p-2.5">
-                      <span className="text-[10px] font-bold text-blue-800 dark:text-blue-400 block">মোট বিক্রি (Sales)</span>
-                      <span className="text-xs sm:text-sm font-black text-blue-950 dark:text-blue-200 block truncate">
-                        ৳ {salesVsMarginStats.totalSales.toLocaleString()}
-                      </span>
-                      <span className="text-[9px] text-blue-700/80 dark:text-blue-400/80 block mt-0.5">
-                        গড়: ৳{salesVsMarginStats.avgSales.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-2.5">
-                      <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-400 block">মোট মার্জিন (Profit)</span>
-                      <span className="text-xs sm:text-sm font-black text-emerald-950 dark:text-emerald-200 block truncate">
-                        ৳ {salesVsMarginStats.totalMargin.toLocaleString()}
-                      </span>
-                      <span className="text-[9px] text-emerald-700/80 dark:text-emerald-400/80 block mt-0.5">
-                        হার: {salesVsMarginStats.avgMarginPercent}%
-                      </span>
-                    </div>
+                    {salesGraphMetric === "margin" ? (
+                      <>
+                        <div className="bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-2.5">
+                          <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-400 block">মোট মার্জিন (Profit)</span>
+                          <span className="text-xs sm:text-sm font-black text-emerald-950 dark:text-emerald-200 block truncate">
+                            ৳ {salesVsMarginStats.totalMargin.toLocaleString()}
+                          </span>
+                          <span className="text-[9px] text-emerald-700/80 dark:text-emerald-400/80 block mt-0.5">
+                            গড়: ৳{salesVsMarginStats.avgMargin.toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200/80 dark:border-teal-900/50 rounded-xl p-2.5">
+                          <span className="text-[10px] font-bold text-teal-800 dark:text-teal-400 block">সর্বোচ্চ মার্জিন (Peak)</span>
+                          <span className="text-xs sm:text-sm font-black text-teal-950 dark:text-teal-200 block truncate">
+                            ৳ {salesVsMarginStats.maxMargin.toLocaleString()}
+                          </span>
+                          <span className="text-[9px] text-teal-700/80 dark:text-teal-400/80 block mt-0.5">
+                            তারিখ: {salesVsMarginStats.peakMarginDay?.date ? salesVsMarginStats.peakMarginDay.date.slice(5) : "-"}
+                          </span>
+                        </div>
+                      </>
+                    ) : salesGraphMetric === "sales" ? (
+                      <>
+                        <div className="bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-900/50 rounded-xl p-2.5">
+                          <span className="text-[10px] font-bold text-blue-800 dark:text-blue-400 block">মোট বিক্রি (Sales)</span>
+                          <span className="text-xs sm:text-sm font-black text-blue-950 dark:text-blue-200 block truncate">
+                            ৳ {salesVsMarginStats.totalSales.toLocaleString()}
+                          </span>
+                          <span className="text-[9px] text-blue-700/80 dark:text-blue-400/80 block mt-0.5">
+                            গড়: ৳{salesVsMarginStats.avgSales.toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-900/50 rounded-xl p-2.5">
+                          <span className="text-[10px] font-bold text-indigo-800 dark:text-indigo-400 block">সর্বোচ্চ বিক্রি (Peak)</span>
+                          <span className="text-xs sm:text-sm font-black text-indigo-950 dark:text-indigo-200 block truncate">
+                            ৳ {salesVsMarginStats.maxSales.toLocaleString()}
+                          </span>
+                          <span className="text-[9px] text-indigo-700/80 dark:text-indigo-400/80 block mt-0.5">
+                            তারিখ: {salesVsMarginStats.peakSalesDay?.date ? salesVsMarginStats.peakSalesDay.date.slice(5) : "-"}
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-900/50 rounded-xl p-2.5">
+                          <span className="text-[10px] font-bold text-blue-800 dark:text-blue-400 block">মোট বিক্রি (Sales)</span>
+                          <span className="text-xs sm:text-sm font-black text-blue-950 dark:text-blue-200 block truncate">
+                            ৳ {salesVsMarginStats.totalSales.toLocaleString()}
+                          </span>
+                          <span className="text-[9px] text-blue-700/80 dark:text-blue-400/80 block mt-0.5">
+                            গড়: ৳{salesVsMarginStats.avgSales.toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-2.5">
+                          <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-400 block">মোট মার্জিন (Profit)</span>
+                          <span className="text-xs sm:text-sm font-black text-emerald-950 dark:text-emerald-200 block truncate">
+                            ৳ {salesVsMarginStats.totalMargin.toLocaleString()}
+                          </span>
+                          <span className="text-[9px] text-emerald-700/80 dark:text-emerald-400/80 block mt-0.5">
+                            হার: {salesVsMarginStats.avgMarginPercent}%
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Interactive Compact SVG Chart */}
@@ -2363,6 +2436,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                         <linearGradient id="salesBarGrad" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.80" />
                           <stop offset="100%" stopColor="#1d4ed8" stopOpacity="0.95" />
+                        </linearGradient>
+                        <linearGradient id="marginBarGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#10b981" stopOpacity="0.85" />
+                          <stop offset="100%" stopColor="#047857" stopOpacity="0.95" />
                         </linearGradient>
                         <linearGradient id="salesAreaGrad" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.30" />
@@ -2375,17 +2452,26 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                       </defs>
 
                       {(() => {
-                        const yMin = salesVsMarginStats.yMin;
-                        const yMax = salesVsMarginStats.yMax;
+                        const isMarginOnly = salesGraphMetric === "margin";
+                        const isSalesOnly = salesGraphMetric === "sales";
+                        const isBoth = salesGraphMetric === "both";
+
                         const plotTop = 22;
                         const plotHeight = 150;
-                        const leftMargin = 45;
-                        const rightMargin = 405;
+                        const leftMargin = isMarginOnly ? 40 : 44;
+                        const rightMargin = isBoth ? 376 : 405;
                         const plotWidth = rightMargin - leftMargin;
 
-                        const getY = (v: number) => {
-                          const clamped = Math.max(yMin, Math.min(yMax, v));
-                          return plotTop + plotHeight - ((clamped - yMin) / Math.max(1, yMax - yMin)) * plotHeight;
+                        const getYSales = (v: number) => {
+                          const yMax = salesVsMarginStats.ySalesMax;
+                          const clamped = Math.max(0, Math.min(yMax, v));
+                          return plotTop + plotHeight - (clamped / Math.max(1, yMax)) * plotHeight;
+                        };
+
+                        const getYMargin = (v: number) => {
+                          const yMax = salesVsMarginStats.yMarginMax;
+                          const clamped = Math.max(0, Math.min(yMax, v));
+                          return plotTop + plotHeight - (clamped / Math.max(1, yMax)) * plotHeight;
                         };
 
                         const getX = (index: number, total: number) => {
@@ -2398,8 +2484,8 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
 
                         const pts = salesVsMarginStats.points.map((p, i) => {
                           const x = getX(i, totalDays);
-                          const ySales = getY(p.sales);
-                          const yMargin = getY(p.margin);
+                          const ySales = getYSales(p.sales);
+                          const yMargin = getYMargin(p.margin);
                           return { ...p, x, ySales, yMargin };
                         });
 
@@ -2415,31 +2501,84 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
 
                         return (
                           <g>
-                            {/* Y-axis dashed grid lines & labels */}
-                            {salesVsMarginStats.yTicks.map((tickVal) => {
-                              const yP = getY(tickVal);
-                              return (
-                                <g key={`sales-tick-${tickVal}`}>
-                                  <line
-                                    x1={leftMargin}
-                                    y1={yP}
-                                    x2={rightMargin}
-                                    y2={yP}
-                                    className="stroke-slate-200 dark:stroke-slate-800"
-                                    strokeWidth="1"
-                                    strokeDasharray="3 3"
-                                  />
-                                  <text
-                                    x={leftMargin - 4}
-                                    y={yP + 3}
-                                    textAnchor="end"
-                                    className="text-[8px] font-bold fill-slate-500 dark:fill-slate-400"
-                                  >
-                                    ৳{tickVal >= 1000 ? `${(tickVal / 1000).toFixed(tickVal % 1000 === 0 ? 0 : 1)}k` : tickVal}
-                                  </text>
-                                </g>
-                              );
-                            })}
+                            {/* Y-axis dashed grid lines & left labels */}
+                            {isMarginOnly ? (
+                              salesVsMarginStats.yMarginTicks.map((tickVal) => {
+                                const yP = getYMargin(tickVal);
+                                return (
+                                  <g key={`margin-tick-${tickVal}`}>
+                                    <line
+                                      x1={leftMargin}
+                                      y1={yP}
+                                      x2={rightMargin}
+                                      y2={yP}
+                                      className="stroke-slate-200 dark:stroke-slate-800"
+                                      strokeWidth="1"
+                                      strokeDasharray="3 3"
+                                    />
+                                    <text
+                                      x={leftMargin - 4}
+                                      y={yP + 3}
+                                      textAnchor="end"
+                                      className="text-[8px] font-bold fill-emerald-600 dark:fill-emerald-400"
+                                    >
+                                      ৳{tickVal >= 1000 ? `${(tickVal / 1000).toFixed(tickVal % 1000 === 0 ? 0 : 1)}k` : tickVal}
+                                    </text>
+                                  </g>
+                                );
+                              })
+                            ) : (
+                              salesVsMarginStats.ySalesTicks.map((tickVal) => {
+                                const yP = getYSales(tickVal);
+                                return (
+                                  <g key={`sales-tick-${tickVal}`}>
+                                    <line
+                                      x1={leftMargin}
+                                      y1={yP}
+                                      x2={rightMargin}
+                                      y2={yP}
+                                      className="stroke-slate-200 dark:stroke-slate-800"
+                                      strokeWidth="1"
+                                      strokeDasharray="3 3"
+                                    />
+                                    <text
+                                      x={leftMargin - 4}
+                                      y={yP + 3}
+                                      textAnchor="end"
+                                      className="text-[8px] font-bold fill-blue-600 dark:fill-blue-400"
+                                    >
+                                      ৳{tickVal >= 1000 ? `${(tickVal / 1000).toFixed(tickVal % 1000 === 0 ? 0 : 1)}k` : tickVal}
+                                    </text>
+                                  </g>
+                                );
+                              })
+                            )}
+
+                            {/* Dual-axis Right Y-axis labels for Margin when Both are selected */}
+                            {isBoth &&
+                              salesVsMarginStats.yMarginTicks.map((tickVal) => {
+                                const yP = getYMargin(tickVal);
+                                return (
+                                  <g key={`dual-margin-tick-${tickVal}`}>
+                                    <line
+                                      x1={rightMargin}
+                                      y1={yP}
+                                      x2={rightMargin + 3}
+                                      y2={yP}
+                                      className="stroke-emerald-500/60 dark:stroke-emerald-400/60"
+                                      strokeWidth="1"
+                                    />
+                                    <text
+                                      x={rightMargin + 4}
+                                      y={yP + 3}
+                                      textAnchor="start"
+                                      className="text-[8px] font-bold fill-emerald-600 dark:fill-emerald-400"
+                                    >
+                                      ৳{tickVal >= 1000 ? `${(tickVal / 1000).toFixed(tickVal % 1000 === 0 ? 0 : 1)}k` : tickVal}
+                                    </text>
+                                  </g>
+                                );
+                              })}
 
                             {/* Left Axis Line */}
                             <line
@@ -2447,30 +2586,65 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                               y1={plotTop - 4}
                               x2={leftMargin}
                               y2={plotTop + plotHeight}
-                              className="stroke-slate-500 dark:stroke-slate-400"
+                              className={isMarginOnly ? "stroke-emerald-500" : "stroke-blue-500"}
                               strokeWidth="1.5"
                             />
 
-                            {/* Axis Titles */}
-                            <text x={leftMargin} y="12" textAnchor="start" className="text-[8px] font-black fill-slate-500 dark:fill-slate-400 uppercase tracking-wider">
-                              ৳ ↑
-                            </text>
-                            <text x={rightMargin} y="12" textAnchor="end" className="text-[8px] font-black fill-slate-500 dark:fill-slate-400 uppercase tracking-wider">
-                              তারিখ →
-                            </text>
+                            {/* Right Axis Line when dual-axis mode */}
+                            {isBoth && (
+                              <line
+                                x1={rightMargin}
+                                y1={plotTop - 4}
+                                x2={rightMargin}
+                                y2={plotTop + plotHeight}
+                                className="stroke-emerald-500/70"
+                                strokeWidth="1.5"
+                              />
+                            )}
 
-                            {/* Sales Area / Bar Fill */}
-                            {(salesGraphMetric === "both" || salesGraphMetric === "sales") && areaSales && (
+                            {/* Axis Titles */}
+                            <text
+                              x={leftMargin}
+                              y="12"
+                              textAnchor="start"
+                              className={`text-[8px] font-black uppercase tracking-wider ${
+                                isMarginOnly ? "fill-emerald-600 dark:fill-emerald-400" : "fill-blue-600 dark:fill-blue-400"
+                              }`}
+                            >
+                              {isMarginOnly ? "মার্জিন (৳) ↑" : "বিক্রি (৳) ↑"}
+                            </text>
+                            {isBoth ? (
+                              <text
+                                x={rightMargin + 2}
+                                y="12"
+                                textAnchor="start"
+                                className="text-[8px] font-black fill-emerald-600 dark:fill-emerald-400 uppercase tracking-wider"
+                              >
+                                মার্জিন ↑
+                              </text>
+                            ) : (
+                              <text
+                                x={rightMargin}
+                                y="12"
+                                textAnchor="end"
+                                className="text-[8px] font-black fill-slate-500 dark:fill-slate-400 uppercase tracking-wider"
+                              >
+                                তারিখ →
+                              </text>
+                            )}
+
+                            {/* Sales Area Fill */}
+                            {(isBoth || isSalesOnly) && areaSales && (
                               <path d={areaSales} fill="url(#salesAreaGrad)" />
                             )}
 
                             {/* Margin Area Fill (when margin only) */}
-                            {salesGraphMetric === "margin" && areaMargin && (
+                            {isMarginOnly && areaMargin && (
                               <path d={areaMargin} fill="url(#marginAreaGrad)" />
                             )}
 
                             {/* Sales Trend Line */}
-                            {(salesGraphMetric === "both" || salesGraphMetric === "sales") && pathSales && (
+                            {(isBoth || isSalesOnly) && pathSales && (
                               <path
                                 d={pathSales}
                                 fill="none"
@@ -2482,12 +2656,12 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                             )}
 
                             {/* Margin Trend Line */}
-                            {(salesGraphMetric === "both" || salesGraphMetric === "margin") && pathMargin && (
+                            {(isBoth || isMarginOnly) && pathMargin && (
                               <path
                                 d={pathMargin}
                                 fill="none"
                                 stroke="#10b981"
-                                strokeWidth="2.5"
+                                strokeWidth={isMarginOnly ? "3" : "2.5"}
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                               />
@@ -2497,7 +2671,8 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                             {pts.map((p, i) => {
                               const isCurrent = currentViewDay && currentViewDay.date === p.date;
                               const isHovered = hoveredSalesIndex === i;
-                              const barH = Math.max(3, plotTop + plotHeight - p.ySales);
+                              const salesBarH = Math.max(3, plotTop + plotHeight - p.ySales);
+                              const marginBarH = Math.max(3, plotTop + plotHeight - p.yMargin);
                               const showDateLabel =
                                 totalDays <= 7 ||
                                 i === 0 ||
@@ -2519,7 +2694,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                       y1={plotTop}
                                       x2={p.x}
                                       y2={plotTop + plotHeight}
-                                      stroke={isCurrent ? "#3b82f6" : "rgba(100, 116, 139, 0.4)"}
+                                      stroke={isCurrent ? (isMarginOnly ? "#10b981" : "#3b82f6") : "rgba(100, 116, 139, 0.4)"}
                                       strokeWidth={isCurrent ? "1.5" : "1"}
                                       strokeDasharray="2 2"
                                     />
@@ -2533,17 +2708,31 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                       width={barWidth + 4}
                                       height={plotHeight}
                                       rx="3"
-                                      fill="rgba(59, 130, 246, 0.12)"
+                                      fill={isMarginOnly ? "rgba(16, 185, 129, 0.12)" : "rgba(59, 130, 246, 0.12)"}
                                     />
                                   )}
 
-                                  {/* Sales Subtle Bar Indicator */}
-                                  {(salesGraphMetric === "both" || salesGraphMetric === "sales") && (
+                                  {/* Margin Bar Indicator when margin only */}
+                                  {isMarginOnly && (
+                                    <rect
+                                      x={p.x - barWidth / 2}
+                                      y={p.yMargin}
+                                      width={barWidth}
+                                      height={marginBarH}
+                                      rx="2"
+                                      fill="url(#marginBarGrad)"
+                                      opacity={isCurrent ? "0.90" : isHovered ? "0.7" : "0.45"}
+                                      className="transition-all"
+                                    />
+                                  )}
+
+                                  {/* Sales Bar Indicator when both or sales only */}
+                                  {(isBoth || isSalesOnly) && (
                                     <rect
                                       x={p.x - barWidth / 2}
                                       y={p.ySales}
                                       width={barWidth}
-                                      height={barH}
+                                      height={salesBarH}
                                       rx="2"
                                       fill="url(#salesBarGrad)"
                                       opacity={isCurrent ? "0.85" : isHovered ? "0.6" : "0.35"}
@@ -2552,7 +2741,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                   )}
 
                                   {/* Sales Point Dot */}
-                                  {(salesGraphMetric === "both" || salesGraphMetric === "sales") && (
+                                  {(isBoth || isSalesOnly) && (
                                     <circle
                                       cx={p.x}
                                       cy={p.ySales}
@@ -2564,14 +2753,14 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                   )}
 
                                   {/* Margin Point Dot */}
-                                  {(salesGraphMetric === "both" || salesGraphMetric === "margin") && (
+                                  {(isBoth || isMarginOnly) && (
                                     <circle
                                       cx={p.x}
                                       cy={p.yMargin}
-                                      r={isCurrent || isHovered ? 5 : 3}
+                                      r={isCurrent || isHovered ? (isMarginOnly ? 5.5 : 4.5) : 3}
                                       fill={isCurrent ? "#059669" : "#fff"}
                                       stroke="#10b981"
-                                      strokeWidth={isCurrent ? "2" : "1.5"}
+                                      strokeWidth={isCurrent ? "2.5" : "1.5"}
                                       className="transition-all"
                                     />
                                   )}
@@ -2594,7 +2783,9 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                       textAnchor="middle"
                                       className={`text-[8px] font-bold ${
                                         isCurrent
-                                          ? "fill-blue-600 dark:fill-blue-400 font-black"
+                                          ? isMarginOnly
+                                            ? "fill-emerald-600 dark:fill-emerald-400 font-black"
+                                            : "fill-blue-600 dark:fill-blue-400 font-black"
                                           : "fill-slate-600 dark:fill-slate-400"
                                       }`}
                                     >
@@ -2625,9 +2816,13 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                             {activePoint.date.slice(5)} ({activePoint.day.slice(0, 3)})
                           </span>
                           <div className="flex items-center space-x-1.5">
-                            <span className="text-blue-300 font-bold">৳{activePoint.sales.toLocaleString()}</span>
-                            <span className="text-slate-500">|</span>
-                            <span className="text-emerald-300 font-bold">৳{activePoint.margin.toLocaleString()}</span>
+                            {salesGraphMetric !== "margin" && (
+                              <span className="text-blue-300 font-bold">বিক্রি: ৳{activePoint.sales.toLocaleString()}</span>
+                            )}
+                            {salesGraphMetric === "both" && <span className="text-slate-500">|</span>}
+                            {salesGraphMetric !== "sales" && (
+                              <span className="text-emerald-300 font-bold">মার্জিন: ৳{activePoint.margin.toLocaleString()}</span>
+                            )}
                             <span className="text-purple-300 font-bold">({activePoint.marginPercent}%)</span>
                           </div>
                         </div>
