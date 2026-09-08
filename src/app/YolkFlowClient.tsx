@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Plus,
   Trash2,
@@ -41,6 +41,7 @@ import {
   Receipt,
   Boxes,
   BarChart3,
+  ArrowUpDown,
 } from "lucide-react";
 import { ComputedDayData, saveLedgerEntryAction } from "./actions";
 import OverheadExpensesView from "./OverheadExpensesView";
@@ -176,6 +177,9 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
   const [selectedSalesDateRange, setSelectedSalesDateRange] = useState<string>("all");
   const [salesGraphMetric, setSalesGraphMetric] = useState<"both" | "sales" | "margin">("both");
   const [hoveredSalesIndex, setHoveredSalesIndex] = useState<number | null>(null);
+  const [salesTableSortOrder, setSalesTableSortOrder] = useState<"asc" | "desc">("asc");
+  const salesTableRef = useRef<HTMLDivElement>(null);
+
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
   const handleRefreshData = async () => {
@@ -1281,6 +1285,27 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
       yTicks,
     };
   }, [salesFilteredData, currentViewDay]);
+
+  // Auto-scroll sales table to the bottom on load/filter change so last/latest data is visible first
+  useEffect(() => {
+    if (activeTab === "dashboard" && salesTableRef.current) {
+      if (salesTableSortOrder === "asc") {
+        salesTableRef.current.scrollTop = salesTableRef.current.scrollHeight;
+      } else {
+        salesTableRef.current.scrollTop = 0;
+      }
+    }
+  }, [activeTab, selectedSalesDateRange, salesVsMarginStats.points.length, salesTableSortOrder]);
+
+  // Keep selected day visible in the table when selected
+  useEffect(() => {
+    if (activeTab === "dashboard" && currentViewDay?.date && salesTableRef.current) {
+      const row = document.getElementById(`tbl-sales-row-${currentViewDay.date}`);
+      if (row) {
+        row.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+    }
+  }, [activeTab, currentViewDay?.date]);
 
   // Unified Date Synchronization & Navigation
   const currentViewDateStr =
@@ -2676,16 +2701,54 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
 
                   {/* Comprehensive Historical Sales & Margin Data Table */}
                   <div>
-                    <div className="flex justify-between items-center pb-2 pt-0.5">
-                      <span className="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                        দিনভিত্তিক ঐতিহাসিক খাতা ({salesFilteredData.length} দিন)
-                      </span>
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-                        👆 যে কোনো লাইনে ক্লিক করে ঐ দিনের ড্যাশবোর্ড দেখুন
-                      </span>
+                    <div className="flex flex-wrap items-center justify-between gap-2 pb-2 pt-0.5">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                          দিনভিত্তিক ঐতিহাসিক খাতা ({salesFilteredData.length} দিন)
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setSalesTableSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))}
+                          className="text-[10px] font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-2 py-0.5 rounded-md border border-slate-300/80 dark:border-slate-700 cursor-pointer flex items-center space-x-1 transition-colors"
+                          title="তারিখের ক্রম পরিবর্তন করুন"
+                        >
+                          <ArrowUpDown className="w-3 h-3 text-slate-500" />
+                          <span>{salesTableSortOrder === "asc" ? "পুরাতন→নতুন" : "নতুন→পুরাতন"}</span>
+                        </button>
+                      </div>
+
+                      <div className="flex items-center space-x-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (salesTableRef.current) {
+                              salesTableRef.current.scrollTo({ top: 0, behavior: "smooth" });
+                            }
+                          }}
+                          className="text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-2 py-0.5 rounded border border-slate-300/70 dark:border-slate-700 cursor-pointer transition-colors"
+                          title="এক ক্লিকে একদম শুরুতে স্ক্রোল করুন"
+                        >
+                          উপরে স্ক্রোল ↑
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (salesTableRef.current) {
+                              salesTableRef.current.scrollTo({ top: salesTableRef.current.scrollHeight, behavior: "smooth" });
+                            }
+                          }}
+                          className="text-[10px] font-bold text-blue-700 dark:text-blue-300 hover:text-blue-800 bg-blue-50 dark:bg-blue-950/70 hover:bg-blue-100 dark:hover:bg-blue-900/60 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800/80 cursor-pointer transition-colors"
+                          title="এক ক্লিকে একদম শেষে (আজকের দিনে) স্ক্রোল করুন"
+                        >
+                          নিচে / শেষ ↓
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="max-h-[260px] overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+                    <div
+                      ref={salesTableRef}
+                      className="max-h-[260px] overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-xl scroll-smooth"
+                    >
                       <table className="w-full text-left text-[11px] sm:text-xs border-collapse">
                         <thead className="sticky top-0 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase font-bold text-[10px] border-b border-slate-200 dark:border-slate-700 z-10">
                           <tr>
@@ -2699,10 +2762,14 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-semibold text-slate-800 dark:text-slate-200">
-                          {salesVsMarginStats.points.map((p) => {
+                          {(salesTableSortOrder === "desc"
+                            ? [...salesVsMarginStats.points].reverse()
+                            : salesVsMarginStats.points
+                          ).map((p) => {
                             const isSelected = currentViewDay && currentViewDay.date === p.date;
                             return (
                               <tr
+                                id={`tbl-sales-row-${p.date}`}
                                 key={`tbl-sales-${p.date}`}
                                 onClick={() => setSelectedDashboardDate(p.date)}
                                 className={`cursor-pointer transition-colors ${
