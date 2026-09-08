@@ -1456,10 +1456,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
               </div>
             </div>
 
-            <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               <ThemeToggle />
-              <span className="inline-flex items-center gap-1.5 bg-amber-500/20 dark:bg-slate-800 text-amber-100 dark:text-amber-300 text-xs font-bold px-2.5 py-1.5 rounded-xl border border-white/20">
-                <UserCheck className="w-3.5 h-3.5 text-amber-300" />
+              <span className="inline-flex items-center gap-1.5 h-8 bg-amber-500/20 dark:bg-slate-800 text-amber-100 dark:text-amber-300 text-xs font-bold px-2.5 rounded-xl border border-white/20 shrink-0 whitespace-nowrap">
+                <UserCheck className="w-3.5 h-3.5 text-amber-300 shrink-0" />
                 <span>লগইন পেজ</span>
               </span>
             </div>
@@ -1502,37 +1502,25 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
             </div>
           </div>
 
-          {/* Right Action Controls: Refresh, Login/Profile, OCR, ThemeToggle, Live Sync */}
-          <div className="flex items-center space-x-1 sm:space-x-2 shrink-0">
-            {/* 🔄 রিফ্রেশ বাটন (Refresh in Top Bar) */}
+          {/* Right Action Controls: Sorted, Modern Glassmorphic, No Overlap */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* 🟢 লাইভ সিঙ্ক ব্যাজ */}
+            <span className="hidden xl:inline-flex items-center gap-1.5 h-8 bg-emerald-500/20 dark:bg-emerald-950/50 text-emerald-100 dark:text-emerald-300 text-[11px] font-bold px-2.5 rounded-xl border border-emerald-400/30 dark:border-emerald-700/50 shadow-xs shrink-0 whitespace-nowrap">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+              <span>লাইভ সিঙ্ক</span>
+            </span>
+
+            {/* 🔄 রিফ্রেশ বাটন */}
             <button
+              type="button"
               onClick={handleRefreshData}
               disabled={isRefreshing}
-              className="p-1.5 sm:px-3 sm:py-1.5 bg-white/15 hover:bg-white/25 active:scale-95 text-white rounded-lg sm:rounded-xl text-xs font-bold border border-white/20 shadow-xs transition-all cursor-pointer disabled:opacity-50 shrink-0"
+              className="inline-flex items-center justify-center gap-1.5 h-8 px-2 sm:px-3 bg-white/15 hover:bg-white/25 active:scale-95 text-white rounded-xl text-xs font-bold border border-white/20 shadow-xs transition-all cursor-pointer disabled:opacity-50 shrink-0 whitespace-nowrap"
               title="তথ্য রিফ্রেশ করুন"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-amber-300" : ""}`} />
-              <span className="hidden sm:inline">{isRefreshing ? "সিঙ্ক হচ্ছে..." : "রিফ্রেশ"}</span>
+              <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${isRefreshing ? "animate-spin text-amber-300" : ""}`} />
+              <span className="hidden md:inline">{isRefreshing ? "সিঙ্ক হচ্ছে..." : "রিফ্রেশ"}</span>
             </button>
-
-            {/* 👤 লগইন ও ইউজার প্রোফাইল (Login / Profile in Top Bar) */}
-            {currentUser && (
-              <div className="flex items-center space-x-1 sm:space-x-1.5 bg-black/25 dark:bg-slate-800/90 border border-white/20 dark:border-slate-700/80 px-1.5 sm:px-2.5 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold shadow-xs shrink-0">
-                <span className="text-xs sm:text-sm">{currentUser.avatarEmoji}</span>
-                <span className="text-white font-black max-w-[60px] sm:max-w-[120px] truncate">{currentUser.username}</span>
-                <span className="hidden md:inline text-[10px] text-amber-200 bg-white/10 px-1.5 py-0.5 rounded-md font-semibold">
-                  {currentUser.roleLabel.split(" ")[1]}
-                </span>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  title="লগআউট করুন"
-                  className="p-0.5 sm:p-1 text-amber-200 hover:text-rose-300 transition-colors cursor-pointer"
-                >
-                  <LogOut className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                </button>
-              </div>
-            )}
 
             {/* 📸 চালান OCR বাটন */}
             <ImageToJsonModal />
@@ -1540,11 +1528,27 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
             {/* 🌓 থিম টগল */}
             <ThemeToggle />
 
-            {/* 🟢 লাইভ সিঙ্ক ব্যাজ */}
-            <span className="hidden lg:inline-flex items-center gap-1.5 bg-emerald-500/20 dark:bg-emerald-950/50 text-emerald-100 dark:text-emerald-300 text-[11px] font-bold px-2.5 py-1.5 rounded-full border border-emerald-400/30 dark:border-emerald-700/50 shadow-xs">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>লাইভ সিঙ্ক</span>
-            </span>
+            {/* 👤 লগইন ও ইউজার প্রোফাইল */}
+            {currentUser && (
+              <div className="flex items-center gap-1.5 h-8 bg-black/25 dark:bg-slate-800/90 border border-white/20 dark:border-slate-700/80 px-2 sm:px-2.5 rounded-xl text-xs font-bold shadow-xs shrink-0 whitespace-nowrap">
+                <span className="text-xs sm:text-sm leading-none">{currentUser.avatarEmoji}</span>
+                <span className="text-white font-bold text-xs max-w-[70px] sm:max-w-[110px] truncate leading-none">
+                  {currentUser.username}
+                </span>
+                <span className="hidden lg:inline text-[10px] text-amber-200 bg-white/10 px-1.5 py-0.5 rounded-md font-semibold leading-none">
+                  {currentUser.roleLabel.split(" ")[1]}
+                </span>
+                <div className="h-3.5 w-px bg-white/20 mx-0.5 shrink-0" />
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  title="লগআউট করুন"
+                  className="p-1 text-amber-200 hover:text-rose-300 hover:bg-white/10 rounded-lg transition-colors cursor-pointer shrink-0"
+                >
+                  <LogOut className="w-3.5 h-3.5 shrink-0" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>

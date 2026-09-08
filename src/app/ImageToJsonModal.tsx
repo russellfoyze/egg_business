@@ -325,13 +325,13 @@ Return ONLY the raw valid JSON without markdown wrapping or comments.`;
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center gap-1 sm:gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 dark:from-amber-600 dark:to-amber-700 text-white text-[10px] sm:text-xs font-black px-1.5 sm:px-3 py-1 sm:py-1.5 rounded-full border border-amber-400/40 shadow-xs sm:shadow-sm transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0"
+        className="inline-flex items-center justify-center gap-1.5 h-8 px-2.5 sm:px-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 dark:from-amber-600 dark:to-amber-700 text-white text-xs font-bold rounded-xl border border-amber-300/40 shadow-xs transition-all hover:scale-[1.02] active:scale-95 cursor-pointer shrink-0 whitespace-nowrap"
         title="খাতার ছবি থেকে সরাসরি JSON তৈরি বা গুগল শিটে সেভ করুন"
       >
-        <Camera className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-        <span className="hidden sm:inline">ছবি থেকে JSON</span>
+        <Camera className="w-3.5 h-3.5 shrink-0 text-amber-100" />
+        <span className="hidden sm:inline">ছবি স্ক্যান</span>
         <span className="sm:hidden">OCR</span>
-        <span className="hidden sm:inline bg-white/20 text-[9px] px-1.5 py-0.2 rounded-full font-bold uppercase">AI</span>
+        <span className="bg-white/25 text-[9px] px-1.5 py-0.5 rounded-md font-black tracking-wider uppercase">AI</span>
       </button>
 
       {/* Modal Dialog */}
