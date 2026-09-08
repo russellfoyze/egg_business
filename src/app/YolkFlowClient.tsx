@@ -39,6 +39,8 @@ import {
   ToggleRight,
   Link2,
   Receipt,
+  Boxes,
+  BarChart3,
 } from "lucide-react";
 import { ComputedDayData, saveLedgerEntryAction } from "./actions";
 import OverheadExpensesView from "./OverheadExpensesView";
@@ -168,6 +170,9 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
   const [selectedDateRange, setSelectedDateRange] = useState<string>("all");
   const [selectedProfitDateRange, setSelectedProfitDateRange] = useState<string>("weekly");
   const [selectedEggPriceFilter, setSelectedEggPriceFilter] = useState<string>("all");
+  const [selectedStockDateRange, setSelectedStockDateRange] = useState<string>("all");
+  const [selectedStockProductFilter, setSelectedStockProductFilter] = useState<string>("total_qty");
+  const [hoveredStockIndex, setHoveredStockIndex] = useState<number | null>(null);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
   const handleRefreshData = async () => {
@@ -990,6 +995,150 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
     };
   }, [filteredData, selectedEggPriceFilter]);
 
+  // Stock Historic Trend Data Computation
+  const stockFilteredData: ComputedDayData[] = useMemo(() => {
+    if (!data || data.length === 0) return [];
+    if (selectedStockDateRange === "all") return data;
+    if (selectedStockDateRange === "7" || selectedStockDateRange === "7d") return data.slice(-7);
+    if (selectedStockDateRange === "14" || selectedStockDateRange === "14d") return data.slice(-14);
+    if (selectedStockDateRange === "30" || selectedStockDateRange === "30d") return data.slice(-30);
+    const count = parseInt(selectedStockDateRange, 10);
+    if (!isNaN(count)) return data.slice(-count);
+    return data;
+  }, [data, selectedStockDateRange]);
+
+  const stockGraphStats = useMemo(() => {
+    if (!stockFilteredData || stockFilteredData.length === 0) {
+      return {
+        points: [] as { date: string; day: string; val: number; detailQty: number; detailVal: number; index: number }[],
+        maxVal: 0,
+        minVal: 0,
+        avgVal: 0,
+        totalValSum: 0,
+        peakDay: null as { date: string; day: string; val: number; detailQty: number; detailVal: number; index: number } | null,
+        lowestDay: null as { date: string; day: string; val: number; detailQty: number; detailVal: number; index: number } | null,
+        currentDayPoint: null as { date: string; day: string; val: number; detailQty: number; detailVal: number; index: number } | null,
+        unit: "টি",
+        yMin: 0,
+        yMax: 1000,
+        yTicks: [0, 250, 500, 750, 1000],
+        activeColor: { stroke: "#f59e0b", fill: "rgba(245, 158, 11, 0.15)", dot: "#d97706", label: "মোট মজুদ সংখ্যা" },
+      };
+    }
+
+    const isValuation = selectedStockProductFilter === "total_val";
+    const isTotalQty = selectedStockProductFilter === "total_qty";
+    const selectedEggType = !isValuation && !isTotalQty ? selectedStockProductFilter : null;
+
+    let unit = "টি";
+    let activeColor = { stroke: "#f59e0b", fill: "rgba(245, 158, 11, 0.15)", dot: "#d97706", label: "মোট মজুদ ডিম (সংখ্যা)" };
+
+    if (isValuation) {
+      unit = "৳";
+      activeColor = { stroke: "#10b981", fill: "rgba(16, 185, 129, 0.15)", dot: "#059669", label: "মোট মজুদ মূল্যায়ন (টাকা)" };
+    } else if (selectedEggType && EGG_COLORS[selectedEggType]) {
+      activeColor = {
+        stroke: EGG_COLORS[selectedEggType].stroke,
+        fill: EGG_COLORS[selectedEggType].fill,
+        dot: EGG_COLORS[selectedEggType].dot,
+        label: EGG_COLORS[selectedEggType].label || selectedEggType,
+      };
+    }
+
+    const points = stockFilteredData.map((d, index) => {
+      let val = 0;
+      let detailQty = 0;
+      let detailVal = 0;
+
+      const totalStockQty = Object.values(d.stock).reduce((sum, item) => sum + (item.currentStock || 0), 0);
+      const totalStockVal = d.financials.totalStockValue || 0;
+
+      if (isValuation) {
+        val = totalStockVal;
+        detailVal = totalStockVal;
+        detailQty = totalStockQty;
+      } else if (isTotalQty) {
+        val = totalStockQty;
+        detailQty = totalStockQty;
+        detailVal = totalStockVal;
+      } else if (selectedEggType && d.stock[selectedEggType]) {
+        const item = d.stock[selectedEggType];
+        val = item.currentStock || 0;
+        detailQty = val;
+        const rate = item.purchaseRate > 0 ? item.purchaseRate : DEFAULT_RATES[selectedEggType] || 0;
+        detailVal = item.stockValue || val * rate;
+      }
+
+      return {
+        date: d.date,
+        day: d.day,
+        val,
+        detailQty,
+        detailVal,
+        index,
+      };
+    });
+
+    const values = points.map((p) => p.val);
+    const rawMax = Math.max(...values, 0);
+    const rawMin = Math.min(...values, 0);
+    const totalValSum = values.reduce((a, b) => a + b, 0);
+    const avgVal = Math.round(totalValSum / Math.max(1, values.length));
+
+    let peakDay: { date: string; day: string; val: number; detailQty: number; detailVal: number; index: number } | null = points[0] || null;
+    let lowestDay: { date: string; day: string; val: number; detailQty: number; detailVal: number; index: number } | null = points[0] || null;
+
+    points.forEach((p) => {
+      if (!peakDay || p.val > peakDay.val) peakDay = p;
+      if (!lowestDay || p.val < lowestDay.val) lowestDay = p;
+    });
+
+    // Current view day value
+    const currentDayPoint = currentViewDay
+      ? points.find((p) => p.date === currentViewDay.date) || points[points.length - 1]
+      : points[points.length - 1];
+
+    // Calculate nice Y scale ticks
+    let yMin = 0;
+    let yMax = rawMax > 0 ? Math.ceil(rawMax * 1.15) : 100;
+    const span = yMax - yMin;
+
+    let step = 50;
+    if (span <= 100) step = 20;
+    else if (span <= 300) step = 50;
+    else if (span <= 1000) step = 200;
+    else if (span <= 3000) step = 500;
+    else if (span <= 8000) step = 1000;
+    else if (span <= 20000) step = 2500;
+    else if (span <= 50000) step = 5000;
+    else if (span <= 100000) step = 15000;
+    else step = 25000;
+
+    yMax = Math.ceil(yMax / step) * step;
+    if (yMax === 0) yMax = step;
+
+    const yTicks: number[] = [];
+    for (let t = yMin; t <= yMax + 0.001; t += step) {
+      yTicks.push(t);
+    }
+
+    return {
+      points,
+      maxVal: rawMax,
+      minVal: rawMin,
+      avgVal,
+      totalValSum,
+      peakDay,
+      lowestDay,
+      currentDayPoint,
+      unit,
+      yMin,
+      yMax,
+      yTicks,
+      activeColor,
+    };
+  }, [stockFilteredData, selectedStockProductFilter, currentViewDay]);
+
   // Unified Date Synchronization & Navigation
   const currentViewDateStr =
     selectedDashboardDate || (data.length > 0 ? data[data.length - 1].date : formDate || "");
@@ -1445,76 +1594,482 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
             </div>
           </div>
 
-          {/* Stock Details */}
+          {/* Stock Historic Graph & Stock Details Section (50% / 50% Split) */}
           {currentViewDay && (
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-3 sm:space-y-4 transition-colors">
-              <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
-                <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 flex items-center space-x-2">
-                  <Package className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                  <span>মজুদ ডিমের বিস্তারিত তালিকা</span>
-                </h3>
-                <span className="text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/70 px-2.5 py-1 rounded-full border border-amber-200 dark:border-amber-800/60">
-                  মোট: ৳ {viewStock.toLocaleString()}
-                </span>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-stretch">
+              {/* Left 50%: Historic Stock Product Graph */}
+              <div className="lg:col-span-6 bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-3.5 flex flex-col justify-between transition-colors">
+                <div className="space-y-3">
+                  {/* Header */}
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+                    <div>
+                      <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 flex items-center space-x-2">
+                        <Boxes className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                        <span>ঐতিহাসিক স্টক পণ্যের গ্রাফ (Historic Stock)</span>
+                      </h3>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                        দিনভিত্তিক মজুদ পণ্যের পরিমাণ ও মূল্যের ইতিহাস
+                      </p>
+                    </div>
+                    <span className="text-[11px] font-black text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/70 px-2.5 py-1 rounded-full border border-amber-200 dark:border-amber-800/60">
+                      স্টক: {stockGraphStats.currentDayPoint ? `${stockGraphStats.currentDayPoint.val.toLocaleString()} ${stockGraphStats.unit}` : "—"}
+                    </span>
+                  </div>
+
+                  {/* Filter Controls: Date Range (7D, 14D, 30D, All) & Product Dropdown */}
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    {/* Date range selector pills */}
+                    <div className="inline-flex p-1 bg-slate-100/90 dark:bg-slate-800/90 rounded-xl">
+                      {[
+                        { id: "7d", label: "7D" },
+                        { id: "14d", label: "14D" },
+                        { id: "30d", label: "30D" },
+                        { id: "all", label: "All" },
+                      ].map((rng) => (
+                        <button
+                          key={rng.id}
+                          type="button"
+                          onClick={() => setSelectedStockDateRange(rng.id)}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            selectedStockDateRange === rng.id
+                              ? "bg-white dark:bg-slate-700 text-amber-900 dark:text-amber-300 shadow-sm font-black"
+                              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                          }`}
+                        >
+                          {rng.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Stock metric selector */}
+                    <div className="flex items-center space-x-1.5">
+                      <select
+                        value={selectedStockProductFilter}
+                        onChange={(e) => setSelectedStockProductFilter(e.target.value)}
+                        className="text-xs font-bold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-lg px-2.5 py-1 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                      >
+                        <option value="total_qty">মোট সংখ্যা (Total Qty)</option>
+                        <option value="total_val">মোট মূল্যায়ন (Total ৳)</option>
+                        {EGG_TYPES.map((type) => (
+                          <option key={type} value={type}>
+                            {type}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Egg Type Quick Filter Badges */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-[11px]">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedStockProductFilter("total_qty")}
+                      className={`px-2.5 py-0.5 rounded-full font-bold whitespace-nowrap transition-colors border ${
+                        selectedStockProductFilter === "total_qty"
+                          ? "bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 border-amber-300 dark:border-amber-700 font-black"
+                          : "bg-slate-50 dark:bg-slate-800/70 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                      }`}
+                    >
+                      মোট ডিম
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedStockProductFilter("total_val")}
+                      className={`px-2.5 py-0.5 rounded-full font-bold whitespace-nowrap transition-colors border ${
+                        selectedStockProductFilter === "total_val"
+                          ? "bg-emerald-100 dark:bg-emerald-950/80 text-emerald-900 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700 font-black"
+                          : "bg-slate-50 dark:bg-slate-800/70 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                      }`}
+                    >
+                      মোট মূল্য (৳)
+                    </button>
+                    {EGG_TYPES.map((type) => {
+                      const shortName = type.split(" ")[0];
+                      const isSelected = selectedStockProductFilter === type;
+                      const eggCol = EGG_COLORS[type];
+                      return (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => setSelectedStockProductFilter(type)}
+                          className={`px-2.5 py-0.5 rounded-full font-bold whitespace-nowrap transition-colors flex items-center space-x-1 border ${
+                            isSelected
+                              ? "ring-1 ring-amber-500 shadow-sm font-black"
+                              : "bg-slate-50 dark:bg-slate-800/70 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                          }`}
+                          style={
+                            isSelected && eggCol
+                              ? {
+                                  backgroundColor: eggCol.fill,
+                                  borderColor: eggCol.stroke,
+                                  color: eggCol.dot,
+                                }
+                              : undefined
+                          }
+                        >
+                          <span
+                            className="w-2 h-2 rounded-full inline-block"
+                            style={{ backgroundColor: eggCol?.stroke || "#f59e0b" }}
+                          />
+                          <span>{shortName}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* 4 Summary Mini-cards */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-0.5">
+                    <div className="bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/70 dark:border-amber-900/40 rounded-xl p-2">
+                      <span className="text-[10px] font-bold text-amber-800 dark:text-amber-400 block">সর্বোচ্চ (Peak)</span>
+                      <span className="text-xs sm:text-sm font-black text-amber-950 dark:text-amber-200 block">
+                        {stockGraphStats.unit === "৳" ? "৳ " : ""}{stockGraphStats.maxVal.toLocaleString()}{stockGraphStats.unit === "টি" ? " টি" : ""}
+                      </span>
+                      {stockGraphStats.peakDay && (
+                        <span className="text-[9px] text-amber-700/80 dark:text-amber-400/80 block truncate">
+                          {stockGraphStats.peakDay.date.slice(5)} ({stockGraphStats.peakDay.day})
+                        </span>
+                      )}
+                    </div>
+                    <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/70 rounded-xl p-2">
+                      <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 block">সর্বনিম্ন (Lowest)</span>
+                      <span className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-200 block">
+                        {stockGraphStats.unit === "৳" ? "৳ " : ""}{stockGraphStats.minVal.toLocaleString()}{stockGraphStats.unit === "টি" ? " টি" : ""}
+                      </span>
+                      {stockGraphStats.lowestDay && (
+                        <span className="text-[9px] text-slate-500 dark:text-slate-400 block truncate">
+                          {stockGraphStats.lowestDay.date.slice(5)} ({stockGraphStats.lowestDay.day})
+                        </span>
+                      )}
+                    </div>
+                    <div className="bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200/70 dark:border-indigo-900/40 rounded-xl p-2">
+                      <span className="text-[10px] font-bold text-indigo-800 dark:text-indigo-400 block">দৈনিক গড় (Avg)</span>
+                      <span className="text-xs sm:text-sm font-black text-indigo-950 dark:text-indigo-200 block">
+                        {stockGraphStats.unit === "৳" ? "৳ " : ""}{stockGraphStats.avgVal.toLocaleString()}{stockGraphStats.unit === "টি" ? " টি" : ""}
+                      </span>
+                      <span className="text-[9px] text-indigo-600/80 dark:text-indigo-400/80 block">
+                        {stockFilteredData.length} দিনের গড়
+                      </span>
+                    </div>
+                    <div className="bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/70 dark:border-emerald-900/40 rounded-xl p-2">
+                      <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-400 block">নির্বাচিত দিন (Day)</span>
+                      <span className="text-xs sm:text-sm font-black text-emerald-950 dark:text-emerald-200 block">
+                        {stockGraphStats.unit === "৳" ? "৳ " : ""}{stockGraphStats.currentDayPoint ? stockGraphStats.currentDayPoint.val.toLocaleString() : 0}{stockGraphStats.unit === "টি" ? " টি" : ""}
+                      </span>
+                      <span className="text-[9px] text-emerald-700/80 dark:text-emerald-400/80 block truncate">
+                        {currentViewDay.date.slice(5)} ({currentViewDay.day})
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* SVG Graph */}
+                  <div className="overflow-hidden bg-slate-50/80 dark:bg-slate-950/60 rounded-xl border border-slate-200/90 dark:border-slate-800 p-2 sm:p-3 relative">
+                    <svg viewBox="0 0 600 240" className="w-full h-auto select-none block">
+                      <defs>
+                        <linearGradient id="stockAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={stockGraphStats.activeColor.stroke} stopOpacity="0.35" />
+                          <stop offset="100%" stopColor={stockGraphStats.activeColor.stroke} stopOpacity="0.01" />
+                        </linearGradient>
+                      </defs>
+
+                      {(() => {
+                        const yMin = stockGraphStats.yMin;
+                        const yMax = stockGraphStats.yMax;
+                        const plotTop = 26;
+                        const plotHeight = 160;
+                        const leftMargin = 55;
+                        const rightMargin = 580;
+                        const plotWidth = rightMargin - leftMargin;
+
+                        const getY = (v: number) => {
+                          const clamped = Math.max(yMin, Math.min(yMax, v));
+                          return plotTop + plotHeight - ((clamped - yMin) / Math.max(1, yMax - yMin)) * plotHeight;
+                        };
+
+                        const getX = (index: number, total: number) => {
+                          if (total <= 1) return leftMargin + plotWidth / 2;
+                          return leftMargin + (index / (total - 1)) * plotWidth;
+                        };
+
+                        const totalDays = stockGraphStats.points.length;
+                        const avgY = getY(stockGraphStats.avgVal);
+                        const barWidth = Math.min(24, Math.max(8, (plotWidth / Math.max(1, totalDays)) * 0.42));
+
+                        const pts = stockGraphStats.points.map((p, i) => {
+                          const x = getX(i, totalDays);
+                          const y = getY(p.val);
+                          return { ...p, x, y };
+                        });
+
+                        const pathD = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
+                        const areaD = pts.length > 0
+                          ? `${pathD} L ${pts[pts.length - 1].x} ${plotTop + plotHeight} L ${pts[0].x} ${plotTop + plotHeight} Z`
+                          : "";
+
+                        return (
+                          <g>
+                            {/* Y-axis dashed grid lines & labels */}
+                            {stockGraphStats.yTicks.map((tickVal) => {
+                              const yP = getY(tickVal);
+                              return (
+                                <g key={`stock-tick-${tickVal}`}>
+                                  <line
+                                    x1={leftMargin}
+                                    y1={yP}
+                                    x2={rightMargin}
+                                    y2={yP}
+                                    className="stroke-slate-200 dark:stroke-slate-800"
+                                    strokeWidth="1"
+                                    strokeDasharray="3 3"
+                                  />
+                                  <text
+                                    x={leftMargin - 6}
+                                    y={yP + 3.5}
+                                    textAnchor="end"
+                                    className="text-[9px] font-bold fill-slate-500 dark:fill-slate-400"
+                                  >
+                                    {stockGraphStats.unit === "৳" ? "৳" : ""}
+                                    {tickVal >= 1000 ? `${(tickVal / 1000).toFixed(tickVal % 1000 === 0 ? 0 : 1)}k` : tickVal}
+                                  </text>
+                                </g>
+                              );
+                            })}
+
+                            {/* Left Axis Line */}
+                            <line
+                              x1={leftMargin}
+                              y1={plotTop - 6}
+                              x2={leftMargin}
+                              y2={plotTop + plotHeight}
+                              className="stroke-slate-500 dark:stroke-slate-400"
+                              strokeWidth="1.5"
+                            />
+
+                            {/* Axis Titles */}
+                            <text x={leftMargin} y="14" textAnchor="start" className="text-[9px] font-black fill-slate-500 dark:fill-slate-400 uppercase tracking-wider">
+                              Y: মজুদ ({stockGraphStats.unit}) ↑
+                            </text>
+                            <text x={rightMargin} y="14" textAnchor="end" className="text-[9px] font-black fill-slate-500 dark:fill-slate-400 uppercase tracking-wider">
+                              X: তারিখ →
+                            </text>
+
+                            {/* Average Stock Reference Line */}
+                            {stockGraphStats.avgVal >= yMin && stockGraphStats.avgVal <= yMax && (
+                              <g>
+                                <line
+                                  x1={leftMargin}
+                                  y1={avgY}
+                                  x2={rightMargin}
+                                  y2={avgY}
+                                  className="stroke-indigo-400/80 dark:stroke-indigo-500/80"
+                                  strokeWidth="1"
+                                  strokeDasharray="3 3"
+                                />
+                              </g>
+                            )}
+
+                            {/* Area Fill */}
+                            {areaD && <path d={areaD} fill="url(#stockAreaGrad)" />}
+
+                            {/* Line Path */}
+                            {pathD && (
+                              <path
+                                d={pathD}
+                                fill="none"
+                                stroke={stockGraphStats.activeColor.stroke}
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            )}
+
+                            {/* Interactive Columns & Points */}
+                            {pts.map((p, i) => {
+                              const isCurrent = currentViewDay && currentViewDay.date === p.date;
+                              const isHovered = hoveredStockIndex === i;
+                              return (
+                                <g
+                                  key={`stock-pt-${p.date}`}
+                                  className="cursor-pointer group"
+                                  onClick={() => setSelectedDashboardDate(p.date)}
+                                  onMouseEnter={() => setHoveredStockIndex(i)}
+                                  onMouseLeave={() => setHoveredStockIndex(null)}
+                                >
+                                  {/* Vertical Guideline on hover or current */}
+                                  {(isHovered || isCurrent) && (
+                                    <line
+                                      x1={p.x}
+                                      y1={plotTop}
+                                      x2={p.x}
+                                      y2={plotTop + plotHeight}
+                                      stroke={stockGraphStats.activeColor.stroke}
+                                      strokeWidth={isCurrent ? "1.5" : "1"}
+                                      strokeDasharray="2 2"
+                                      strokeOpacity={isCurrent ? "0.7" : "0.4"}
+                                    />
+                                  )}
+
+                                  {/* Selected day highlight glow */}
+                                  {isCurrent && (
+                                    <rect
+                                      x={p.x - barWidth / 2 - 3}
+                                      y={plotTop}
+                                      width={barWidth + 6}
+                                      height={plotHeight}
+                                      rx="4"
+                                      fill={stockGraphStats.activeColor.fill}
+                                      opacity="0.5"
+                                    />
+                                  )}
+
+                                  {/* Data Point Dot */}
+                                  <circle
+                                    cx={p.x}
+                                    cy={p.y}
+                                    r={isCurrent || isHovered ? 5.5 : 3.5}
+                                    fill={isCurrent ? stockGraphStats.activeColor.dot : "#fff"}
+                                    stroke={stockGraphStats.activeColor.stroke}
+                                    strokeWidth={isCurrent ? "2.5" : "2"}
+                                    className="transition-all"
+                                  />
+
+                                  {/* Bottom Tick Mark */}
+                                  <line
+                                    x1={p.x}
+                                    y1={plotTop + plotHeight}
+                                    x2={p.x}
+                                    y2={plotTop + plotHeight + 4}
+                                    className="stroke-slate-500 dark:stroke-slate-400"
+                                    strokeWidth="1"
+                                  />
+
+                                  {/* Date Label */}
+                                  <text
+                                    x={p.x}
+                                    y={plotTop + plotHeight + 16}
+                                    textAnchor="middle"
+                                    className={`text-[8.5px] font-bold ${
+                                      isCurrent
+                                        ? "fill-amber-600 dark:fill-amber-400 font-black"
+                                        : "fill-slate-600 dark:fill-slate-400"
+                                    }`}
+                                  >
+                                    {p.date.slice(8)}
+                                  </text>
+                                </g>
+                              );
+                            })}
+                          </g>
+                        );
+                      })()}
+                    </svg>
+
+                    {/* Active / Hovered Tooltip Overlay */}
+                    {(() => {
+                      const activeIndex =
+                        hoveredStockIndex !== null
+                          ? hoveredStockIndex
+                          : stockGraphStats.points.findIndex((p) => p.date === currentViewDay?.date);
+                      const activePoint = activeIndex >= 0 ? stockGraphStats.points[activeIndex] : null;
+
+                      if (!activePoint) return null;
+
+                      return (
+                        <div className="mt-2 p-2 bg-slate-900/90 dark:bg-slate-800/90 text-white rounded-lg text-[11px] flex flex-wrap items-center justify-between gap-2 shadow-md">
+                          <div className="flex items-center space-x-2">
+                            <span className="font-black text-amber-300">
+                              {activePoint.date} ({activePoint.day})
+                            </span>
+                            <span className="text-slate-400">|</span>
+                            <span className="text-slate-200">
+                              মজুদ: <strong className="text-amber-400">{activePoint.detailQty.toLocaleString()} টি</strong>
+                            </span>
+                            <span className="text-slate-400">|</span>
+                            <span className="text-slate-200">
+                              মূল্যায়ন: <strong className="text-emerald-400">৳ {activePoint.detailVal.toLocaleString()}</strong>
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-amber-200/80 font-medium">
+                            👆 ক্লিক করে দিন নির্বাচন করুন
+                          </span>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
               </div>
 
-              {/* Desktop Table View (Stock Only) */}
-              <div className="hidden md:block overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="bg-slate-50 dark:bg-slate-800/70 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 uppercase font-bold text-[11px]">
-                      <th className="py-3 px-4">ডিমের ধরন</th>
-                      <th className="py-3 px-4 text-right">মজুদ (Qty)</th>
-                      <th className="py-3 px-4 text-right">দর (Rate)</th>
-                      <th className="py-3 px-4 text-right">মোট মজুদ মূল্য (Valuation)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-semibold text-slate-800 dark:text-slate-200">
+              {/* Right 50%: Stock Data Table */}
+              <div className="lg:col-span-6 bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-3 sm:space-y-4 flex flex-col justify-between transition-colors">
+                <div>
+                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
+                    <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 flex items-center space-x-2">
+                      <Package className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                      <span>মজুদ ডিমের বিস্তারিত তালিকা</span>
+                    </h3>
+                    <span className="text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/70 px-2.5 py-1 rounded-full border border-amber-200 dark:border-amber-800/60">
+                      মোট: ৳ {viewStock.toLocaleString()}
+                    </span>
+                  </div>
+
+                  {/* Desktop Table View (Stock Only) */}
+                  <div className="hidden md:block overflow-x-auto mt-2">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="bg-slate-50 dark:bg-slate-800/70 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 uppercase font-bold text-[11px]">
+                          <th className="py-2.5 px-3">ডিমের ধরন</th>
+                          <th className="py-2.5 px-3 text-right">মজুদ (Qty)</th>
+                          <th className="py-2.5 px-3 text-right">দর (Rate)</th>
+                          <th className="py-2.5 px-3 text-right">মোট মজুদ মূল্য (Valuation)</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-semibold text-slate-800 dark:text-slate-200">
+                        {Object.entries(currentViewDay.stock).map(([eggName, item]) => {
+                          const rate = item.purchaseRate > 0 ? item.purchaseRate : DEFAULT_RATES[eggName] || 0;
+                          const totalVal = item.stockValue || item.currentStock * rate;
+                          return (
+                            <tr key={eggName} className="hover:bg-amber-50/30 dark:hover:bg-slate-800/50 transition-colors">
+                              <td className="py-2.5 px-3 font-bold text-slate-900 dark:text-slate-100">{eggName}</td>
+                              <td className="py-2.5 px-3 text-right font-black text-slate-800 dark:text-slate-200">{item.currentStock.toLocaleString()} টি</td>
+                              <td className="py-2.5 px-3 text-right text-slate-600 dark:text-slate-400">৳ {rate}</td>
+                              <td className="py-2.5 px-3 text-right font-black text-amber-800 dark:text-amber-400">৳ {totalVal.toLocaleString()}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      <tfoot>
+                        <tr className="bg-amber-50/70 dark:bg-amber-950/40 border-t-2 border-amber-300 dark:border-amber-800/70 font-black text-xs text-slate-900 dark:text-slate-100">
+                          <td className="py-2.5 px-3 text-amber-950 dark:text-amber-300">সর্বমোট মজুদ ডিম (B12 & D12)</td>
+                          <td className="py-2.5 px-3 text-right text-slate-900 dark:text-slate-100 font-black">
+                            {Object.values(currentViewDay.stock).reduce((sum, item) => sum + (item.currentStock || 0), 0).toLocaleString()} টি
+                          </td>
+                          <td className="py-2.5 px-3 text-right text-slate-400">—</td>
+                          <td className="py-2.5 px-3 text-right text-amber-900 dark:text-amber-300 text-sm font-black">৳ {viewStock.toLocaleString()}</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+
+                  {/* Mobile Card Grid View (Stock Only) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:hidden gap-2.5 mt-2">
                     {Object.entries(currentViewDay.stock).map(([eggName, item]) => {
                       const rate = item.purchaseRate > 0 ? item.purchaseRate : DEFAULT_RATES[eggName] || 0;
                       const totalVal = item.stockValue || item.currentStock * rate;
                       return (
-                        <tr key={eggName} className="hover:bg-amber-50/30 dark:hover:bg-slate-800/50 transition-colors">
-                          <td className="py-3 px-4 font-bold text-slate-900 dark:text-slate-100">{eggName}</td>
-                          <td className="py-3 px-4 text-right font-black text-slate-800 dark:text-slate-200">{item.currentStock.toLocaleString()} টি</td>
-                          <td className="py-3 px-4 text-right text-slate-600 dark:text-slate-400">৳ {rate}</td>
-                          <td className="py-3 px-4 text-right font-black text-amber-800 dark:text-amber-400">৳ {totalVal.toLocaleString()}</td>
-                        </tr>
+                        <div key={eggName} className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200/90 dark:border-slate-700/60 flex justify-between items-center">
+                          <div>
+                            <div className="font-bold text-xs text-slate-900 dark:text-slate-100">{eggName}</div>
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                              মজুদ: {item.currentStock.toLocaleString()} টি × ৳{rate}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-black text-xs text-amber-900 dark:text-amber-300">৳ {totalVal.toLocaleString()}</div>
+                          </div>
+                        </div>
                       );
                     })}
-                  </tbody>
-                  <tfoot>
-                    <tr className="bg-amber-50/70 dark:bg-amber-950/40 border-t-2 border-amber-300 dark:border-amber-800/70 font-black text-xs text-slate-900 dark:text-slate-100">
-                      <td className="py-3 px-4 text-amber-950 dark:text-amber-300">সর্বমোট মজুদ ডিম (B12 & D12)</td>
-                      <td className="py-3 px-4 text-right text-slate-900 dark:text-slate-100 font-black">
-                        {Object.values(currentViewDay.stock).reduce((sum, item) => sum + (item.currentStock || 0), 0).toLocaleString()} টি
-                      </td>
-                      <td className="py-3 px-4 text-right text-slate-400">—</td>
-                      <td className="py-3 px-4 text-right text-amber-900 dark:text-amber-300 text-sm font-black">৳ {viewStock.toLocaleString()}</td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-
-              {/* Mobile Card Grid View (Stock Only) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:hidden gap-2.5">
-                {Object.entries(currentViewDay.stock).map(([eggName, item]) => {
-                  const rate = item.purchaseRate > 0 ? item.purchaseRate : DEFAULT_RATES[eggName] || 0;
-                  const totalVal = item.stockValue || item.currentStock * rate;
-                  return (
-                    <div key={eggName} className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200/90 dark:border-slate-700/60 flex justify-between items-center">
-                      <div>
-                        <div className="font-bold text-xs text-slate-900 dark:text-slate-100">{eggName}</div>
-                        <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                          মজুদ: {item.currentStock.toLocaleString()} টি × ৳{rate}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-black text-xs text-amber-900 dark:text-amber-300">৳ {totalVal.toLocaleString()}</div>
-                      </div>
-                    </div>
-                  );
-                })}
+                  </div>
+                </div>
               </div>
             </div>
           )}
