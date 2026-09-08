@@ -2271,22 +2271,19 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
 
           {/* ================= HISTORICAL SALES VS MARGIN SECTION (35% GRAPH / 65% DATA TABLE) ================= */}
           {currentViewDay && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-stretch">
+            <div className="grid grid-cols-1 landscape:grid-cols-12 sm:landscape:grid-cols-12 lg:grid-cols-12 gap-3 sm:gap-4 lg:gap-5 items-stretch">
               {/* Left 35%: Minimal Sales vs Margin Comparison Graph */}
-              <div className="lg:col-span-4 bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-3 flex flex-col justify-between transition-colors">
-                <div className="space-y-3">
+              <div className="col-span-1 landscape:col-span-4 sm:landscape:col-span-4 lg:col-span-4 bg-white dark:bg-slate-900 rounded-2xl p-3 sm:p-4 lg:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-2.5 flex flex-col justify-between transition-colors">
+                <div className="space-y-2.5">
                   {/* Header */}
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1.5 border-b border-slate-200 dark:border-slate-800 pb-2.5">
-                    <div>
-                      <h3 className="text-sm font-black text-slate-800 dark:text-slate-100 flex items-center space-x-1.5">
-                        <ShoppingCart className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
-                        <span>বিক্রি ও মার্জিন গ্রাফ</span>
+                  <div className="flex justify-between items-center gap-1.5 border-b border-slate-200 dark:border-slate-800 pb-2">
+                    <div className="flex items-center space-x-1.5 min-w-0">
+                      <ShoppingCart className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                      <h3 className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100 truncate">
+                        বিক্রি ও মার্জিন গ্রাফ
                       </h3>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-                        দিনভিত্তিক মোট বিক্রি ও নিট লাভ
-                      </p>
                     </div>
-                    <span className="text-[10px] font-black text-blue-800 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800/60 whitespace-nowrap">
+                    <span className="text-[10px] font-black text-blue-800 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800/60 whitespace-nowrap shrink-0">
                       আজ: ৳{salesVsMarginStats.currentDayPoint ? salesVsMarginStats.currentDayPoint.sales.toLocaleString() : "—"}
                     </span>
                   </div>
@@ -2362,66 +2359,66 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                   </div>
 
                   {/* Minimal Sales & Margin Summary (2 Compact Cards) */}
-                  <div className="grid grid-cols-2 gap-2 pt-0.5">
+                  <div className="grid grid-cols-2 gap-1.5 sm:gap-2 pt-0.5">
                     {salesGraphMetric === "margin" ? (
                       <>
-                        <div className="bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-2.5">
-                          <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-400 block">মোট মার্জিন (Profit)</span>
+                        <div className="bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-2">
+                          <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-400 block truncate">মোট মার্জিন</span>
                           <span className="text-xs sm:text-sm font-black text-emerald-950 dark:text-emerald-200 block truncate">
                             ৳ {salesVsMarginStats.totalMargin.toLocaleString()}
                           </span>
-                          <span className="text-[9px] text-emerald-700/80 dark:text-emerald-400/80 block mt-0.5">
+                          <span className="text-[9px] text-emerald-700/80 dark:text-emerald-400/80 block mt-0.5 truncate">
                             গড়: ৳{salesVsMarginStats.avgMargin.toLocaleString()}
                           </span>
                         </div>
-                        <div className="bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200/80 dark:border-teal-900/50 rounded-xl p-2.5">
-                          <span className="text-[10px] font-bold text-teal-800 dark:text-teal-400 block">সর্বোচ্চ মার্জিন (Peak)</span>
+                        <div className="bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200/80 dark:border-teal-900/50 rounded-xl p-2">
+                          <span className="text-[10px] font-bold text-teal-800 dark:text-teal-400 block truncate">সর্বোচ্চ মার্জিন</span>
                           <span className="text-xs sm:text-sm font-black text-teal-950 dark:text-teal-200 block truncate">
                             ৳ {salesVsMarginStats.maxMargin.toLocaleString()}
                           </span>
-                          <span className="text-[9px] text-teal-700/80 dark:text-teal-400/80 block mt-0.5">
+                          <span className="text-[9px] text-teal-700/80 dark:text-teal-400/80 block mt-0.5 truncate">
                             তারিখ: {salesVsMarginStats.peakMarginDay?.date ? salesVsMarginStats.peakMarginDay.date.slice(5) : "-"}
                           </span>
                         </div>
                       </>
                     ) : salesGraphMetric === "sales" ? (
                       <>
-                        <div className="bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-900/50 rounded-xl p-2.5">
-                          <span className="text-[10px] font-bold text-blue-800 dark:text-blue-400 block">মোট বিক্রি (Sales)</span>
+                        <div className="bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-900/50 rounded-xl p-2">
+                          <span className="text-[10px] font-bold text-blue-800 dark:text-blue-400 block truncate">মোট বিক্রি</span>
                           <span className="text-xs sm:text-sm font-black text-blue-950 dark:text-blue-200 block truncate">
                             ৳ {salesVsMarginStats.totalSales.toLocaleString()}
                           </span>
-                          <span className="text-[9px] text-blue-700/80 dark:text-blue-400/80 block mt-0.5">
+                          <span className="text-[9px] text-blue-700/80 dark:text-blue-400/80 block mt-0.5 truncate">
                             গড়: ৳{salesVsMarginStats.avgSales.toLocaleString()}
                           </span>
                         </div>
-                        <div className="bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-900/50 rounded-xl p-2.5">
-                          <span className="text-[10px] font-bold text-indigo-800 dark:text-indigo-400 block">সর্বোচ্চ বিক্রি (Peak)</span>
+                        <div className="bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-900/50 rounded-xl p-2">
+                          <span className="text-[10px] font-bold text-indigo-800 dark:text-indigo-400 block truncate">সর্বোচ্চ বিক্রি</span>
                           <span className="text-xs sm:text-sm font-black text-indigo-950 dark:text-indigo-200 block truncate">
                             ৳ {salesVsMarginStats.maxSales.toLocaleString()}
                           </span>
-                          <span className="text-[9px] text-indigo-700/80 dark:text-indigo-400/80 block mt-0.5">
+                          <span className="text-[9px] text-indigo-700/80 dark:text-indigo-400/80 block mt-0.5 truncate">
                             তারিখ: {salesVsMarginStats.peakSalesDay?.date ? salesVsMarginStats.peakSalesDay.date.slice(5) : "-"}
                           </span>
                         </div>
                       </>
                     ) : (
                       <>
-                        <div className="bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-900/50 rounded-xl p-2.5">
-                          <span className="text-[10px] font-bold text-blue-800 dark:text-blue-400 block">মোট বিক্রি (Sales)</span>
+                        <div className="bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-900/50 rounded-xl p-2">
+                          <span className="text-[10px] font-bold text-blue-800 dark:text-blue-400 block truncate">মোট বিক্রি</span>
                           <span className="text-xs sm:text-sm font-black text-blue-950 dark:text-blue-200 block truncate">
                             ৳ {salesVsMarginStats.totalSales.toLocaleString()}
                           </span>
-                          <span className="text-[9px] text-blue-700/80 dark:text-blue-400/80 block mt-0.5">
+                          <span className="text-[9px] text-blue-700/80 dark:text-blue-400/80 block mt-0.5 truncate">
                             গড়: ৳{salesVsMarginStats.avgSales.toLocaleString()}
                           </span>
                         </div>
-                        <div className="bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-2.5">
-                          <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-400 block">মোট মার্জিন (Profit)</span>
+                        <div className="bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-2">
+                          <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-400 block truncate">মোট মার্জিন</span>
                           <span className="text-xs sm:text-sm font-black text-emerald-950 dark:text-emerald-200 block truncate">
                             ৳ {salesVsMarginStats.totalMargin.toLocaleString()}
                           </span>
-                          <span className="text-[9px] text-emerald-700/80 dark:text-emerald-400/80 block mt-0.5">
+                          <span className="text-[9px] text-emerald-700/80 dark:text-emerald-400/80 block mt-0.5 truncate">
                             হার: {salesVsMarginStats.avgMarginPercent}%
                           </span>
                         </div>
@@ -2833,61 +2830,58 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
               </div>
 
               {/* Right 65%: Sales & Margin Comprehensive Data Table & Widget */}
-              <div className="lg:col-span-8 bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-3.5 flex flex-col justify-between transition-colors">
-                <div className="space-y-3.5">
+              <div className="col-span-1 landscape:col-span-8 sm:landscape:col-span-8 lg:col-span-8 bg-white dark:bg-slate-900 rounded-2xl p-3 sm:p-4 lg:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-2.5 sm:space-y-3 flex flex-col justify-between transition-colors">
+                <div className="space-y-2.5 sm:space-y-3">
                   {/* Card Header */}
-                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-2.5">
-                    <div>
-                      <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 flex items-center space-x-2">
-                        <ShoppingCart className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                        <span>মোট বিক্রি ও মার্জিন ডাটা বিস্তারিত</span>
+                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-2">
+                    <div className="flex items-center space-x-1.5 min-w-0">
+                      <ShoppingCart className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                      <h3 className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100 truncate">
+                        বিক্রি ও মার্জিন ডাটা
                       </h3>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-                        দৈনিক বিক্রির পরিমাণ, ডিম ক্রয়ের খরচ, মোট বিক্রি এবং লাভ বিবরণী
-                      </p>
                     </div>
-                    <span className="text-[11px] font-bold text-blue-800 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 px-2.5 py-1 rounded-full border border-blue-200 dark:border-blue-800/60 whitespace-nowrap">
+                    <span className="text-[10px] sm:text-[11px] font-bold text-blue-800 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 px-2 sm:px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800/60 whitespace-nowrap shrink-0">
                       {currentViewDay.date} ({getBanglaDay(currentViewDay.day)})
                     </span>
                   </div>
 
-                  {/* Featured "আজকের মোট ডিম বিক্রি" Widget (Taking full width of 65% card) */}
-                  <div className="bg-slate-900 text-white rounded-xl p-3.5 sm:p-4 shadow-sm border border-slate-800 space-y-3">
-                    <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-                      <div className="flex items-center space-x-2">
-                        <ShoppingCart className="w-4 h-4 text-blue-400" />
-                        <h4 className="text-xs sm:text-sm font-black text-slate-100">আজকের মোট ডিম বিক্রি ও লাভ</h4>
+                  {/* Featured "আজকের বিক্রি" Widget */}
+                  <div className="bg-slate-900 text-white rounded-xl p-2.5 sm:p-3 shadow-xs border border-slate-800 space-y-2">
+                    <div className="flex justify-between items-center border-b border-slate-800 pb-1.5">
+                      <div className="flex items-center space-x-1.5 min-w-0">
+                        <ShoppingCart className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                        <h4 className="text-xs sm:text-sm font-black text-slate-100 truncate">আজকের বিক্রি ও লাভ</h4>
                       </div>
-                      <span className="text-xs font-black text-blue-300 bg-blue-950/90 px-3 py-1 rounded-full border border-blue-800/60">
-                        সর্বমোট {salesVsMarginStats.currentDayPoint ? salesVsMarginStats.currentDayPoint.soldQty.toLocaleString() : 0} টি ডিম
+                      <span className="text-[10px] sm:text-xs font-black text-blue-300 bg-blue-950/90 px-2 sm:px-2.5 py-0.5 rounded-full border border-blue-800/60 shrink-0">
+                        {salesVsMarginStats.currentDayPoint ? salesVsMarginStats.currentDayPoint.soldQty.toLocaleString() : 0} টি ডিম
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 text-xs">
-                      <div className="bg-slate-800/70 rounded-lg p-2.5 border border-slate-700/60">
-                        <span className="text-slate-400 text-[11px] block">ডিম বিক্রির ক্রয়মূল্য</span>
-                        <span className="text-sm sm:text-base font-bold text-slate-100 mt-0.5 block">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2 text-xs">
+                      <div className="bg-slate-800/70 rounded-lg p-2 border border-slate-700/60">
+                        <span className="text-slate-400 text-[10px] block">ক্রয়মূল্য</span>
+                        <span className="text-xs sm:text-sm font-bold text-slate-100 mt-0.5 block truncate">
                           ৳ {salesVsMarginStats.currentDayPoint ? salesVsMarginStats.currentDayPoint.cost.toLocaleString() : 0}
                         </span>
                       </div>
 
-                      <div className="bg-slate-800/70 rounded-lg p-2.5 border border-blue-900/50">
-                        <span className="text-blue-300 text-[11px] font-bold block">মোট বিক্রি (Sales)</span>
-                        <span className="text-sm sm:text-base font-black text-blue-400 mt-0.5 block">
+                      <div className="bg-slate-800/70 rounded-lg p-2 border border-blue-900/50">
+                        <span className="text-blue-300 text-[10px] font-bold block">মোট বিক্রি</span>
+                        <span className="text-xs sm:text-sm font-black text-blue-400 mt-0.5 block truncate">
                           ৳ {salesVsMarginStats.currentDayPoint ? salesVsMarginStats.currentDayPoint.sales.toLocaleString() : 0}
                         </span>
                       </div>
 
-                      <div className="bg-slate-800/70 rounded-lg p-2.5 border border-emerald-900/50">
-                        <span className="text-emerald-300 text-[11px] font-bold block">দিনের মোট লাভ (মার্জিন)</span>
-                        <span className="text-sm sm:text-base font-black text-emerald-400 mt-0.5 block">
+                      <div className="bg-slate-800/70 rounded-lg p-2 border border-emerald-900/50">
+                        <span className="text-emerald-300 text-[10px] font-bold block">মার্জিন (লাভ)</span>
+                        <span className="text-xs sm:text-sm font-black text-emerald-400 mt-0.5 block truncate">
                           ৳ {salesVsMarginStats.currentDayPoint ? salesVsMarginStats.currentDayPoint.margin.toLocaleString() : 0}
                         </span>
                       </div>
 
-                      <div className="bg-slate-800/70 rounded-lg p-2.5 border border-purple-900/50">
-                        <span className="text-purple-300 text-[11px] font-bold block">মার্জিন হার (%)</span>
-                        <span className="text-sm sm:text-base font-black text-purple-300 mt-0.5 block">
+                      <div className="bg-slate-800/70 rounded-lg p-2 border border-purple-900/50">
+                        <span className="text-purple-300 text-[10px] font-bold block">মার্জিন হার</span>
+                        <span className="text-xs sm:text-sm font-black text-purple-300 mt-0.5 block truncate">
                           {salesVsMarginStats.currentDayPoint ? salesVsMarginStats.currentDayPoint.marginPercent : 0}%
                         </span>
                       </div>
@@ -2896,23 +2890,23 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
 
                   {/* Comprehensive Historical Sales & Margin Data Table */}
                   <div>
-                    <div className="flex flex-wrap items-center justify-between gap-2 pb-2 pt-0.5">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                          দিনভিত্তিক ঐতিহাসিক খাতা ({salesFilteredData.length} দিন)
+                    <div className="flex flex-wrap items-center justify-between gap-1.5 pb-1.5 pt-0.5">
+                      <div className="flex items-center space-x-1.5">
+                        <span className="text-[10px] sm:text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                          খাতা ({salesFilteredData.length} দিন)
                         </span>
                         <button
                           type="button"
                           onClick={() => setSalesTableSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))}
-                          className="text-[10px] font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-2 py-0.5 rounded-md border border-slate-300/80 dark:border-slate-700 cursor-pointer flex items-center space-x-1 transition-colors"
+                          className="text-[9px] sm:text-[10px] font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-1.5 sm:px-2 py-0.5 rounded-md border border-slate-300/80 dark:border-slate-700 cursor-pointer flex items-center space-x-1 transition-colors"
                           title="তারিখের ক্রম পরিবর্তন করুন"
                         >
-                          <ArrowUpDown className="w-3 h-3 text-slate-500" />
+                          <ArrowUpDown className="w-2.5 h-2.5 text-slate-500" />
                           <span>{salesTableSortOrder === "asc" ? "পুরাতন→নতুন" : "নতুন→পুরাতন"}</span>
                         </button>
                       </div>
 
-                      <div className="flex items-center space-x-1.5">
+                      <div className="flex items-center space-x-1">
                         <button
                           type="button"
                           onClick={() => {
@@ -2920,10 +2914,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                               salesTableRef.current.scrollTo({ top: 0, behavior: "smooth" });
                             }
                           }}
-                          className="text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-2 py-0.5 rounded border border-slate-300/70 dark:border-slate-700 cursor-pointer transition-colors"
+                          className="text-[9px] sm:text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-1.5 sm:px-2 py-0.5 rounded border border-slate-300/70 dark:border-slate-700 cursor-pointer transition-colors"
                           title="এক ক্লিকে একদম শুরুতে স্ক্রোল করুন"
                         >
-                          উপরে স্ক্রোল ↑
+                          উপরে ↑
                         </button>
                         <button
                           type="button"
@@ -2932,28 +2926,28 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                               salesTableRef.current.scrollTo({ top: salesTableRef.current.scrollHeight, behavior: "smooth" });
                             }
                           }}
-                          className="text-[10px] font-bold text-blue-700 dark:text-blue-300 hover:text-blue-800 bg-blue-50 dark:bg-blue-950/70 hover:bg-blue-100 dark:hover:bg-blue-900/60 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800/80 cursor-pointer transition-colors"
+                          className="text-[9px] sm:text-[10px] font-bold text-blue-700 dark:text-blue-300 hover:text-blue-800 bg-blue-50 dark:bg-blue-950/70 hover:bg-blue-100 dark:hover:bg-blue-900/60 px-1.5 sm:px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800/80 cursor-pointer transition-colors"
                           title="এক ক্লিকে একদম শেষে (আজকের দিনে) স্ক্রোল করুন"
                         >
-                          নিচে / শেষ ↓
+                          নিচে / আজ ↓
                         </button>
                       </div>
                     </div>
 
                     <div
                       ref={salesTableRef}
-                      className="max-h-[260px] overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-xl scroll-smooth"
+                      className="max-h-[220px] landscape:max-h-[175px] sm:max-h-[260px] overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-xl scroll-smooth"
                     >
-                      <table className="w-full text-left text-[11px] sm:text-xs border-collapse">
-                        <thead className="sticky top-0 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase font-bold text-[10px] border-b border-slate-200 dark:border-slate-700 z-10">
+                      <table className="w-full text-left text-[10px] sm:text-xs border-collapse">
+                        <thead className="sticky top-0 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase font-bold text-[9px] sm:text-[10px] border-b border-slate-200 dark:border-slate-700 z-10">
                           <tr>
-                            <th className="py-2.5 px-3">তারিখ ও বার</th>
-                            <th className="py-2.5 px-2 text-right whitespace-nowrap">বিক্রিত ডিম (টি)</th>
-                            <th className="py-2.5 px-2 text-right whitespace-nowrap">ক্রয়মূল্য (৳)</th>
-                            <th className="py-2.5 px-2 text-right whitespace-nowrap">মোট বিক্রি (৳)</th>
-                            <th className="py-2.5 px-2 text-right whitespace-nowrap">মার্জিন / লাভ (৳)</th>
-                            <th className="py-2.5 px-2 text-right whitespace-nowrap">হার (%)</th>
-                            <th className="py-2.5 px-2.5 text-center whitespace-nowrap">স্ট্যাটাস</th>
+                            <th className="py-2 px-2.5">তারিখ</th>
+                            <th className="py-2 px-1.5 text-right whitespace-nowrap">ডিম</th>
+                            <th className="py-2 px-1.5 text-right whitespace-nowrap">ক্রয় (৳)</th>
+                            <th className="py-2 px-1.5 text-right whitespace-nowrap">বিক্রি (৳)</th>
+                            <th className="py-2 px-1.5 text-right whitespace-nowrap">মার্জিন (৳)</th>
+                            <th className="py-2 px-1.5 text-right whitespace-nowrap">হার</th>
+                            <th className="py-2 px-2 text-center whitespace-nowrap">স্ট্যাটাস</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-semibold text-slate-800 dark:text-slate-200">
@@ -2973,34 +2967,34 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                     : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
                                 }`}
                               >
-                                <td className="py-2 px-3 whitespace-nowrap">
-                                  <div className="font-bold">{p.date}</div>
-                                  <div className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">
+                                <td className="py-1.5 px-2.5 whitespace-nowrap">
+                                  <div className="font-bold">{p.date.slice(5)}</div>
+                                  <div className="text-[9px] text-slate-500 dark:text-slate-400 font-normal">
                                     {getBanglaDay(p.day)}
                                   </div>
                                 </td>
-                                <td className="py-2 px-2 text-right font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                                <td className="py-1.5 px-1.5 text-right font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap">
                                   {p.soldQty.toLocaleString()} টি
                                 </td>
-                                <td className="py-2 px-2 text-right font-bold text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                                <td className="py-1.5 px-1.5 text-right font-bold text-slate-600 dark:text-slate-400 whitespace-nowrap">
                                   ৳{p.cost.toLocaleString()}
                                 </td>
-                                <td className="py-2 px-2 text-right font-black text-blue-700 dark:text-blue-300 whitespace-nowrap">
+                                <td className="py-1.5 px-1.5 text-right font-black text-blue-700 dark:text-blue-300 whitespace-nowrap">
                                   ৳{p.sales.toLocaleString()}
                                 </td>
-                                <td className="py-2 px-2 text-right font-black text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
+                                <td className="py-1.5 px-1.5 text-right font-black text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
                                   ৳{p.margin.toLocaleString()}
                                 </td>
-                                <td className="py-2 px-2 text-right font-bold text-purple-700 dark:text-purple-300 whitespace-nowrap">
+                                <td className="py-1.5 px-1.5 text-right font-bold text-purple-700 dark:text-purple-300 whitespace-nowrap">
                                   {p.marginPercent}%
                                 </td>
-                                <td className="py-2 px-2.5 text-center whitespace-nowrap">
+                                <td className="py-1.5 px-2 text-center whitespace-nowrap">
                                   {isSelected ? (
-                                    <span className="inline-block text-[10px] font-black bg-blue-600 text-white px-2 py-0.5 rounded-full shadow-xs">
+                                    <span className="inline-block text-[9px] font-black bg-blue-600 text-white px-1.5 py-0.5 rounded-full shadow-xs">
                                       নির্বাচিত
                                     </span>
                                   ) : (
-                                    <span className="inline-block text-[10px] font-semibold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+                                    <span className="inline-block text-[9px] font-semibold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">
                                       দেখুন
                                     </span>
                                   )}
@@ -3009,25 +3003,25 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                             );
                           })}
                         </tbody>
-                        <tfoot className="sticky bottom-0 bg-slate-50 dark:bg-slate-800/95 font-black text-[11px] sm:text-xs border-t-2 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 z-10">
+                        <tfoot className="sticky bottom-0 bg-slate-50 dark:bg-slate-800/95 font-black text-[10px] sm:text-xs border-t-2 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 z-10">
                           <tr>
-                            <td className="py-2.5 px-3 whitespace-nowrap">সর্বমোট ({salesVsMarginStats.points.length} দিন)</td>
-                            <td className="py-2.5 px-2 text-right text-slate-900 dark:text-slate-100 whitespace-nowrap">
+                            <td className="py-2 px-2.5 whitespace-nowrap">মোট ({salesVsMarginStats.points.length}দিন)</td>
+                            <td className="py-2 px-1.5 text-right text-slate-900 dark:text-slate-100 whitespace-nowrap">
                               {salesVsMarginStats.points.reduce((s, p) => s + (p.soldQty || 0), 0).toLocaleString()} টি
                             </td>
-                            <td className="py-2.5 px-2 text-right text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                            <td className="py-2 px-1.5 text-right text-slate-700 dark:text-slate-300 whitespace-nowrap">
                               ৳{salesVsMarginStats.totalCost.toLocaleString()}
                             </td>
-                            <td className="py-2.5 px-2 text-right text-blue-900 dark:text-blue-300 whitespace-nowrap">
+                            <td className="py-2 px-1.5 text-right text-blue-900 dark:text-blue-300 whitespace-nowrap">
                               ৳{salesVsMarginStats.totalSales.toLocaleString()}
                             </td>
-                            <td className="py-2.5 px-2 text-right text-emerald-900 dark:text-emerald-300 whitespace-nowrap">
+                            <td className="py-2 px-1.5 text-right text-emerald-900 dark:text-emerald-300 whitespace-nowrap">
                               ৳{salesVsMarginStats.totalMargin.toLocaleString()}
                             </td>
-                            <td className="py-2.5 px-2 text-right text-purple-900 dark:text-purple-300 whitespace-nowrap">
+                            <td className="py-2 px-1.5 text-right text-purple-900 dark:text-purple-300 whitespace-nowrap">
                               {salesVsMarginStats.avgMarginPercent}%
                             </td>
-                            <td className="py-2.5 px-2.5 text-center whitespace-nowrap">—</td>
+                            <td className="py-2 px-2 text-center whitespace-nowrap">—</td>
                           </tr>
                         </tfoot>
                       </table>
