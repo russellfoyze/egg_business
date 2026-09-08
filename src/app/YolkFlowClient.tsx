@@ -1594,11 +1594,11 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
             </div>
           </div>
 
-          {/* Stock Historic Graph & Stock Details Section (50% / 50% Split) */}
+          {/* Stock Historic Graph & Stock Details Section (65% / 35% Split) */}
           {currentViewDay && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-stretch">
-              {/* Left 50%: Historic Stock Product Graph */}
-              <div className="lg:col-span-6 bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-3.5 flex flex-col justify-between transition-colors">
+              {/* Left 65%: Historic Stock Product Graph */}
+              <div className="lg:col-span-8 bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-3.5 flex flex-col justify-between transition-colors">
                 <div className="space-y-3">
                   {/* Header */}
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
@@ -1763,7 +1763,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
 
                   {/* SVG Graph */}
                   <div className="overflow-hidden bg-slate-50/80 dark:bg-slate-950/60 rounded-xl border border-slate-200/90 dark:border-slate-800 p-2 sm:p-3 relative">
-                    <svg viewBox="0 0 600 240" className="w-full h-auto select-none block">
+                    <svg viewBox="0 0 760 250" className="w-full h-auto select-none block">
                       <defs>
                         <linearGradient id="stockAreaGrad" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor={stockGraphStats.activeColor.stroke} stopOpacity="0.35" />
@@ -1775,9 +1775,9 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                         const yMin = stockGraphStats.yMin;
                         const yMax = stockGraphStats.yMax;
                         const plotTop = 26;
-                        const plotHeight = 160;
+                        const plotHeight = 165;
                         const leftMargin = 55;
-                        const rightMargin = 580;
+                        const rightMargin = 740;
                         const plotWidth = rightMargin - leftMargin;
 
                         const getY = (v: number) => {
@@ -1998,8 +1998,8 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                 </div>
               </div>
 
-              {/* Right 50%: Stock Data Table */}
-              <div className="lg:col-span-6 bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-3 sm:space-y-4 flex flex-col justify-between transition-colors">
+              {/* Right 35%: Stock Data Table */}
+              <div className="lg:col-span-4 bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-3 sm:space-y-4 flex flex-col justify-between transition-colors">
                 <div>
                   <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
                     <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 flex items-center space-x-2">
@@ -2013,13 +2013,13 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
 
                   {/* Desktop Table View (Stock Only) */}
                   <div className="hidden md:block overflow-x-auto mt-2">
-                    <table className="w-full text-left text-xs border-collapse">
+                    <table className="w-full text-left text-[11px] sm:text-xs border-collapse">
                       <thead>
-                        <tr className="bg-slate-50 dark:bg-slate-800/70 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 uppercase font-bold text-[11px]">
-                          <th className="py-2.5 px-3">ডিমের ধরন</th>
-                          <th className="py-2.5 px-3 text-right">মজুদ (Qty)</th>
-                          <th className="py-2.5 px-3 text-right">দর (Rate)</th>
-                          <th className="py-2.5 px-3 text-right">মোট মজুদ মূল্য (Valuation)</th>
+                        <tr className="bg-slate-50 dark:bg-slate-800/70 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 uppercase font-bold text-[10px] sm:text-[11px]">
+                          <th className="py-2.5 px-2">ডিমের ধরন</th>
+                          <th className="py-2.5 px-1.5 text-right whitespace-nowrap">মজুদ (Qty)</th>
+                          <th className="py-2.5 px-1.5 text-right whitespace-nowrap">দর</th>
+                          <th className="py-2.5 px-2 text-right whitespace-nowrap">মোট মূল্য (৳)</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-semibold text-slate-800 dark:text-slate-200">
@@ -2028,22 +2028,22 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                           const totalVal = item.stockValue || item.currentStock * rate;
                           return (
                             <tr key={eggName} className="hover:bg-amber-50/30 dark:hover:bg-slate-800/50 transition-colors">
-                              <td className="py-2.5 px-3 font-bold text-slate-900 dark:text-slate-100">{eggName}</td>
-                              <td className="py-2.5 px-3 text-right font-black text-slate-800 dark:text-slate-200">{item.currentStock.toLocaleString()} টি</td>
-                              <td className="py-2.5 px-3 text-right text-slate-600 dark:text-slate-400">৳ {rate}</td>
-                              <td className="py-2.5 px-3 text-right font-black text-amber-800 dark:text-amber-400">৳ {totalVal.toLocaleString()}</td>
+                              <td className="py-2.5 px-2 font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap">{eggName}</td>
+                              <td className="py-2.5 px-1.5 text-right font-black text-slate-800 dark:text-slate-200 whitespace-nowrap">{item.currentStock.toLocaleString()}</td>
+                              <td className="py-2.5 px-1.5 text-right text-slate-600 dark:text-slate-400 whitespace-nowrap">৳{rate}</td>
+                              <td className="py-2.5 px-2 text-right font-black text-amber-800 dark:text-amber-400 whitespace-nowrap">৳{totalVal.toLocaleString()}</td>
                             </tr>
                           );
                         })}
                       </tbody>
                       <tfoot>
-                        <tr className="bg-amber-50/70 dark:bg-amber-950/40 border-t-2 border-amber-300 dark:border-amber-800/70 font-black text-xs text-slate-900 dark:text-slate-100">
-                          <td className="py-2.5 px-3 text-amber-950 dark:text-amber-300">সর্বমোট মজুদ ডিম (B12 & D12)</td>
-                          <td className="py-2.5 px-3 text-right text-slate-900 dark:text-slate-100 font-black">
+                        <tr className="bg-amber-50/70 dark:bg-amber-950/40 border-t-2 border-amber-300 dark:border-amber-800/70 font-black text-[11px] sm:text-xs text-slate-900 dark:text-slate-100">
+                          <td className="py-2.5 px-2 text-amber-950 dark:text-amber-300 whitespace-nowrap">সর্বমোট</td>
+                          <td className="py-2.5 px-1.5 text-right text-slate-900 dark:text-slate-100 font-black whitespace-nowrap">
                             {Object.values(currentViewDay.stock).reduce((sum, item) => sum + (item.currentStock || 0), 0).toLocaleString()} টি
                           </td>
-                          <td className="py-2.5 px-3 text-right text-slate-400">—</td>
-                          <td className="py-2.5 px-3 text-right text-amber-900 dark:text-amber-300 text-sm font-black">৳ {viewStock.toLocaleString()}</td>
+                          <td className="py-2.5 px-1.5 text-right text-slate-400">—</td>
+                          <td className="py-2.5 px-2 text-right text-amber-900 dark:text-amber-300 font-black whitespace-nowrap">৳{viewStock.toLocaleString()}</td>
                         </tr>
                       </tfoot>
                     </table>
