@@ -1074,7 +1074,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
 
       return {
         date: d.date,
-        day: d.day,
+        day: getBanglaDay(d.day),
         val,
         detailQty,
         detailVal,
@@ -1083,18 +1083,26 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
     });
 
     const values = points.map((p) => p.val);
-    const rawMax = Math.max(...values, 0);
-    const rawMin = Math.min(...values, 0);
+    const rawMax = values.length > 0 ? Math.max(...values) : 0;
     const totalValSum = values.reduce((a, b) => a + b, 0);
     const avgVal = Math.round(totalValSum / Math.max(1, values.length));
 
-    let peakDay: { date: string; day: string; val: number; detailQty: number; detailVal: number; index: number } | null = points[0] || null;
-    let lowestDay: { date: string; day: string; val: number; detailQty: number; detailVal: number; index: number } | null = points[0] || null;
+    // Peak day (highest value)
+    const sortedPoints = [...points].sort((a, b) => a.val - b.val);
+    const peakDay = sortedPoints.length > 0 ? sortedPoints[sortedPoints.length - 1] : null;
 
-    points.forEach((p) => {
-      if (!peakDay || p.val > peakDay.val) peakDay = p;
-      if (!lowestDay || p.val < lowestDay.val) lowestDay = p;
-    });
+    // Lowest day: if lowest is 0, count the 2nd lowest (non-zero if available)
+    let lowestDay = sortedPoints[0] || null;
+    if (lowestDay && lowestDay.val === 0) {
+      const nonZeroLowest = sortedPoints.find((p) => p.val > 0);
+      if (nonZeroLowest) {
+        lowestDay = nonZeroLowest;
+      } else if (sortedPoints.length > 1) {
+        lowestDay = sortedPoints[1];
+      }
+    }
+
+    const minVal = lowestDay ? lowestDay.val : 0;
 
     // Current view day value
     const currentDayPoint = currentViewDay
@@ -1128,7 +1136,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
     return {
       points,
       maxVal: rawMax,
-      minVal: rawMin,
+      minVal,
       avgVal,
       totalValSum,
       peakDay,
