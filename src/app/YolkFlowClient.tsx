@@ -1444,29 +1444,25 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
       <div className="min-h-screen flex flex-col">
         {/* 🌟 Top Navigation Bar */}
         <header className="bg-gradient-to-r from-amber-600 via-amber-600 to-amber-700 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 text-white shadow-md sticky top-0 z-50 backdrop-blur-md border-b border-amber-700/50 dark:border-slate-800 transition-colors duration-200">
-          <div className="w-full max-w-none mx-auto px-3 sm:px-6 lg:px-[100px] py-2.5 sm:py-3 flex justify-between items-center">
-            <div className="flex items-center space-x-2.5">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden shadow-md border-2 border-amber-300/40 dark:border-amber-400/30 shrink-0 bg-slate-900 flex items-center justify-center">
-                <img
-                  src="/logo.png"
-                  alt="M.A Khalek Sarker Logo"
-                  className="w-full h-full object-cover"
-                />
-              </div>
+          <div className="w-full max-w-none mx-auto px-2 sm:px-6 lg:px-[100px] py-2 sm:py-3 flex justify-between items-center gap-2">
+            <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
               <div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-base sm:text-lg font-black tracking-tight leading-none">M.A Khalek Sarker</span>
-                  <span className="bg-amber-500/40 dark:bg-amber-500/20 text-amber-100 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-400/30">
+                <div className="flex items-center space-x-1 sm:space-x-2">
+                  <span className="text-sm sm:text-lg font-black tracking-tight leading-none whitespace-nowrap">
+                    <span className="hidden xs:inline">M.A Khalek Sarker</span>
+                    <span className="xs:hidden">M.A Khalek</span>
+                  </span>
+                  <span className="bg-amber-500/40 dark:bg-amber-500/20 text-amber-100 text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full border border-amber-400/30 whitespace-nowrap">
                     হালখাতা
                   </span>
                 </div>
-                <p className="text-[10px] text-amber-200/90 dark:text-slate-400 font-medium hidden sm:block">
+                <p className="text-[10px] text-amber-200/90 dark:text-slate-400 font-medium hidden md:block">
                   এম. এ. খালেক সরকার — ডিমের পাইকারি আড়ত ও ডিজিটাল খতিয়ান
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center space-x-2 sm:space-x-2.5">
+            <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
               <ThemeToggle />
               <span className="inline-flex items-center gap-1.5 bg-amber-500/20 dark:bg-slate-800 text-amber-100 dark:text-amber-300 text-xs font-bold px-2.5 py-1.5 rounded-xl border border-white/20">
                 <UserCheck className="w-3.5 h-3.5 text-amber-300" />
@@ -1499,47 +1495,43 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
     <div className="min-h-screen flex flex-col">
       {/* 🌟 Top Navigation Bar with Refresh & Login/Profile */}
       <header className="bg-gradient-to-r from-amber-600 via-amber-600 to-amber-700 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 text-white shadow-md sticky top-0 z-50 backdrop-blur-md border-b border-amber-700/50 dark:border-slate-800 transition-colors duration-200">
-        <div className="w-full max-w-none mx-auto px-3 sm:px-6 lg:px-[100px] py-2.5 sm:py-3 flex justify-between items-center">
-          {/* Logo & Branding */}
-          <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden shadow-md border-2 border-amber-300/40 dark:border-amber-400/30 shrink-0 bg-slate-900 flex items-center justify-center">
-              <img
-                src="/logo.png"
-                alt="M.A Khalek Sarker Logo"
-                className="w-full h-full object-cover"
-              />
-            </div>
+        <div className="w-full max-w-none mx-auto px-2 sm:px-6 lg:px-[100px] py-2 sm:py-3 flex justify-between items-center gap-2">
+          {/* Branding (Logo Removed for clean fit) */}
+          <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0 min-w-0">
             <div>
-              <div className="flex items-center space-x-2">
-                <span className="text-base sm:text-lg font-black tracking-tight leading-none">M.A Khalek Sarker</span>
-                <span className="bg-amber-500/40 dark:bg-amber-500/20 text-amber-100 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-400/30">
+              <div className="flex items-center space-x-1 sm:space-x-2">
+                <span className="text-sm sm:text-lg font-black tracking-tight leading-none whitespace-nowrap">
+                  <span className="hidden xs:inline">M.A Khalek Sarker</span>
+                  <span className="xs:hidden">M.A Khalek</span>
+                </span>
+                <span className="bg-amber-500/40 dark:bg-amber-500/20 text-amber-100 text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full border border-amber-400/30 whitespace-nowrap">
                   হালখাতা
                 </span>
               </div>
-              <p className="text-[10px] text-amber-200/90 dark:text-slate-400 font-medium hidden sm:block">
+              <p className="text-[10px] text-amber-200/90 dark:text-slate-400 font-medium hidden md:block">
                 এম. এ. খালেক সরকার — ডিমের পাইকারি আড়ত ও ডিজিটাল খতিয়ান
               </p>
             </div>
           </div>
 
           {/* Right Action Controls: Refresh, Login/Profile, OCR, ThemeToggle, Live Sync */}
-          <div className="flex items-center space-x-1.5 sm:space-x-2">
+          <div className="flex items-center space-x-1 sm:space-x-2 shrink-0">
             {/* 🔄 রিফ্রেশ বাটন (Refresh in Top Bar) */}
             <button
               onClick={handleRefreshData}
               disabled={isRefreshing}
-              className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 bg-white/15 hover:bg-white/25 active:scale-95 text-white rounded-xl text-xs font-bold border border-white/20 shadow-xs transition-all cursor-pointer disabled:opacity-50"
+              className="p-1.5 sm:px-3 sm:py-1.5 bg-white/15 hover:bg-white/25 active:scale-95 text-white rounded-lg sm:rounded-xl text-xs font-bold border border-white/20 shadow-xs transition-all cursor-pointer disabled:opacity-50 shrink-0"
               title="তথ্য রিফ্রেশ করুন"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-amber-300" : ""}`} />
-              <span className="hidden xs:inline">{isRefreshing ? "সিঙ্ক হচ্ছে..." : "রিফ্রেশ"}</span>
+              <span className="hidden sm:inline">{isRefreshing ? "সিঙ্ক হচ্ছে..." : "রিফ্রেশ"}</span>
             </button>
 
             {/* 👤 লগইন ও ইউজার প্রোফাইল (Login / Profile in Top Bar) */}
             {currentUser && (
-              <div className="flex items-center space-x-1.5 sm:space-x-2 bg-black/25 dark:bg-slate-800/90 border border-white/20 dark:border-slate-700/80 px-2 sm:px-2.5 py-1.5 rounded-xl text-xs font-bold shadow-xs">
-                <span className="text-sm">{currentUser.avatarEmoji}</span>
-                <span className="text-white font-black max-w-[85px] sm:max-w-[120px] truncate">{currentUser.username}</span>
+              <div className="flex items-center space-x-1 sm:space-x-1.5 bg-black/25 dark:bg-slate-800/90 border border-white/20 dark:border-slate-700/80 px-1.5 sm:px-2.5 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold shadow-xs shrink-0">
+                <span className="text-xs sm:text-sm">{currentUser.avatarEmoji}</span>
+                <span className="text-white font-black max-w-[60px] sm:max-w-[120px] truncate">{currentUser.username}</span>
                 <span className="hidden md:inline text-[10px] text-amber-200 bg-white/10 px-1.5 py-0.5 rounded-md font-semibold">
                   {currentUser.roleLabel.split(" ")[1]}
                 </span>
@@ -1547,9 +1539,9 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                   type="button"
                   onClick={handleLogout}
                   title="লগআউট করুন"
-                  className="p-1 text-amber-200 hover:text-rose-300 transition-colors cursor-pointer"
+                  className="p-0.5 sm:p-1 text-amber-200 hover:text-rose-300 transition-colors cursor-pointer"
                 >
-                  <LogOut className="w-3.5 h-3.5" />
+                  <LogOut className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 </button>
               </div>
             )}
