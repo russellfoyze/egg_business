@@ -1447,16 +1447,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
           <div className="w-full max-w-none mx-auto px-2 sm:px-6 lg:px-[100px] py-2 sm:py-3 flex justify-between items-center gap-2">
             <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
               <div>
-                <div className="flex items-center space-x-1 sm:space-x-2">
-                  <span className="text-sm sm:text-lg font-black tracking-tight leading-none whitespace-nowrap">
-                    <span className="hidden xs:inline">M.A Khalek Sarker</span>
-                    <span className="xs:hidden">M.A Khalek</span>
-                  </span>
-                  <span className="bg-amber-500/40 dark:bg-amber-500/20 text-amber-100 text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full border border-amber-400/30 whitespace-nowrap">
-                    হালখাতা
-                  </span>
-                </div>
-                <p className="text-[10px] text-amber-200/90 dark:text-slate-400 font-medium hidden md:block">
+                <span className="text-sm sm:text-lg font-black tracking-tight leading-none whitespace-nowrap block">
+                  M.A Khalek Sarker
+                </span>
+                <p className="text-[10px] text-amber-200/90 dark:text-slate-400 font-medium hidden md:block mt-0.5">
                   এম. এ. খালেক সরকার — ডিমের পাইকারি আড়ত ও ডিজিটাল খতিয়ান
                 </p>
               </div>
@@ -1496,19 +1490,13 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
       {/* 🌟 Top Navigation Bar with Refresh & Login/Profile */}
       <header className="bg-gradient-to-r from-amber-600 via-amber-600 to-amber-700 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 text-white shadow-md sticky top-0 z-50 backdrop-blur-md border-b border-amber-700/50 dark:border-slate-800 transition-colors duration-200">
         <div className="w-full max-w-none mx-auto px-2 sm:px-6 lg:px-[100px] py-2 sm:py-3 flex justify-between items-center gap-2">
-          {/* Branding (Logo Removed for clean fit) */}
+          {/* Branding */}
           <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0 min-w-0">
             <div>
-              <div className="flex items-center space-x-1 sm:space-x-2">
-                <span className="text-sm sm:text-lg font-black tracking-tight leading-none whitespace-nowrap">
-                  <span className="hidden xs:inline">M.A Khalek Sarker</span>
-                  <span className="xs:hidden">M.A Khalek</span>
-                </span>
-                <span className="bg-amber-500/40 dark:bg-amber-500/20 text-amber-100 text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full border border-amber-400/30 whitespace-nowrap">
-                  হালখাতা
-                </span>
-              </div>
-              <p className="text-[10px] text-amber-200/90 dark:text-slate-400 font-medium hidden md:block">
+              <span className="text-sm sm:text-lg font-black tracking-tight leading-none whitespace-nowrap block">
+                M.A Khalek Sarker
+              </span>
+              <p className="text-[10px] text-amber-200/90 dark:text-slate-400 font-medium hidden md:block mt-0.5">
                 এম. এ. খালেক সরকার — ডিমের পাইকারি আড়ত ও ডিজিটাল খতিয়ান
               </p>
             </div>
