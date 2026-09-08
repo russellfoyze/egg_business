@@ -1417,7 +1417,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
       <div className="min-h-screen flex flex-col">
         {/* 🌟 Top Navigation Bar */}
         <header className="bg-gradient-to-r from-amber-600 via-amber-600 to-amber-700 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 text-white shadow-md sticky top-0 z-50 backdrop-blur-md border-b border-amber-700/50 dark:border-slate-800 transition-colors duration-200">
-          <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex justify-between items-center">
+          <div className="w-full max-w-none mx-auto px-3 sm:px-6 lg:px-[50px] py-2.5 sm:py-3 flex justify-between items-center">
             <div className="flex items-center space-x-2.5">
               <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden shadow-md border-2 border-amber-300/40 dark:border-amber-400/30 shrink-0 bg-slate-900 flex items-center justify-center">
                 <img
@@ -1449,7 +1449,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
           </div>
         </header>
 
-        <main className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-4 sm:py-6 w-full flex-1">
+        <main className="w-full max-w-none mx-auto px-2 sm:px-6 lg:px-[50px] py-4 sm:py-6 flex-1">
           <LoginScreen
             onLoginSuccess={(u) => {
               setCurrentUser(u);
@@ -1472,7 +1472,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
     <div className="min-h-screen flex flex-col">
       {/* 🌟 Top Navigation Bar with Refresh & Login/Profile */}
       <header className="bg-gradient-to-r from-amber-600 via-amber-600 to-amber-700 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 text-white shadow-md sticky top-0 z-50 backdrop-blur-md border-b border-amber-700/50 dark:border-slate-800 transition-colors duration-200">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex justify-between items-center">
+        <div className="w-full max-w-none mx-auto px-3 sm:px-6 lg:px-[50px] py-2.5 sm:py-3 flex justify-between items-center">
           {/* Logo & Branding */}
           <div className="flex items-center space-x-2.5">
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden shadow-md border-2 border-amber-300/40 dark:border-amber-400/30 shrink-0 bg-slate-900 flex items-center justify-center">
@@ -1543,7 +1543,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
       </header>
 
       {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-4 sm:py-6 w-full flex-1">
+      <main className="w-full max-w-none mx-auto px-2 sm:px-6 lg:px-[50px] py-4 sm:py-6 flex-1">
         <div className="space-y-4 sm:space-y-6">
           {/* Sticky Secondary Navigation (Tabs on Left, Date Navigator on Right) */}
           <div className="hidden sm:flex sticky top-[56px] sm:top-[64px] z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-2 sm:p-2.5 rounded-2xl shadow-md border border-slate-200/90 dark:border-slate-800/90 transition-all justify-between items-center gap-3">
