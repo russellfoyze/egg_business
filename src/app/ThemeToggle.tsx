@@ -45,7 +45,7 @@ export default function ThemeToggle() {
       onClick={toggleTheme}
       aria-label={isDark ? "লাইট থিমে পরিবর্তন করুন" : "ডার্ক থিমে পরিবর্তন করুন"}
       title={isDark ? "লাইট মোড (Light Mode)" : "ডার্ক মোড (Dark Mode)"}
-      className={`relative flex items-center h-8 w-16 p-1 rounded-full border transition-all duration-300 cursor-pointer shadow-inner select-none shrink-0 ${
+      className={`relative flex items-center h-8 w-16 p-1 rounded-full border transition-all duration-300 cursor-pointer shadow-inner select-none ${
         isDark
           ? "bg-slate-900/90 border-slate-700/80 hover:border-amber-400/40 shadow-slate-950/60"
           : "bg-amber-950/30 border-amber-300/30 hover:border-amber-200/60 shadow-amber-950/30"

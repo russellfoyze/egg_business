@@ -179,6 +179,8 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
   const [hoveredSalesIndex, setHoveredSalesIndex] = useState<number | null>(null);
   const [salesTableSortOrder, setSalesTableSortOrder] = useState<"asc" | "desc">("asc");
   const salesTableRef = useRef<HTMLDivElement>(null);
+  const [itemSellPieMetric, setItemSellPieMetric] = useState<"qty" | "value">("qty");
+  const [hoveredSellEgg, setHoveredSellEgg] = useState<string | null>(null);
 
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
@@ -786,6 +788,116 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
   const viewDailySalesAmount = currentViewDay?.sales?.dailySalesAmount ?? 0;
   const viewSoldStockCost = currentViewDay?.sales?.soldStockCost ?? 0;
   const viewTotalSoldQty = currentViewDay?.sales?.totalSoldQty ?? 0;
+
+  // Per Item Sell Pie Chart Computation
+  const itemSellPieData = useMemo(() => {
+    if (!currentViewDay) {
+      return {
+        items: [] as {
+          eggType: string;
+          shortName: string;
+          soldQty: number;
+          rate: number;
+          soldVal: number;
+          color: { stroke: string; fill: string; dot: string; label: string };
+          metricVal: number;
+          percent: number;
+          path: string;
+          midAngle: number;
+        }[],
+        totalQty: 0,
+        totalVal: 0,
+        activeMetricTotal: 0,
+      };
+    }
+
+    let totalQty = 0;
+    let totalVal = 0;
+
+    const baseItems = EGG_TYPES.map((eggType) => {
+      const stockInfo = currentViewDay.stock[eggType];
+      const soldQty = stockInfo?.soldQty || 0;
+      const rate = stockInfo?.purchaseRate || DEFAULT_RATES[eggType] || 0;
+      const soldVal = stockInfo?.soldValue !== undefined ? stockInfo.soldValue : soldQty * rate;
+      const color = EGG_COLORS[eggType] || { stroke: "#d97706", fill: "rgba(217,119,6,0.12)", dot: "#d97706", label: eggType };
+      const shortName = eggType.split(" (")[0];
+
+      totalQty += soldQty;
+      totalVal += soldVal;
+
+      return {
+        eggType,
+        shortName,
+        soldQty,
+        rate,
+        soldVal,
+        color,
+      };
+    });
+
+    const activeMetricTotal = itemSellPieMetric === "qty" ? totalQty : totalVal;
+
+    const nonZeroItems = baseItems.filter((item) =>
+      (itemSellPieMetric === "qty" ? item.soldQty : item.soldVal) > 0
+    );
+
+    let runningAngle = -Math.PI / 2; // Start from top (12 o'clock)
+
+    const items = baseItems.map((item) => {
+      const metricVal = itemSellPieMetric === "qty" ? item.soldQty : item.soldVal;
+      const percent = activeMetricTotal > 0 ? (metricVal / activeMetricTotal) * 100 : 0;
+
+      let path = "";
+      let midAngle = 0;
+
+      if (metricVal > 0 && activeMetricTotal > 0) {
+        const sliceAngle = (metricVal / activeMetricTotal) * (2 * Math.PI);
+        const startAngle = runningAngle;
+        const endAngle = nonZeroItems.length === 1 ? startAngle + Math.PI * 1.9999 : startAngle + sliceAngle;
+        midAngle = (startAngle + endAngle) / 2;
+        runningAngle += sliceAngle;
+
+        const cx = 80;
+        const cy = 80;
+        const rOuter = 66;
+        const rInner = 43;
+
+        const x1 = cx + rOuter * Math.cos(startAngle);
+        const y1 = cy + rOuter * Math.sin(startAngle);
+        const x2 = cx + rOuter * Math.cos(endAngle);
+        const y2 = cy + rOuter * Math.sin(endAngle);
+
+        const x3 = cx + rInner * Math.cos(endAngle);
+        const y3 = cy + rInner * Math.sin(endAngle);
+        const x4 = cx + rInner * Math.cos(startAngle);
+        const y4 = cy + rInner * Math.sin(startAngle);
+
+        const largeArc = sliceAngle > Math.PI ? 1 : 0;
+
+        path = `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${rOuter} ${rOuter} 0 ${largeArc} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} L ${x3.toFixed(2)} ${y3.toFixed(2)} A ${rInner} ${rInner} 0 ${largeArc} 0 ${x4.toFixed(2)} ${y4.toFixed(2)} Z`;
+      }
+
+      return {
+        ...item,
+        metricVal,
+        percent,
+        path,
+        midAngle,
+      };
+    });
+
+    return {
+      items,
+      totalQty,
+      totalVal,
+      activeMetricTotal,
+    };
+  }, [currentViewDay, itemSellPieMetric]);
+
+  const activeHoveredEggData = useMemo(() => {
+    if (!hoveredSellEgg) return null;
+    return itemSellPieData.items.find((it) => it.eggType === hoveredSellEgg) || null;
+  }, [hoveredSellEgg, itemSellPieData]);
 
   // 7-Day Rolling Margin calculation
   const currentDayIndex = useMemo(() => {
@@ -1456,10 +1568,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
               <ThemeToggle />
-              <span className="inline-flex items-center gap-1.5 h-8 bg-amber-500/20 dark:bg-slate-800 text-amber-100 dark:text-amber-300 text-xs font-bold px-2.5 rounded-xl border border-white/20 shrink-0 whitespace-nowrap">
-                <UserCheck className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+              <span className="inline-flex items-center gap-1.5 bg-amber-500/20 dark:bg-slate-800 text-amber-100 dark:text-amber-300 text-xs font-bold px-2.5 py-1.5 rounded-xl border border-white/20">
+                <UserCheck className="w-3.5 h-3.5 text-amber-300" />
                 <span>লগইন পেজ</span>
               </span>
             </div>
@@ -1502,25 +1614,37 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
             </div>
           </div>
 
-          {/* Right Action Controls: Sorted, Modern Glassmorphic, No Overlap */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* 🟢 লাইভ সিঙ্ক ব্যাজ */}
-            <span className="hidden xl:inline-flex items-center gap-1.5 h-8 bg-emerald-500/20 dark:bg-emerald-950/50 text-emerald-100 dark:text-emerald-300 text-[11px] font-bold px-2.5 rounded-xl border border-emerald-400/30 dark:border-emerald-700/50 shadow-xs shrink-0 whitespace-nowrap">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-              <span>লাইভ সিঙ্ক</span>
-            </span>
-
-            {/* 🔄 রিফ্রেশ বাটন */}
+          {/* Right Action Controls: Refresh, Login/Profile, OCR, ThemeToggle, Live Sync */}
+          <div className="flex items-center space-x-1 sm:space-x-2 shrink-0">
+            {/* 🔄 রিফ্রেশ বাটন (Refresh in Top Bar) */}
             <button
-              type="button"
               onClick={handleRefreshData}
               disabled={isRefreshing}
-              className="inline-flex items-center justify-center gap-1.5 h-8 px-2 sm:px-3 bg-white/15 hover:bg-white/25 active:scale-95 text-white rounded-xl text-xs font-bold border border-white/20 shadow-xs transition-all cursor-pointer disabled:opacity-50 shrink-0 whitespace-nowrap"
+              className="p-1.5 sm:px-3 sm:py-1.5 bg-white/15 hover:bg-white/25 active:scale-95 text-white rounded-lg sm:rounded-xl text-xs font-bold border border-white/20 shadow-xs transition-all cursor-pointer disabled:opacity-50 shrink-0"
               title="তথ্য রিফ্রেশ করুন"
             >
-              <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${isRefreshing ? "animate-spin text-amber-300" : ""}`} />
-              <span className="hidden md:inline">{isRefreshing ? "সিঙ্ক হচ্ছে..." : "রিফ্রেশ"}</span>
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-amber-300" : ""}`} />
+              <span className="hidden sm:inline">{isRefreshing ? "সিঙ্ক হচ্ছে..." : "রিফ্রেশ"}</span>
             </button>
+
+            {/* 👤 লগইন ও ইউজার প্রোফাইল (Login / Profile in Top Bar) */}
+            {currentUser && (
+              <div className="flex items-center space-x-1 sm:space-x-1.5 bg-black/25 dark:bg-slate-800/90 border border-white/20 dark:border-slate-700/80 px-1.5 sm:px-2.5 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold shadow-xs shrink-0">
+                <span className="text-xs sm:text-sm">{currentUser.avatarEmoji}</span>
+                <span className="text-white font-black max-w-[60px] sm:max-w-[120px] truncate">{currentUser.username}</span>
+                <span className="hidden md:inline text-[10px] text-amber-200 bg-white/10 px-1.5 py-0.5 rounded-md font-semibold">
+                  {currentUser.roleLabel.split(" ")[1]}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  title="লগআউট করুন"
+                  className="p-0.5 sm:p-1 text-amber-200 hover:text-rose-300 transition-colors cursor-pointer"
+                >
+                  <LogOut className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                </button>
+              </div>
+            )}
 
             {/* 📸 চালান OCR বাটন */}
             <ImageToJsonModal />
@@ -1528,27 +1652,11 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
             {/* 🌓 থিম টগল */}
             <ThemeToggle />
 
-            {/* 👤 লগইন ও ইউজার প্রোফাইল */}
-            {currentUser && (
-              <div className="flex items-center gap-1.5 h-8 bg-black/25 dark:bg-slate-800/90 border border-white/20 dark:border-slate-700/80 px-2 sm:px-2.5 rounded-xl text-xs font-bold shadow-xs shrink-0 whitespace-nowrap">
-                <span className="text-xs sm:text-sm leading-none">{currentUser.avatarEmoji}</span>
-                <span className="text-white font-bold text-xs max-w-[70px] sm:max-w-[110px] truncate leading-none">
-                  {currentUser.username}
-                </span>
-                <span className="hidden lg:inline text-[10px] text-amber-200 bg-white/10 px-1.5 py-0.5 rounded-md font-semibold leading-none">
-                  {currentUser.roleLabel.split(" ")[1]}
-                </span>
-                <div className="h-3.5 w-px bg-white/20 mx-0.5 shrink-0" />
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  title="লগআউট করুন"
-                  className="p-1 text-amber-200 hover:text-rose-300 hover:bg-white/10 rounded-lg transition-colors cursor-pointer shrink-0"
-                >
-                  <LogOut className="w-3.5 h-3.5 shrink-0" />
-                </button>
-              </div>
-            )}
+            {/* 🟢 লাইভ সিঙ্ক ব্যাজ */}
+            <span className="hidden lg:inline-flex items-center gap-1.5 bg-emerald-500/20 dark:bg-emerald-950/50 text-emerald-100 dark:text-emerald-300 text-[11px] font-bold px-2.5 py-1.5 rounded-full border border-emerald-400/30 dark:border-emerald-700/50 shadow-xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>লাইভ সিঙ্ক</span>
+            </span>
           </div>
         </div>
       </header>
@@ -3461,51 +3569,235 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
 
             {/* 30% SECTION: Per Item Sell & Daily Egg Sales Widget Sidebar */}
             <div className="lg:col-span-4 xl:col-span-4 flex flex-col justify-between gap-3 sm:gap-4 h-full">
-              {/* Item-wise Sell Card */}
+              {/* Item-wise Sell Card with Interactive Pie/Donut Chart */}
               <div className="flex-1 bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 flex flex-col justify-between space-y-3 transition-colors">
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-2.5">
+                  {/* Header: Title, Metric Toggle, Date Badge */}
+                  <div className="flex flex-wrap justify-between items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2.5">
                     <div className="flex items-center space-x-2">
                       <div className="bg-amber-50 dark:bg-amber-950/70 p-1.5 rounded-xl border border-amber-100 dark:border-amber-800/60 text-amber-700 dark:text-amber-400">
-                        <Package className="w-4 h-4" />
+                        <PieChart className="w-4 h-4" />
                       </div>
                       <div>
                         <h4 className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100">
                           ডিম অনুযায়ী বিক্রি
                         </h4>
-                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Per Item Sell Breakdown</p>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">পাই চার্ট ও বিক্রির হার</p>
                       </div>
                     </div>
-                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
-                      {currentViewDay ? currentViewDay.date.slice(5) : ""}
-                    </span>
+
+                    <div className="flex items-center space-x-1.5">
+                      {/* Metric Toggle: Qty vs Value */}
+                      <div className="inline-flex p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px]">
+                        <button
+                          type="button"
+                          onClick={() => setItemSellPieMetric("qty")}
+                          className={`px-2 py-0.5 rounded-md font-bold transition-all cursor-pointer ${
+                            itemSellPieMetric === "qty"
+                              ? "bg-white dark:bg-slate-700 text-amber-700 dark:text-amber-300 shadow-2xs"
+                              : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                          }`}
+                          title="সংখ্যা অনুপাতে পাই চার্ট"
+                        >
+                          সংখ্যা
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setItemSellPieMetric("value")}
+                          className={`px-2 py-0.5 rounded-md font-bold transition-all cursor-pointer ${
+                            itemSellPieMetric === "value"
+                              ? "bg-white dark:bg-slate-700 text-amber-700 dark:text-amber-300 shadow-2xs"
+                              : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                          }`}
+                          title="টাকার মূল্যে পাই চার্ট"
+                        >
+                          মূল্য (৳)
+                        </button>
+                      </div>
+
+                      <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
+                        {currentViewDay ? currentViewDay.date.slice(5) : ""}
+                      </span>
+                    </div>
                   </div>
 
+                  {/* Interactive SVG Pie / Donut Chart */}
+                  <div className="flex justify-center items-center py-1">
+                    <div className="w-40 h-40 sm:w-44 sm:h-44 relative">
+                      <svg viewBox="0 0 160 160" className="w-full h-full select-none block overflow-visible">
+                        {/* Empty background ring */}
+                        <circle
+                          cx="80"
+                          cy="80"
+                          r="54.5"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="23"
+                          className="text-slate-100 dark:text-slate-800/70"
+                        />
+
+                        {/* Donut Slices */}
+                        {itemSellPieData.activeMetricTotal > 0 &&
+                          itemSellPieData.items.map((item) => {
+                            if (!item.path) return null;
+                            const isHovered = hoveredSellEgg === item.eggType;
+                            const shift = isHovered ? 3.5 : 0;
+                            const shiftX = Math.cos(item.midAngle) * shift;
+                            const shiftY = Math.sin(item.midAngle) * shift;
+
+                            return (
+                              <g
+                                key={`pie-slice-${item.eggType}`}
+                                style={{
+                                  transform: shift ? `translate(${shiftX.toFixed(2)}px, ${shiftY.toFixed(2)}px)` : undefined,
+                                  transition: "transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s",
+                                }}
+                                className="cursor-pointer"
+                                onMouseEnter={() => setHoveredSellEgg(item.eggType)}
+                                onMouseLeave={() => setHoveredSellEgg(null)}
+                              >
+                                <path
+                                  d={item.path}
+                                  fill={item.color.stroke}
+                                  stroke="currentColor"
+                                  strokeWidth={isHovered ? 2.5 : 1.5}
+                                  className="text-white dark:text-slate-900 transition-all duration-150"
+                                  style={{
+                                    opacity: hoveredSellEgg && !isHovered ? 0.4 : 1,
+                                    filter: isHovered ? `drop-shadow(0 2px 6px ${item.color.stroke}90)` : undefined,
+                                  }}
+                                />
+                              </g>
+                            );
+                          })}
+
+                        {/* Center Statistics */}
+                        {activeHoveredEggData && activeHoveredEggData.metricVal > 0 ? (
+                          <g className="pointer-events-none transition-all duration-200">
+                            <text
+                              x="80"
+                              y="66"
+                              textAnchor="middle"
+                              className="text-[10px] font-bold fill-slate-500 dark:fill-slate-400"
+                            >
+                              {activeHoveredEggData.shortName}
+                            </text>
+                            <text
+                              x="80"
+                              y="81"
+                              textAnchor="middle"
+                              className="text-xs font-black fill-slate-900 dark:fill-white"
+                            >
+                              {itemSellPieMetric === "qty"
+                                ? `${activeHoveredEggData.soldQty.toLocaleString()} টি`
+                                : `৳ ${activeHoveredEggData.soldVal.toLocaleString()}`}
+                            </text>
+                            <text
+                              x="80"
+                              y="95"
+                              textAnchor="middle"
+                              className="text-[9.5px] font-black fill-amber-600 dark:fill-amber-400"
+                            >
+                              {activeHoveredEggData.percent.toFixed(1)}%
+                            </text>
+                          </g>
+                        ) : (
+                          <g className="pointer-events-none transition-all duration-200">
+                            <text
+                              x="80"
+                              y="67"
+                              textAnchor="middle"
+                              className="text-[9.5px] font-bold fill-slate-400 dark:fill-slate-500"
+                            >
+                              মোট {itemSellPieMetric === "qty" ? "ডিম বিক্রি" : "বিক্রি মূল্য"}
+                            </text>
+                            <text
+                              x="80"
+                              y="82"
+                              textAnchor="middle"
+                              className="text-xs font-black fill-slate-900 dark:fill-white"
+                            >
+                              {itemSellPieMetric === "qty"
+                                ? `${itemSellPieData.totalQty.toLocaleString()} টি`
+                                : `৳ ${itemSellPieData.totalVal.toLocaleString()}`}
+                            </text>
+                            <text
+                              x="80"
+                              y="95"
+                              textAnchor="middle"
+                              className="text-[9px] font-bold fill-slate-400 dark:fill-slate-500"
+                            >
+                              {itemSellPieData.activeMetricTotal > 0 ? "সর্বমোট ১০০%" : "বিক্রি নেই"}
+                            </text>
+                          </g>
+                        )}
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* List breakdown with mini progress indicators */}
                   <div className="grid grid-cols-1 gap-1 divide-y divide-slate-100 dark:divide-slate-800/80 text-xs">
-                    {EGG_TYPES.map((eggType) => {
-                      const stockInfo = currentViewDay?.stock[eggType];
-                      const soldQty = stockInfo?.soldQty || 0;
-                      const rate = stockInfo?.purchaseRate || DEFAULT_RATES[eggType] || 0;
-                      const soldVal = stockInfo?.soldValue !== undefined ? stockInfo.soldValue : (soldQty * rate);
-                      const color = EGG_COLORS[eggType] || { stroke: "#d97706" };
+                    {itemSellPieData.items.map((item) => {
+                      const isHovered = hoveredSellEgg === item.eggType;
 
                       return (
-                        <div key={`sell-${eggType}`} className="flex justify-between items-center py-1 px-1 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-md transition-colors">
-                          <div className="flex items-center space-x-1.5">
-                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color.stroke }} />
-                            <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                              {eggType.split(" (")[0]}
-                            </span>
+                        <div
+                          key={`sell-${item.eggType}`}
+                          onMouseEnter={() => setHoveredSellEgg(item.eggType)}
+                          onMouseLeave={() => setHoveredSellEgg(null)}
+                          className={`flex flex-col py-1 px-1.5 rounded-lg transition-all cursor-pointer ${
+                            isHovered
+                              ? "bg-amber-50/90 dark:bg-amber-950/40 ring-1 ring-amber-300 dark:ring-amber-700/60"
+                              : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                          }`}
+                        >
+                          <div className="flex justify-between items-center">
+                            <div className="flex items-center space-x-1.5">
+                              <span
+                                className="w-2.5 h-2.5 rounded-full shrink-0 transition-transform"
+                                style={{
+                                  backgroundColor: item.color.stroke,
+                                  transform: isHovered ? "scale(1.25)" : "scale(1)",
+                                }}
+                              />
+                              <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                                {item.shortName}
+                              </span>
+                              {item.percent > 0 && (
+                                <span
+                                  className="text-[9.5px] font-black px-1.5 py-0.2 rounded-full leading-none"
+                                  style={{
+                                    backgroundColor: `${item.color.stroke}20`,
+                                    color: item.color.stroke,
+                                  }}
+                                >
+                                  {item.percent.toFixed(0)}%
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center space-x-2 text-[11px]">
+                              <span className="font-bold text-slate-900 dark:text-slate-100">
+                                {item.soldQty > 0 ? `${item.soldQty.toLocaleString()} টি` : "০ টি"}
+                              </span>
+                              <span className="text-slate-400 dark:text-slate-500 font-medium">@ ৳{item.rate}</span>
+                              <span className="font-black text-amber-800 dark:text-amber-300 w-16 text-right">
+                                {item.soldVal > 0 ? `৳ ${item.soldVal.toLocaleString()}` : "৳ ০"}
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex items-center space-x-2 text-[11px]">
-                            <span className="font-bold text-slate-900 dark:text-slate-100">
-                              {soldQty > 0 ? `${soldQty.toLocaleString()} টি` : "০ টি"}
-                            </span>
-                            <span className="text-slate-400 dark:text-slate-500 font-medium">@ ৳{rate}</span>
-                            <span className="font-black text-amber-800 dark:text-amber-300 w-16 text-right">
-                              {soldVal > 0 ? `৳ ${soldVal.toLocaleString()}` : "৳ ০"}
-                            </span>
-                          </div>
+
+                          {/* Proportion progress bar */}
+                          {item.percent > 0 && (
+                            <div className="w-full bg-slate-100 dark:bg-slate-800 h-1 rounded-full mt-1 overflow-hidden">
+                              <div
+                                className="h-full rounded-full transition-all duration-300"
+                                style={{
+                                  width: `${item.percent}%`,
+                                  backgroundColor: item.color.stroke,
+                                }}
+                              />
+                            </div>
+                          )}
                         </div>
                       );
                     })}
