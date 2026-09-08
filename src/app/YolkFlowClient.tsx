@@ -173,6 +173,9 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
   const [selectedStockDateRange, setSelectedStockDateRange] = useState<string>("all");
   const [selectedStockProductFilter, setSelectedStockProductFilter] = useState<string>("total_qty");
   const [hoveredStockIndex, setHoveredStockIndex] = useState<number | null>(null);
+  const [selectedSalesDateRange, setSelectedSalesDateRange] = useState<string>("all");
+  const [salesGraphMetric, setSalesGraphMetric] = useState<"both" | "sales" | "margin">("both");
+  const [hoveredSalesIndex, setHoveredSalesIndex] = useState<number | null>(null);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
   const handleRefreshData = async () => {
@@ -1139,6 +1142,138 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
     };
   }, [stockFilteredData, selectedStockProductFilter, currentViewDay]);
 
+  // Historical Sales vs Margin Chart Data Computation
+  const salesFilteredData: ComputedDayData[] = useMemo(() => {
+    if (!data || data.length === 0) return [];
+    if (selectedSalesDateRange === "all") return data;
+    if (selectedSalesDateRange === "7" || selectedSalesDateRange === "7d") return data.slice(-7);
+    if (selectedSalesDateRange === "14" || selectedSalesDateRange === "14d") return data.slice(-14);
+    if (selectedSalesDateRange === "30" || selectedSalesDateRange === "30d") return data.slice(-30);
+    const count = parseInt(selectedSalesDateRange, 10);
+    if (!isNaN(count)) return data.slice(-count);
+    return data;
+  }, [data, selectedSalesDateRange]);
+
+  const salesVsMarginStats = useMemo(() => {
+    if (!salesFilteredData || salesFilteredData.length === 0) {
+      return {
+        points: [] as {
+          date: string;
+          day: string;
+          sales: number;
+          cost: number;
+          margin: number;
+          soldQty: number;
+          marginPercent: number;
+          index: number;
+        }[],
+        totalSales: 0,
+        totalMargin: 0,
+        totalCost: 0,
+        avgSales: 0,
+        avgMargin: 0,
+        avgMarginPercent: 0,
+        maxSales: 0,
+        maxMargin: 0,
+        peakSalesDay: null as { date: string; day: string; sales: number; margin: number } | null,
+        peakMarginDay: null as { date: string; day: string; sales: number; margin: number } | null,
+        currentDayPoint: null as {
+          date: string;
+          day: string;
+          sales: number;
+          cost: number;
+          margin: number;
+          soldQty: number;
+          marginPercent: number;
+        } | null,
+        yMin: 0,
+        yMax: 10000,
+        yTicks: [0, 2500, 5000, 7500, 10000],
+      };
+    }
+
+    const points = salesFilteredData.map((d, index) => {
+      const sales = d.sales?.dailySalesAmount || 0;
+      const cost = d.sales?.soldStockCost || 0;
+      const margin = d.financials?.profitMargin || 0;
+      const soldQty = d.sales?.totalSoldQty || 0;
+      const marginPercent = sales > 0 ? (margin / sales) * 100 : 0;
+
+      return {
+        date: d.date,
+        day: d.day,
+        sales,
+        cost,
+        margin,
+        soldQty,
+        marginPercent: Number(marginPercent.toFixed(1)),
+        index,
+      };
+    });
+
+    const totalSales = points.reduce((s, p) => s + p.sales, 0);
+    const totalMargin = points.reduce((s, p) => s + p.margin, 0);
+    const totalCost = points.reduce((s, p) => s + p.cost, 0);
+    const avgSales = Math.round(totalSales / points.length);
+    const avgMargin = Math.round(totalMargin / points.length);
+    const avgMarginPercent = totalSales > 0 ? Number(((totalMargin / totalSales) * 100).toFixed(1)) : 0;
+
+    const salesValues = points.map((p) => p.sales);
+    const marginValues = points.map((p) => p.margin);
+    const maxSales = Math.max(...salesValues, 0);
+    const maxMargin = Math.max(...marginValues, 0);
+
+    let peakSalesDay = points[0] || null;
+    let peakMarginDay = points[0] || null;
+
+    points.forEach((p) => {
+      if (!peakSalesDay || p.sales > peakSalesDay.sales) peakSalesDay = p;
+      if (!peakMarginDay || p.margin > peakMarginDay.margin) peakMarginDay = p;
+    });
+
+    const currentDayPoint = currentViewDay
+      ? points.find((p) => p.date === currentViewDay.date) || points[points.length - 1]
+      : points[points.length - 1];
+
+    const topVal = Math.max(maxSales, maxMargin, 1000);
+    let yMin = 0;
+    let yMax = Math.ceil(topVal * 1.15);
+    const span = yMax - yMin;
+
+    let step = 5000;
+    if (span <= 10000) step = 2000;
+    else if (span <= 25000) step = 5000;
+    else if (span <= 50000) step = 10000;
+    else if (span <= 100000) step = 20000;
+    else step = 25000;
+
+    yMax = Math.ceil(yMax / step) * step;
+    if (yMax === 0) yMax = step;
+
+    const yTicks: number[] = [];
+    for (let t = yMin; t <= yMax + 0.001; t += step) {
+      yTicks.push(t);
+    }
+
+    return {
+      points,
+      totalSales,
+      totalMargin,
+      totalCost,
+      avgSales,
+      avgMargin,
+      avgMarginPercent,
+      maxSales,
+      maxMargin,
+      peakSalesDay,
+      peakMarginDay,
+      currentDayPoint,
+      yMin,
+      yMax,
+      yTicks,
+    };
+  }, [salesFilteredData, currentViewDay]);
+
   // Unified Date Synchronization & Navigation
   const currentViewDateStr =
     selectedDashboardDate || (data.length > 0 ? data[data.length - 1].date : formDate || "");
@@ -2068,6 +2203,553 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                         </div>
                       );
                     })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ================= HISTORICAL SALES VS MARGIN SECTION (65% / 35% SPLIT) ================= */}
+          {currentViewDay && (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-stretch">
+              {/* Left 65%: Historical Sales vs Margin Comparison Graph */}
+              <div className="lg:col-span-8 bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-3.5 flex flex-col justify-between transition-colors">
+                <div className="space-y-3">
+                  {/* Header */}
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+                    <div>
+                      <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 flex items-center space-x-2">
+                        <ShoppingCart className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                        <span>ঐতিহাসিক মোট বিক্রি ও মার্জিন তুলনা গ্রাফ (Sales vs Margin)</span>
+                      </h3>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                        দিনভিত্তিক মোট বিক্রি (Sales) এবং নিট লাভের (Margin) তুলনামূলক গ্রাফ
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-[11px] font-black text-blue-800 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 px-2.5 py-1 rounded-full border border-blue-200 dark:border-blue-800/60">
+                        বিক্রি: ৳ {salesVsMarginStats.currentDayPoint ? salesVsMarginStats.currentDayPoint.sales.toLocaleString() : "—"}
+                      </span>
+                      <span className="text-[11px] font-black text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/70 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800/60">
+                        মার্জিন: ৳ {salesVsMarginStats.currentDayPoint ? salesVsMarginStats.currentDayPoint.margin.toLocaleString() : "—"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Filter Controls: Date Range (7D, 14D, 30D, All) & Metric Toggle */}
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    {/* Date range selector pills */}
+                    <div className="inline-flex p-1 bg-slate-100/90 dark:bg-slate-800/90 rounded-xl">
+                      {[
+                        { id: "7d", label: "7D" },
+                        { id: "14d", label: "14D" },
+                        { id: "30d", label: "30D" },
+                        { id: "all", label: "All" },
+                      ].map((rng) => (
+                        <button
+                          key={rng.id}
+                          type="button"
+                          onClick={() => setSelectedSalesDateRange(rng.id)}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            selectedSalesDateRange === rng.id
+                              ? "bg-white dark:bg-slate-700 text-blue-900 dark:text-blue-300 shadow-sm font-black"
+                              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                          }`}
+                        >
+                          {rng.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Metric Display Mode Pills */}
+                    <div className="inline-flex p-1 bg-slate-100/90 dark:bg-slate-800/90 rounded-xl text-[11px]">
+                      <button
+                        type="button"
+                        onClick={() => setSalesGraphMetric("both")}
+                        className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer flex items-center space-x-1 ${
+                          salesGraphMetric === "both"
+                            ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm font-black"
+                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                        }`}
+                      >
+                        <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                        <span>উভয় তুলনা (Both)</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSalesGraphMetric("sales")}
+                        className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer flex items-center space-x-1 ${
+                          salesGraphMetric === "sales"
+                            ? "bg-white dark:bg-slate-700 text-blue-900 dark:text-blue-300 shadow-sm font-black"
+                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                        }`}
+                      >
+                        <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />
+                        <span>শুধু বিক্রি</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSalesGraphMetric("margin")}
+                        className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer flex items-center space-x-1 ${
+                          salesGraphMetric === "margin"
+                            ? "bg-white dark:bg-slate-700 text-emerald-900 dark:text-emerald-300 shadow-sm font-black"
+                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                        }`}
+                      >
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                        <span>শুধু মার্জিন</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 4 Summary Mini-cards */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-0.5">
+                    <div className="bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-900/50 rounded-xl p-2.5">
+                      <span className="text-[10px] font-bold text-blue-800 dark:text-blue-400 block">মোট বিক্রি (Sales)</span>
+                      <span className="text-xs sm:text-sm font-black text-blue-950 dark:text-blue-200 block">
+                        ৳ {salesVsMarginStats.totalSales.toLocaleString()}
+                      </span>
+                      <span className="text-[9px] text-blue-700/80 dark:text-blue-400/80 block">
+                        গড়: ৳{salesVsMarginStats.avgSales.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-2.5">
+                      <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-400 block">মোট লাভ (Margin)</span>
+                      <span className="text-xs sm:text-sm font-black text-emerald-950 dark:text-emerald-200 block">
+                        ৳ {salesVsMarginStats.totalMargin.toLocaleString()}
+                      </span>
+                      <span className="text-[9px] text-emerald-700/80 dark:text-emerald-400/80 block">
+                        গড়: ৳{salesVsMarginStats.avgMargin.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="bg-purple-50/70 dark:bg-purple-950/40 border border-purple-200/80 dark:border-purple-900/50 rounded-xl p-2.5">
+                      <span className="text-[10px] font-bold text-purple-800 dark:text-purple-400 block">গড় মার্জিন হার (Rate)</span>
+                      <span className="text-xs sm:text-sm font-black text-purple-950 dark:text-purple-200 block">
+                        {salesVsMarginStats.avgMarginPercent}%
+                      </span>
+                      <span className="text-[9px] text-purple-700/80 dark:text-purple-400/80 block">
+                        বিক্রির বিপরীতে লাভ
+                      </span>
+                    </div>
+                    <div className="bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-900/50 rounded-xl p-2.5">
+                      <span className="text-[10px] font-bold text-amber-800 dark:text-amber-400 block">সর্বোচ্চ বিক্রি (Peak)</span>
+                      <span className="text-xs sm:text-sm font-black text-amber-950 dark:text-amber-200 block">
+                        ৳ {salesVsMarginStats.maxSales.toLocaleString()}
+                      </span>
+                      {salesVsMarginStats.peakSalesDay && (
+                        <span className="text-[9px] text-amber-700/80 dark:text-amber-400/80 block truncate">
+                          {salesVsMarginStats.peakSalesDay.date.slice(5)} ({salesVsMarginStats.peakSalesDay.day})
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Interactive SVG Chart */}
+                  <div className="overflow-hidden bg-slate-50/80 dark:bg-slate-950/60 rounded-xl border border-slate-200/90 dark:border-slate-800 p-2 sm:p-3 relative">
+                    <svg viewBox="0 0 760 250" className="w-full h-auto select-none block">
+                      <defs>
+                        <linearGradient id="salesBarGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.80" />
+                          <stop offset="100%" stopColor="#1d4ed8" stopOpacity="0.95" />
+                        </linearGradient>
+                        <linearGradient id="salesAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.30" />
+                          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.02" />
+                        </linearGradient>
+                        <linearGradient id="marginAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#10b981" stopOpacity="0.35" />
+                          <stop offset="100%" stopColor="#10b981" stopOpacity="0.02" />
+                        </linearGradient>
+                      </defs>
+
+                      {(() => {
+                        const yMin = salesVsMarginStats.yMin;
+                        const yMax = salesVsMarginStats.yMax;
+                        const plotTop = 26;
+                        const plotHeight = 165;
+                        const leftMargin = 60;
+                        const rightMargin = 740;
+                        const plotWidth = rightMargin - leftMargin;
+
+                        const getY = (v: number) => {
+                          const clamped = Math.max(yMin, Math.min(yMax, v));
+                          return plotTop + plotHeight - ((clamped - yMin) / Math.max(1, yMax - yMin)) * plotHeight;
+                        };
+
+                        const getX = (index: number, total: number) => {
+                          if (total <= 1) return leftMargin + plotWidth / 2;
+                          return leftMargin + (index / (total - 1)) * plotWidth;
+                        };
+
+                        const totalDays = salesVsMarginStats.points.length;
+                        const barWidth = Math.min(26, Math.max(8, (plotWidth / Math.max(1, totalDays)) * 0.44));
+
+                        const pts = salesVsMarginStats.points.map((p, i) => {
+                          const x = getX(i, totalDays);
+                          const ySales = getY(p.sales);
+                          const yMargin = getY(p.margin);
+                          return { ...p, x, ySales, yMargin };
+                        });
+
+                        const pathSales = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.ySales}`).join(" ");
+                        const areaSales = pts.length > 0
+                          ? `${pathSales} L ${pts[pts.length - 1].x} ${plotTop + plotHeight} L ${pts[0].x} ${plotTop + plotHeight} Z`
+                          : "";
+
+                        const pathMargin = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.yMargin}`).join(" ");
+                        const areaMargin = pts.length > 0
+                          ? `${pathMargin} L ${pts[pts.length - 1].x} ${plotTop + plotHeight} L ${pts[0].x} ${plotTop + plotHeight} Z`
+                          : "";
+
+                        return (
+                          <g>
+                            {/* Y-axis dashed grid lines & labels */}
+                            {salesVsMarginStats.yTicks.map((tickVal) => {
+                              const yP = getY(tickVal);
+                              return (
+                                <g key={`sales-tick-${tickVal}`}>
+                                  <line
+                                    x1={leftMargin}
+                                    y1={yP}
+                                    x2={rightMargin}
+                                    y2={yP}
+                                    className="stroke-slate-200 dark:stroke-slate-800"
+                                    strokeWidth="1"
+                                    strokeDasharray="3 3"
+                                  />
+                                  <text
+                                    x={leftMargin - 6}
+                                    y={yP + 3.5}
+                                    textAnchor="end"
+                                    className="text-[9px] font-bold fill-slate-500 dark:fill-slate-400"
+                                  >
+                                    ৳{tickVal >= 1000 ? `${(tickVal / 1000).toFixed(tickVal % 1000 === 0 ? 0 : 1)}k` : tickVal}
+                                  </text>
+                                </g>
+                              );
+                            })}
+
+                            {/* Left Axis Line */}
+                            <line
+                              x1={leftMargin}
+                              y1={plotTop - 6}
+                              x2={leftMargin}
+                              y2={plotTop + plotHeight}
+                              className="stroke-slate-500 dark:stroke-slate-400"
+                              strokeWidth="1.5"
+                            />
+
+                            {/* Axis Titles */}
+                            <text x={leftMargin} y="14" textAnchor="start" className="text-[9px] font-black fill-slate-500 dark:fill-slate-400 uppercase tracking-wider">
+                              Y: টাকা (৳) ↑
+                            </text>
+                            <text x={rightMargin} y="14" textAnchor="end" className="text-[9px] font-black fill-slate-500 dark:fill-slate-400 uppercase tracking-wider">
+                              X: তারিখ →
+                            </text>
+
+                            {/* Sales Area / Bar Fill */}
+                            {(salesGraphMetric === "both" || salesGraphMetric === "sales") && areaSales && (
+                              <path d={areaSales} fill="url(#salesAreaGrad)" />
+                            )}
+
+                            {/* Margin Area Fill (when margin only) */}
+                            {salesGraphMetric === "margin" && areaMargin && (
+                              <path d={areaMargin} fill="url(#marginAreaGrad)" />
+                            )}
+
+                            {/* Sales Trend Line */}
+                            {(salesGraphMetric === "both" || salesGraphMetric === "sales") && pathSales && (
+                              <path
+                                d={pathSales}
+                                fill="none"
+                                stroke="#3b82f6"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            )}
+
+                            {/* Margin Trend Line */}
+                            {(salesGraphMetric === "both" || salesGraphMetric === "margin") && pathMargin && (
+                              <path
+                                d={pathMargin}
+                                fill="none"
+                                stroke="#10b981"
+                                strokeWidth="3"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="drop-shadow-xs"
+                              />
+                            )}
+
+                            {/* Interactive Columns & Points */}
+                            {pts.map((p, i) => {
+                              const isCurrent = currentViewDay && currentViewDay.date === p.date;
+                              const isHovered = hoveredSalesIndex === i;
+                              const barH = Math.max(4, plotTop + plotHeight - p.ySales);
+
+                              return (
+                                <g
+                                  key={`sales-col-${p.date}`}
+                                  className="cursor-pointer group"
+                                  onClick={() => setSelectedDashboardDate(p.date)}
+                                  onMouseEnter={() => setHoveredSalesIndex(i)}
+                                  onMouseLeave={() => setHoveredSalesIndex(null)}
+                                >
+                                  {/* Vertical Guideline */}
+                                  {(isHovered || isCurrent) && (
+                                    <line
+                                      x1={p.x}
+                                      y1={plotTop}
+                                      x2={p.x}
+                                      y2={plotTop + plotHeight}
+                                      stroke={isCurrent ? "#3b82f6" : "rgba(100, 116, 139, 0.4)"}
+                                      strokeWidth={isCurrent ? "1.5" : "1"}
+                                      strokeDasharray="2 2"
+                                    />
+                                  )}
+
+                                  {/* Highlight Glow for selected day */}
+                                  {isCurrent && (
+                                    <rect
+                                      x={p.x - barWidth / 2 - 3}
+                                      y={plotTop}
+                                      width={barWidth + 6}
+                                      height={plotHeight}
+                                      rx="4"
+                                      fill="rgba(59, 130, 246, 0.12)"
+                                    />
+                                  )}
+
+                                  {/* Sales Subtle Bar Indicator */}
+                                  {(salesGraphMetric === "both" || salesGraphMetric === "sales") && (
+                                    <rect
+                                      x={p.x - barWidth / 2}
+                                      y={p.ySales}
+                                      width={barWidth}
+                                      height={barH}
+                                      rx="3"
+                                      fill="url(#salesBarGrad)"
+                                      opacity={isCurrent ? "0.85" : isHovered ? "0.6" : "0.35"}
+                                      className="transition-all"
+                                    />
+                                  )}
+
+                                  {/* Sales Point Dot */}
+                                  {(salesGraphMetric === "both" || salesGraphMetric === "sales") && (
+                                    <circle
+                                      cx={p.x}
+                                      cy={p.ySales}
+                                      r={isCurrent || isHovered ? 5 : 3.5}
+                                      fill={isCurrent ? "#2563eb" : "#fff"}
+                                      stroke="#3b82f6"
+                                      strokeWidth={isCurrent ? "2.5" : "1.5"}
+                                    />
+                                  )}
+
+                                  {/* Margin Point Dot */}
+                                  {(salesGraphMetric === "both" || salesGraphMetric === "margin") && (
+                                    <circle
+                                      cx={p.x}
+                                      cy={p.yMargin}
+                                      r={isCurrent || isHovered ? 5.5 : 4}
+                                      fill={isCurrent ? "#059669" : "#fff"}
+                                      stroke="#10b981"
+                                      strokeWidth={isCurrent ? "2.5" : "2"}
+                                      className="transition-all"
+                                    />
+                                  )}
+
+                                  {/* Bottom Tick Mark */}
+                                  <line
+                                    x1={p.x}
+                                    y1={plotTop + plotHeight}
+                                    x2={p.x}
+                                    y2={plotTop + plotHeight + 4}
+                                    className="stroke-slate-500 dark:stroke-slate-400"
+                                    strokeWidth="1"
+                                  />
+
+                                  {/* Date Label */}
+                                  <text
+                                    x={p.x}
+                                    y={plotTop + plotHeight + 16}
+                                    textAnchor="middle"
+                                    className={`text-[8.5px] font-bold ${
+                                      isCurrent
+                                        ? "fill-blue-600 dark:fill-blue-400 font-black"
+                                        : "fill-slate-600 dark:fill-slate-400"
+                                    }`}
+                                  >
+                                    {p.date.slice(8)}
+                                  </text>
+                                </g>
+                              );
+                            })}
+                          </g>
+                        );
+                      })()}
+                    </svg>
+
+                    {/* Active / Hovered Tooltip Overlay */}
+                    {(() => {
+                      const activeIndex =
+                        hoveredSalesIndex !== null
+                          ? hoveredSalesIndex
+                          : salesVsMarginStats.points.findIndex((p) => p.date === currentViewDay?.date);
+                      const activePoint = activeIndex >= 0 ? salesVsMarginStats.points[activeIndex] : null;
+
+                      if (!activePoint) return null;
+
+                      return (
+                        <div className="mt-2 p-2.5 bg-slate-900/90 dark:bg-slate-800/90 text-white rounded-lg text-[11px] flex flex-wrap items-center justify-between gap-2 shadow-md">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-black text-amber-300">
+                              {activePoint.date} ({activePoint.day})
+                            </span>
+                            <span className="text-slate-400">|</span>
+                            <span>
+                              মোট বিক্রি: <strong className="text-blue-400">৳ {activePoint.sales.toLocaleString()}</strong>
+                            </span>
+                            <span className="text-slate-400">|</span>
+                            <span>
+                              ক্রয়মূল্য: <strong className="text-slate-300">৳ {activePoint.cost.toLocaleString()}</strong>
+                            </span>
+                            <span className="text-slate-400">|</span>
+                            <span>
+                              মার্জিন: <strong className="text-emerald-400">৳ {activePoint.margin.toLocaleString()}</strong>
+                            </span>
+                            <span className="text-slate-400">|</span>
+                            <span className="text-purple-300 font-bold">
+                              ({activePoint.marginPercent}%)
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-blue-200/80 font-medium">
+                            👆 ক্লিক করে দিন পরিবর্তন করুন
+                          </span>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right 35%: Sales & Margin Data Table & Card */}
+              <div className="lg:col-span-4 bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-3.5 flex flex-col justify-between transition-colors">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-2.5">
+                    <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 flex items-center space-x-2">
+                      <ShoppingCart className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      <span>মোট বিক্রি ও মার্জিন ডাটা</span>
+                    </h3>
+                    <span className="text-[11px] font-bold text-blue-800 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800/60">
+                      {currentViewDay.date.slice(5)}
+                    </span>
+                  </div>
+
+                  {/* Exact Sales Widget matching User Screenshot */}
+                  <div className="bg-slate-900 text-white rounded-xl p-3.5 sm:p-4 shadow-sm border border-slate-800 space-y-2.5">
+                    <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                      <div className="flex items-center space-x-2">
+                        <ShoppingCart className="w-4 h-4 text-blue-400" />
+                        <h4 className="text-xs sm:text-sm font-black text-slate-100">আজকের মোট ডিম বিক্রি</h4>
+                      </div>
+                      <span className="text-[11px] font-black text-blue-300 bg-blue-950/90 px-2.5 py-0.5 rounded-full border border-blue-800/60">
+                        সর্বমোট {salesVsMarginStats.currentDayPoint ? salesVsMarginStats.currentDayPoint.soldQty.toLocaleString() : 0} টি
+                      </span>
+                    </div>
+                    <div className="space-y-1.5 text-xs">
+                      <div className="flex justify-between items-center py-1 border-b border-slate-800/80">
+                        <span className="text-slate-400 font-medium">ডিম বিক্রির ক্রয়মূল্য:</span>
+                        <span className="font-bold text-slate-100">
+                          ৳ {salesVsMarginStats.currentDayPoint ? salesVsMarginStats.currentDayPoint.cost.toLocaleString() : 0}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-1 border-b border-slate-800/80">
+                        <span className="text-slate-400 font-medium">দিনের মোট লাভ (মার্জিন):</span>
+                        <span className="font-bold text-emerald-400">
+                          ৳ {salesVsMarginStats.currentDayPoint ? salesVsMarginStats.currentDayPoint.margin.toLocaleString() : 0}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center pt-1 font-black">
+                        <span className="text-xs sm:text-sm text-slate-200">মোট বিক্রি (Sales):</span>
+                        <span className="text-blue-400 text-sm sm:text-base font-black">
+                          ৳ {salesVsMarginStats.currentDayPoint ? salesVsMarginStats.currentDayPoint.sales.toLocaleString() : 0}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Historical Sales & Margin Scrollable Data Table */}
+                  <div>
+                    <div className="flex justify-between items-center pb-1.5 pt-1">
+                      <span className="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                        দিনভিত্তিক ঐতিহাসিক খাতা ({salesFilteredData.length} দিন)
+                      </span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                        👆 ক্লিক করে তারিখ দেখুন
+                      </span>
+                    </div>
+
+                    <div className="max-h-[220px] overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+                      <table className="w-full text-left text-[11px] sm:text-xs border-collapse">
+                        <thead className="sticky top-0 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase font-bold text-[10px] border-b border-slate-200 dark:border-slate-700 z-10">
+                          <tr>
+                            <th className="py-2 px-2">তারিখ</th>
+                            <th className="py-2 px-1.5 text-right whitespace-nowrap">মোট বিক্রি</th>
+                            <th className="py-2 px-1.5 text-right whitespace-nowrap">মার্জিন</th>
+                            <th className="py-2 px-2 text-right whitespace-nowrap">হার %</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-semibold text-slate-800 dark:text-slate-200">
+                          {salesVsMarginStats.points.map((p) => {
+                            const isSelected = currentViewDay && currentViewDay.date === p.date;
+                            return (
+                              <tr
+                                key={`tbl-sales-${p.date}`}
+                                onClick={() => setSelectedDashboardDate(p.date)}
+                                className={`cursor-pointer transition-colors ${
+                                  isSelected
+                                    ? "bg-blue-50/90 dark:bg-blue-950/70 font-black text-blue-900 dark:text-blue-200"
+                                    : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                                }`}
+                              >
+                                <td className="py-1.5 px-2 whitespace-nowrap">
+                                  <div className="font-bold">{p.date.slice(5)}</div>
+                                  <div className="text-[9px] text-slate-400 font-normal">
+                                    {getBanglaDay(p.day).slice(0, 4)}
+                                  </div>
+                                </td>
+                                <td className="py-1.5 px-1.5 text-right font-bold text-blue-700 dark:text-blue-300 whitespace-nowrap">
+                                  ৳{p.sales.toLocaleString()}
+                                </td>
+                                <td className="py-1.5 px-1.5 text-right font-black text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
+                                  ৳{p.margin.toLocaleString()}
+                                </td>
+                                <td className="py-1.5 px-2 text-right font-bold text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                                  {p.marginPercent}%
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                        <tfoot className="sticky bottom-0 bg-slate-50 dark:bg-slate-800/90 font-black text-[11px] border-t-2 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 z-10">
+                          <tr>
+                            <td className="py-2 px-2 whitespace-nowrap">সর্বমোট</td>
+                            <td className="py-2 px-1.5 text-right text-blue-900 dark:text-blue-300 whitespace-nowrap">
+                              ৳{salesVsMarginStats.totalSales.toLocaleString()}
+                            </td>
+                            <td className="py-2 px-1.5 text-right text-emerald-900 dark:text-emerald-300 whitespace-nowrap">
+                              ৳{salesVsMarginStats.totalMargin.toLocaleString()}
+                            </td>
+                            <td className="py-2 px-2 text-right text-purple-900 dark:text-purple-300 whitespace-nowrap">
+                              {salesVsMarginStats.avgMarginPercent}%
+                            </td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
                   </div>
                 </div>
               </div>
