@@ -412,43 +412,7 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
 
   return (
     <div className="space-y-4 sm:space-y-6 animate-fadeIn pb-16">
-      {/* 1. Header Banner & Actions - Modern Frosted Glass */}
-      <div className="glass-panel rounded-3xl p-4 sm:p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 relative overflow-hidden group">
-        <div className="flex items-center space-x-3">
-          <div className="w-11 h-11 bg-cyan-500/15 border border-cyan-400/40 rounded-2xl flex items-center justify-center text-cyan-400 shadow-[0_0_16px_rgba(0,200,255,0.3)]">
-            <Building2 className="w-6 h-6" />
-          </div>
-          <div>
-            <h2 className="text-base sm:text-lg font-black text-slate-100 flex items-center gap-2">
-              <span>কর্মচারী, দোকান ভাড়া ও অতিরিক্ত পরিচালন খরচ</span>
-            </h2>
-            <p className="text-xs text-slate-400 font-medium">
-              বেতন, দোকান/গোডাউন ভাড়া, বিদ্যুৎ বিল ও মাসিক পরিচালন ব্যয়ের নির্ভুল খাতা
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-2 w-full md:w-auto justify-end">
-          <button
-            onClick={() => setIsFormOpen(!isFormOpen)}
-            className="flex items-center space-x-1.5 px-5 py-2.5 bg-gradient-to-r from-cyan-400 to-sky-400 hover:from-cyan-300 hover:to-sky-300 text-slate-950 rounded-full text-xs font-black transition-all shadow-[0_0_16px_rgba(0,200,255,0.45)] active:scale-95 cursor-pointer border border-cyan-300/50"
-          >
-            <Plus className="w-4 h-4" />
-            <span>{isFormOpen ? "ফর্ম লুকান" : "+ নতুন খরচ এন্ট্রি"}</span>
-          </button>
-
-          <button
-            onClick={fetchExpenses}
-            disabled={refreshing}
-            className="w-10 h-10 flex items-center justify-center bg-slate-900/90 hover:bg-cyan-950/40 text-cyan-400 hover:text-cyan-300 rounded-full border border-cyan-500/60 hover:border-cyan-400 shadow-[0_0_12px_rgba(0,200,255,0.25)] transition-all cursor-pointer active:scale-95 shrink-0"
-            title="রিফ্রেশ করুন"
-          >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin text-cyan-300" : ""}`} />
-          </button>
-        </div>
-      </div>
-
-      {/* 2. Top Summary Fund & Cash Cards (Modern Frosted Glass) */}
+      {/* 1. Top Summary Fund & Cash Cards (Modern Frosted Glass) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
         {/* Card 1: সর্বমোট নিট তহবিল (দোকান + ব্যাংক) */}
         <div className="glass-panel-emerald rounded-3xl p-5 sm:p-6 relative overflow-hidden flex flex-col justify-between space-y-3 transition-all group hover:scale-[1.01] hover:shadow-[0_16px_40px_rgba(16,185,129,0.2)]">
@@ -1087,6 +1051,25 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
               ))}
             </select>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setIsFormOpen(!isFormOpen)}
+            className="flex items-center space-x-1 px-3.5 py-1.5 bg-gradient-to-r from-cyan-400 to-sky-400 hover:from-cyan-300 hover:to-sky-300 text-slate-950 rounded-full text-xs font-black transition-all shadow-[0_0_10px_rgba(0,200,255,0.3)] active:scale-95 cursor-pointer border border-cyan-300/50 shrink-0"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>{isFormOpen ? "ফর্ম লুকান" : "+ খরচ এন্ট্রি"}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={fetchExpenses}
+            disabled={refreshing}
+            className="w-8 h-8 flex items-center justify-center bg-slate-900/90 hover:bg-cyan-950/40 text-cyan-400 hover:text-cyan-300 rounded-full border border-cyan-500/60 hover:border-cyan-400 shadow-xs transition-all cursor-pointer active:scale-95 shrink-0"
+            title="রিফ্রেশ করুন"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin text-cyan-300" : ""}`} />
+          </button>
         </div>
 
         {/* Search Box */}
