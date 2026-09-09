@@ -34,7 +34,6 @@ import {
   Building2,
   LogOut,
   UserCheck,
-  PiggyBank,
   ToggleLeft,
   ToggleRight,
   Link2,
@@ -48,7 +47,6 @@ import {
 } from "lucide-react";
 import { ComputedDayData, saveLedgerEntryAction } from "./actions";
 import OverheadExpensesView from "./OverheadExpensesView";
-import SavingsTrackerView from "./SavingsTrackerView";
 import LoginScreen from "./LoginScreen";
 import { UserAccount } from "@/lib/auth";
 import ThemeToggle from "./ThemeToggle";
@@ -278,7 +276,7 @@ function ThemedFundDropdown({
 
 export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
   const [data, setData] = useState<ComputedDayData[]>(initialData);
-  const [activeTab, setActiveTab] = useState<"dashboard" | "entry" | "overhead" | "savings">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "entry" | "overhead">("dashboard");
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [authLoaded, setAuthLoaded] = useState<boolean>(false);
 
@@ -1702,7 +1700,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
     }
   };
 
-  const handleSwitchTab = (tab: "dashboard" | "entry" | "overhead" | "savings") => {
+  const handleSwitchTab = (tab: "dashboard" | "entry" | "overhead") => {
     if (tab === "entry") {
       const targetDate = selectedDashboardDate || currentViewDay?.date || (data.length > 0 ? data[data.length - 1].date : "");
       if (targetDate) {
@@ -1823,7 +1821,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
     );
   }
 
-  const isAllowed = (tab: "dashboard" | "entry" | "overhead" | "savings") => {
+  const isAllowed = (tab: "dashboard" | "entry" | "overhead") => {
     if (!currentUser) return true;
     return currentUser.allowedTabs.includes(tab);
   };
@@ -1941,23 +1939,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                 </button>
               )}
 
-              {isAllowed("savings") && (
-                <button
-                  onClick={() => handleSwitchTab("savings")}
-                  className={`flex items-center justify-center space-x-1.5 sm:space-x-2 px-4 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                    activeTab === "savings"
-                      ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 font-black shadow-[0_0_14px_rgba(0,200,255,0.45)] border border-cyan-300/60"
-                      : "text-slate-400 hover:text-cyan-300 hover:bg-slate-800/60"
-                  }`}
-                >
-                  <PiggyBank className="w-4 h-4" />
-                  <span>সঞ্চয় ও অতিরিক্ত আয়</span>
-                </button>
-              )}
             </div>
 
             {/* Unified Date Navigator Pill on the Right (Web View) */}
-            {activeTab !== "overhead" && activeTab !== "savings" &&
+            {activeTab !== "overhead" &&
               renderDateNavigatorPill(
                 activeDisplayDate,
                 activeDisplayDay,
@@ -1970,7 +1955,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
           </div>
 
           {/* Sticky Mobile Sub-Header (Date Navigator for Mobile Phone View) */}
-          {activeTab !== "overhead" && activeTab !== "savings" && (
+          {activeTab !== "overhead" && (
             <div className="sm:hidden sticky top-[58px] z-30 glass-panel p-2 rounded-2xl shadow-md flex items-center gap-1.5 w-full min-w-0">
               {renderDateNavigatorPill(
                 activeDisplayDate,
@@ -5141,14 +5126,9 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
             </button>
           </div>
         </form>
-      ) : activeTab === "overhead" ? (
+      ) : (
         /* ================= OVERHEAD EXPENSES & EMPLOYEE COSTS TAB ================= */
         <OverheadExpensesView ledgerData={data} />
-      ) : (
-        /* ================= BUSINESS SAVINGS & EXTRA INFLOWS TAB ================= */
-        <div className="hidden sm:block">
-          <SavingsTrackerView />
-        </div>
       )}
 
       {/* Floating Bottom Nav for Mobile Screens */}

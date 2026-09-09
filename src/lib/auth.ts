@@ -5,7 +5,7 @@ export interface UserAccount {
   name: string;
   role: UserRole;
   roleLabel: string;
-  allowedTabs: Array<"dashboard" | "entry" | "overhead" | "savings">;
+  allowedTabs: Array<"dashboard" | "entry" | "overhead">;
   canEdit: boolean;
   canDelete: boolean;
   avatarEmoji: string;
@@ -18,7 +18,7 @@ export const USERS: Record<string, UserAccount & { passwordHash: string }> = {
     name: "Russell Foyze",
     role: "admin",
     roleLabel: "👑 অ্যাডমিন (মালিক)",
-    allowedTabs: ["dashboard", "entry", "overhead", "savings"],
+    allowedTabs: ["dashboard", "entry", "overhead"],
     canEdit: true,
     canDelete: true,
     avatarEmoji: "👑",
@@ -29,7 +29,7 @@ export const USERS: Record<string, UserAccount & { passwordHash: string }> = {
     name: "Billal Hossain",
     role: "manager",
     roleLabel: "👔 ম্যানেজার (হিসাবরক্ষক)",
-    allowedTabs: ["entry", "overhead", "savings"],
+    allowedTabs: ["entry", "overhead"],
     canEdit: true,
     canDelete: false,
     avatarEmoji: "👔",
@@ -40,7 +40,7 @@ export const USERS: Record<string, UserAccount & { passwordHash: string }> = {
     name: "Kayes",
     role: "manager",
     roleLabel: "👔 ম্যানেজার (হিসাবরক্ষক)",
-    allowedTabs: ["dashboard", "entry", "overhead", "savings"],
+    allowedTabs: ["dashboard", "entry", "overhead"],
     canEdit: true,
     canDelete: true,
     avatarEmoji: "💼",
