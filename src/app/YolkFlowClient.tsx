@@ -584,6 +584,17 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
     return expenses.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
   }, [expenses]);
 
+  // Live Personal Expenses ("নিজ") in Form
+  const formLivePersonalExpense = useMemo(() => {
+    return expenses.reduce((sum, exp) => {
+      const t = (exp.expenseType === "Other" && exp.customName ? exp.customName : exp.expenseType || "").trim().toLowerCase();
+      if (t === "নিজ" || t.includes("নিজ") || t.includes("ব্যক্তিগত")) {
+        return sum + (Number(exp.amount) || 0);
+      }
+      return sum;
+    }, 0);
+  }, [expenses]);
+
   // Live breakdown of expenses linked to Overhead & Savings
   const formLiveOverheadBreakdown = useMemo(() => {
     let overheadCount = 0;
@@ -807,6 +818,16 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
   const viewProfit = currentViewDay ? currentViewDay.financials.profitMargin : 0;
   const viewCash = currentViewDay ? currentViewDay.financials.totalCash : 0;
   const viewCashPlusStock = currentViewDay ? currentViewDay.financials.cashPlusStock : 0;
+
+  const viewPersonalExpense = useMemo(() => {
+    if (!currentViewDay || !currentViewDay.expenses?.list) return 0;
+    return currentViewDay.expenses.list
+      .filter((e) => {
+        const t = (e.type || "").trim().toLowerCase();
+        return t === "নিজ" || t.includes("নিজ") || t.includes("ব্যক্তিগত");
+      })
+      .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+  }, [currentViewDay]);
 
   // Daily Sales calculations
   const viewDailySalesAmount = currentViewDay?.sales?.dailySalesAmount ?? 0;
@@ -1875,8 +1896,13 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                   <Trash2 className="w-5 h-5 text-white" />
                 </div>
               </div>
-              <div className="mt-3 pt-2.5 border-t border-white/20 text-[11px] text-slate-300 font-medium truncate">
-                খরচসহ মোট: ৳ {viewTotalBusinessWithExpenses.toLocaleString()}
+              <div className="mt-3 pt-2.5 border-t border-white/20 text-[11px] text-slate-300 font-medium truncate flex justify-between items-center">
+                <span>খরচসহ মোট: ৳ {viewTotalBusinessWithExpenses.toLocaleString()}</span>
+                {viewPersonalExpense > 0 && (
+                  <span className="font-bold text-amber-300 bg-black/25 px-1.5 py-0.2 rounded-md">
+                    নিজ: ৳{viewPersonalExpense.toLocaleString()}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -4616,14 +4642,21 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">নাস্তা, ট্রে-ফের, ভাঙ্গা ইত্যাদি খরচ যোগ করুন</p>
               </div>
               <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
-                <button
-                  type="button"
-                  onClick={addExpenseRow}
-                  className="text-xs font-bold text-slate-700 dark:text-slate-300 bg-rose-50 dark:bg-rose-950/70 border border-rose-200 dark:border-rose-800/60 px-2.5 py-1.5 rounded-xl cursor-pointer hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-all active:scale-95"
-                  title="নতুন খরচ যোগ করুন"
-                >
-                  মোট খরচ: <strong className="text-rose-600 dark:text-rose-400 font-black">৳ {formLiveTotalExpenses.toLocaleString()}</strong>
-                </button>
+                <div className="flex items-center space-x-1.5 sm:space-x-2">
+                  <button
+                    type="button"
+                    onClick={addExpenseRow}
+                    className="text-xs font-bold text-slate-700 dark:text-slate-300 bg-rose-50 dark:bg-rose-950/70 border border-rose-200 dark:border-rose-800/60 px-2.5 py-1.5 rounded-xl cursor-pointer hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-all active:scale-95"
+                    title="নতুন খরচ যোগ করুন"
+                  >
+                    মোট খরচ: <strong className="text-rose-600 dark:text-rose-400 font-black">৳ {formLiveTotalExpenses.toLocaleString()}</strong>
+                  </button>
+                  {formLivePersonalExpense > 0 && (
+                    <span className="text-xs font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/70 border border-purple-200 dark:border-purple-800/60 px-2.5 py-1.5 rounded-xl" title="ব্যক্তিগত খরচ (নিজ)">
+                      নিজ খরচ: <strong className="font-black">৳ {formLivePersonalExpense.toLocaleString()}</strong>
+                    </span>
+                  )}
+                </div>
                 <button
                   type="button"
                   onClick={addExpenseRow}
@@ -4909,7 +4942,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
         </form>
       ) : activeTab === "overhead" ? (
         /* ================= OVERHEAD EXPENSES & EMPLOYEE COSTS TAB ================= */
-        <OverheadExpensesView />
+        <OverheadExpensesView ledgerData={data} />
       ) : (
         /* ================= BUSINESS SAVINGS & EXTRA INFLOWS TAB ================= */
         <SavingsTrackerView />

@@ -27,8 +27,12 @@ import {
   Info,
   Receipt,
   ArrowDownRight,
+  UserCheck,
+  Eye,
+  X,
 } from "lucide-react";
 import { OverheadExpenseItem } from "@/lib/googleSheets";
+import { ComputedDayData } from "./actions";
 import DateTimePicker, { formatToDayMonthYear } from "./DateTimePicker";
 
 const CATEGORIES = [
@@ -45,7 +49,14 @@ const CATEGORIES = [
   { id: "extra", label: "অন্যান্য বিবিধ অতিরিক্ত খরচ", icon: Coins, color: "text-rose-700 dark:text-rose-400", bg: "bg-rose-50 dark:bg-rose-950/60", border: "border-rose-200 dark:border-rose-800" },
 ];
 
-export default function OverheadExpensesView() {
+interface OverheadExpensesViewProps {
+  ledgerData?: ComputedDayData[];
+}
+
+export default function OverheadExpensesView({ ledgerData }: OverheadExpensesViewProps = {}) {
+  const [internalLedgerData, setInternalLedgerData] = useState<ComputedDayData[]>([]);
+  const [isPersonalListOpen, setIsPersonalListOpen] = useState<boolean>(false);
+
   const [expenses, setExpenses] = useState<OverheadExpenseItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -121,6 +132,78 @@ export default function OverheadExpensesView() {
     } catch (e) {}
     fetchExpenses();
   }, []);
+
+  // Sync ledger data if not provided via props
+  useEffect(() => {
+    if (!ledgerData || ledgerData.length === 0) {
+      fetch("/api/data")
+        .then((res) => res.json())
+        .then((json) => {
+          if (json && Array.isArray(json.data)) {
+            setInternalLedgerData(json.data);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [ledgerData]);
+
+  const activeLedgerData = (ledgerData && ledgerData.length > 0) ? ledgerData : internalLedgerData;
+
+  // Compute personal expenses ("নিজ") from 4. দৈনিক খরচের খাত across all ledger entries
+  const personalExpensesList = useMemo(() => {
+    const list: {
+      date: string;
+      pageNo: string;
+      day: string;
+      amount: number;
+      type: string;
+    }[] = [];
+
+    activeLedgerData.forEach((dayData) => {
+      const expList = dayData.expenses?.list || [];
+      expList.forEach((exp) => {
+        const t = (exp.type || "").trim().toLowerCase();
+        if (t === "নিজ" || t.includes("নিজ") || t.includes("ব্যক্তিগত") || t === "personal") {
+          const amt = Number(exp.amount) || 0;
+          if (amt > 0) {
+            list.push({
+              date: dayData.date,
+              pageNo: dayData.pageNo,
+              day: dayData.day,
+              amount: amt,
+              type: exp.type,
+            });
+          }
+        }
+      });
+    });
+
+    list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return list;
+  }, [activeLedgerData]);
+
+  const personalExpenseTotals = useMemo(() => {
+    let allTimeTotal = 0;
+    let filteredMonthTotal = 0;
+    let filteredCount = 0;
+
+    personalExpensesList.forEach((item) => {
+      allTimeTotal += item.amount;
+      const itemMonth = item.date.slice(0, 7);
+      if (selectedMonth === "all" || itemMonth === selectedMonth) {
+        filteredMonthTotal += item.amount;
+        filteredCount++;
+      }
+    });
+
+    return {
+      allTimeTotal,
+      filteredMonthTotal,
+      displayTotal: selectedMonth === "all" ? allTimeTotal : filteredMonthTotal,
+      count: selectedMonth === "all" ? personalExpensesList.length : filteredCount,
+      allTimeCount: personalExpensesList.length,
+    };
+  }, [personalExpensesList, selectedMonth]);
 
   // Available unique months
   const availableMonths = useMemo(() => {
@@ -364,10 +447,10 @@ export default function OverheadExpensesView() {
         </div>
       </div>
 
-      {/* 2. Top Summary Metric Cards (সর্বমোট সঞ্চয় জমা, কর্মচারী বেতন, মাসিক খরচ ও দোকানের ক্যাশ) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+      {/* 2. Top Summary Metric Cards (সর্বমোট সঞ্চয় জমা, কর্মচারী বেতন, মাসিক খরচ, দোকানের ক্যাশ ও ব্যক্তিগত খরচ) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3.5 sm:gap-4">
         {/* Card 1: মোট সঞ্চয় জমা (Total Savings Given) */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-emerald-200/80 dark:border-emerald-800/60 space-y-2">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-emerald-200/80 dark:border-emerald-800/60 flex flex-col justify-between space-y-2">
           <div className="flex justify-between items-center">
             <div className="p-2 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-xl border border-emerald-200 dark:border-emerald-800">
               <PiggyBank className="w-5 h-5" />
@@ -388,7 +471,7 @@ export default function OverheadExpensesView() {
         </div>
 
         {/* Card 2: কর্মচারী মোট বেতন (Employee Salary) */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-2">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 flex flex-col justify-between space-y-2">
           <div className="flex justify-between items-center">
             <div className="p-2 bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 rounded-xl border border-blue-200 dark:border-blue-800">
               <Users className="w-5 h-5" />
@@ -409,7 +492,7 @@ export default function OverheadExpensesView() {
         </div>
 
         {/* Card 3: সর্বমোট মাসিক খরচ (Total Monthly Cost) */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-2">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 flex flex-col justify-between space-y-2">
           <div className="flex justify-between items-center">
             <div className="p-2 bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 rounded-xl border border-amber-200 dark:border-amber-800">
               <Receipt className="w-5 h-5" />
@@ -430,24 +513,83 @@ export default function OverheadExpensesView() {
         </div>
 
         {/* Card 4: দোকানের নগদ ক্যাশ (Cash in the Shop) */}
-        <div className="bg-gradient-to-br from-amber-600 to-amber-700 text-white rounded-2xl p-4 sm:p-5 shadow-md space-y-2">
-          <div className="flex justify-between items-center">
-            <div className="p-2 bg-white/20 rounded-xl">
-              <Store className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-[11px] font-bold bg-white/20 text-white px-2.5 py-0.5 rounded-full">
-              নগদ ক্যাশ ড্রয়ার
-            </span>
-          </div>
+        <div className="bg-gradient-to-br from-amber-600 to-amber-700 text-white rounded-2xl p-4 sm:p-5 shadow-md flex flex-col justify-between space-y-2.5">
           <div>
-            <p className="text-xs font-semibold text-amber-100">দোকানের নগদ ক্যাশ (Cash in Shop)</p>
-            <p className="text-2xl sm:text-3xl font-black text-white mt-0.5">
-              ৳ {(latestShopCash > 0 ? latestShopCash : totals.netShopSavings).toLocaleString()}
-            </p>
-            <p className="text-[10px] font-medium text-amber-100/90 mt-1">
-              {latestShopCash > 0
-                ? `দৈনিক ক্যাশ: ৳${latestShopCash.toLocaleString()} | দোকানে সঞ্চয়: ৳${totals.netShopSavings.toLocaleString()}`
-                : `দোকানের ক্যাশ ড্রয়ারে রক্ষিত নগদ ফান্ড`}
+            <div className="flex justify-between items-center">
+              <div className="p-2 bg-white/20 rounded-xl">
+                <Store className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-[10px] font-bold bg-white/25 text-white px-2.5 py-0.5 rounded-full backdrop-blur-xs">
+                {latestShopCashDate ? `${latestShopCashDate.slice(5)} তারিখের ক্যাশ` : "নগদ ক্যাশ ড্রয়ার"}
+              </span>
+            </div>
+            <div className="mt-2">
+              <p className="text-xs font-bold text-amber-100">দোকানের নগদ ক্যাশ (Cash in Shop)</p>
+              <p className="text-2xl sm:text-3xl font-black text-white mt-0.5 tracking-tight">
+                ৳ {(latestShopCash > 0 ? latestShopCash : totals.netShopSavings).toLocaleString()}
+              </p>
+            </div>
+          </div>
+
+          {/* User Requested Exact Breakdown: অবশিষ্ট নিট ফান্ড, অবশিষ্ট নিট ব্যাংক ফান্ড, সর্বমোট মাসিক খরচ */}
+          <div className="pt-2 border-t border-white/20 space-y-1 text-[11px]">
+            <div className="flex justify-between items-center text-amber-100">
+              <span className="font-medium">অবশিষ্ট নিট ফান্ড:</span>
+              <span className="font-black text-white">৳ {totals.netShopSavings.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between items-center text-amber-100">
+              <span className="font-medium">+ অবশিষ্ট নিট ব্যাংক ফান্ড:</span>
+              <span className="font-black text-white">৳ {totals.netBankSavings.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between items-center text-amber-200">
+              <span className="font-medium">সর্বমোট মাসিক খরচ:</span>
+              <span className="font-black text-white">৳ {totals.pureExpenseTotal.toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 5: ব্যক্তিগত মোট খরচ (Personal Cost from 4. Daily Expenses) */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-purple-200/80 dark:border-purple-800/60 flex flex-col justify-between space-y-2.5 transition-colors">
+          <div>
+            <div className="flex justify-between items-center">
+              <div className="p-2 bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 rounded-xl border border-purple-200 dark:border-purple-800">
+                <UserCheck className="w-5 h-5" />
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsPersonalListOpen(true)}
+                className="text-[10px] font-black text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/80 hover:bg-purple-100 dark:hover:bg-purple-900/60 px-2 py-0.5 rounded-full border border-purple-200 dark:border-purple-800 flex items-center space-x-1 cursor-pointer transition-colors"
+                title="সকল ব্যক্তিগত খরচের তালিকা দেখুন"
+              >
+                <span>তালিকা</span>
+                <Eye className="w-3 h-3" />
+              </button>
+            </div>
+            <div className="mt-2">
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400">ব্যক্তিগত মোট খরচ (Personal Cost)</p>
+              <p className="text-2xl sm:text-3xl font-black text-purple-800 dark:text-purple-300 mt-0.5 tracking-tight">
+                ৳ {personalExpenseTotals.displayTotal.toLocaleString()}
+              </p>
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+            <div className="flex justify-between items-center">
+              <span>{selectedMonth === "all" ? "মোট এন্ট্রি:" : "চলতি সময়ে:"}</span>
+              <span className="font-bold text-slate-700 dark:text-slate-300">
+                {personalExpenseTotals.count} দিনে এন্ট্রি
+              </span>
+            </div>
+            {selectedMonth !== "all" && (
+              <div className="flex justify-between items-center">
+                <span>সর্বমোট (সব দিন):</span>
+                <span className="font-bold text-purple-600 dark:text-purple-400">
+                  ৳ {personalExpenseTotals.allTimeTotal.toLocaleString()}
+                </span>
+              </div>
+            )}
+            <p className="text-[9.5px] font-semibold text-purple-600 dark:text-purple-400">
+              ৪. দৈনিক খরচের খাত (নিজ) হতে
             </p>
           </div>
         </div>
@@ -980,6 +1122,68 @@ export default function OverheadExpensesView() {
           </div>
         )}
       </div>
+
+      {/* Modal: ৪. দৈনিক খরচের খাত (নিজ) তালিকা */}
+      {isPersonalListOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 w-full max-w-lg shadow-2xl border border-purple-200 dark:border-purple-800/80 space-y-4 max-h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
+              <div className="flex items-center space-x-2.5">
+                <div className="p-2 bg-purple-50 dark:bg-purple-950/70 text-purple-600 dark:text-purple-400 rounded-xl border border-purple-200 dark:border-purple-800">
+                  <UserCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100">
+                    ব্যক্তিগত খরচ (নিজ) বিস্তারিত তালিকা
+                  </h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                    ৪. দৈনিক খরচের খাত (হালখাতা এন্ট্রি) হতে সংগৃহীত
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsPersonalListOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex justify-between items-center p-3 rounded-2xl bg-purple-50 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-800/60 text-xs">
+              <span className="font-bold text-purple-900 dark:text-purple-200">মোট ব্যক্তিগত খরচ:</span>
+              <span className="text-base font-black text-purple-700 dark:text-purple-300">
+                ৳ {personalExpenseTotals.allTimeTotal.toLocaleString()} ({personalExpensesList.length} টি এন্ট্রি)
+              </span>
+            </div>
+
+            <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 text-xs pr-1">
+              {personalExpensesList.length === 0 ? (
+                <p className="text-center text-slate-400 py-8">কোনো ব্যক্তিগত খরচ (নিজ) পাওয়া যায়নি</p>
+              ) : (
+                personalExpensesList.map((item, idx) => (
+                  <div key={`personal-${item.date}-${idx}`} className="py-2.5 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/40 px-2 rounded-xl transition-colors">
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-bold text-slate-800 dark:text-slate-200">{item.date}</span>
+                        {item.pageNo && (
+                          <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-2 py-0.2 rounded-full font-bold text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                            পৃষ্ঠা #{item.pageNo}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">খাত: {item.type} ({item.day})</p>
+                    </div>
+                    <span className="text-sm font-black text-purple-700 dark:text-purple-300">
+                      ৳ {item.amount.toLocaleString()}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
