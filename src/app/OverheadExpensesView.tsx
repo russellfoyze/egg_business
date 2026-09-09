@@ -412,17 +412,17 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
 
   return (
     <div className="space-y-4 sm:space-y-6 animate-fadeIn pb-16">
-      {/* 1. Header Banner & Actions */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+      {/* 1. Header Banner & Actions - Modern Frosted Glass */}
+      <div className="glass-panel rounded-3xl p-4 sm:p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 relative overflow-hidden group">
         <div className="flex items-center space-x-3">
-          <div className="p-2.5 bg-gradient-to-tr from-amber-500 to-amber-600 rounded-2xl text-white shadow-sm">
+          <div className="w-11 h-11 bg-cyan-500/15 border border-cyan-400/40 rounded-2xl flex items-center justify-center text-cyan-400 shadow-[0_0_16px_rgba(0,200,255,0.3)]">
             <Building2 className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100">
-              কর্মচারী, দোকান ভাড়া ও অতিরিক্ত পরিচালন খরচ
+            <h2 className="text-base sm:text-lg font-black text-slate-100 flex items-center gap-2">
+              <span>কর্মচারী, দোকান ভাড়া ও অতিরিক্ত পরিচালন খরচ</span>
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-slate-400 font-medium">
               বেতন, দোকান/গোডাউন ভাড়া, বিদ্যুৎ বিল ও মাসিক পরিচালন ব্যয়ের নির্ভুল খাতা
             </p>
           </div>
@@ -431,7 +431,7 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
         <div className="flex items-center space-x-2 w-full md:w-auto justify-end">
           <button
             onClick={() => setIsFormOpen(!isFormOpen)}
-            className="flex items-center space-x-1.5 px-4 py-2 bg-gradient-to-r from-cyan-400 to-sky-400 hover:from-cyan-300 hover:to-sky-300 text-slate-950 rounded-full text-xs font-black transition-all shadow-[0_0_14px_rgba(0,200,255,0.4)] active:scale-95 cursor-pointer border border-cyan-300/40"
+            className="flex items-center space-x-1.5 px-5 py-2.5 bg-gradient-to-r from-cyan-400 to-sky-400 hover:from-cyan-300 hover:to-sky-300 text-slate-950 rounded-full text-xs font-black transition-all shadow-[0_0_16px_rgba(0,200,255,0.45)] active:scale-95 cursor-pointer border border-cyan-300/50"
           >
             <Plus className="w-4 h-4" />
             <span>{isFormOpen ? "ফর্ম লুকান" : "+ নতুন খরচ এন্ট্রি"}</span>
@@ -440,7 +440,7 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
           <button
             onClick={fetchExpenses}
             disabled={refreshing}
-            className="w-9 h-9 flex items-center justify-center bg-slate-900/90 hover:bg-cyan-950/40 text-cyan-400 hover:text-cyan-300 rounded-full border border-cyan-500/60 hover:border-cyan-400 shadow-[0_0_10px_rgba(0,200,255,0.25)] transition-all cursor-pointer active:scale-95"
+            className="w-10 h-10 flex items-center justify-center bg-slate-900/90 hover:bg-cyan-950/40 text-cyan-400 hover:text-cyan-300 rounded-full border border-cyan-500/60 hover:border-cyan-400 shadow-[0_0_12px_rgba(0,200,255,0.25)] transition-all cursor-pointer active:scale-95 shrink-0"
             title="রিফ্রেশ করুন"
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin text-cyan-300" : ""}`} />
@@ -448,159 +448,158 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
         </div>
       </div>
 
-      {/* 2. Top Summary Fund & Cash Cards (সর্বমোট নিট তহবিল ও দোকানের নগদ ক্যাশ) */}
+      {/* 2. Top Summary Fund & Cash Cards (Modern Frosted Glass) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
         {/* Card 1: সর্বমোট নিট তহবিল (দোকান + ব্যাংক) */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-emerald-200/80 dark:border-emerald-800/60 flex flex-col justify-between space-y-2 transition-colors">
-          <div className="flex justify-between items-center">
-            <div className="p-2 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-xl border border-emerald-200 dark:border-emerald-800">
-              <PiggyBank className="w-5 h-5" />
-            </div>
-            <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
-              দোকান + ব্যাংক
-            </span>
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-500 dark:text-slate-400">সর্বমোট নিট তহবিল (দোকান + ব্যাংক)</p>
-            <p className="text-xl sm:text-2xl font-black text-emerald-700 dark:text-emerald-400 mt-0.5 tracking-tight">
-              ৳ {totals.netTotalSavings.toLocaleString()}
-            </p>
-            <div className="mt-1 pt-1.5 border-t border-slate-100 dark:border-slate-800 text-[10px] space-y-0.5">
-              <div className="flex justify-between items-center font-semibold text-slate-600 dark:text-slate-300">
-                <span>জমা ৳{totals.totalSavingsDeposited.toLocaleString()}</span>
-                <span className="text-slate-400 dark:text-slate-500">|</span>
-                <span className="text-amber-600 dark:text-amber-400">বিল ৳{totals.totalSavingsWithdrawn.toLocaleString()}</span>
-              </div>
-              <p className="text-[9.5px] font-medium text-slate-400 dark:text-slate-500">
-                দোকানে নিট ৳{totals.netShopSavings.toLocaleString()} | ব্যাংকে নিট ৳{totals.netBankSavings.toLocaleString()}
+        <div className="glass-panel-emerald rounded-3xl p-5 sm:p-6 relative overflow-hidden flex flex-col justify-between space-y-3 transition-all group hover:scale-[1.01] hover:shadow-[0_16px_40px_rgba(16,185,129,0.2)]">
+          <div className="flex justify-between items-start">
+            <div>
+              <span className="text-[10px] sm:text-xs font-black tracking-wider text-emerald-400 bg-emerald-950/70 border border-emerald-500/40 px-2.5 py-1 rounded-full uppercase backdrop-blur-md inline-block">
+                #দোকান + ব্যাংক তহবিল
+              </span>
+              <p className="text-[11px] font-bold text-slate-400 block mt-2">সর্বমোট নিট তহবিল (দোকান + ব্যাংক)</p>
+              <p className="text-2xl sm:text-3xl font-black text-emerald-400 drop-shadow-[0_0_16px_rgba(16,185,129,0.45)] mt-0.5 tracking-tight">
+                ৳ {totals.netTotalSavings.toLocaleString()}
               </p>
             </div>
+            <div className="w-10 h-10 rounded-full bg-emerald-500/15 border border-emerald-400/40 flex items-center justify-center text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.3)] shrink-0">
+              <PiggyBank className="w-5 h-5" />
+            </div>
+          </div>
+
+          <div className="pt-2.5 border-t border-white/10 text-[11px] space-y-1">
+            <div className="flex justify-between items-center font-bold text-slate-300">
+              <span>জমা: <strong className="text-emerald-300">৳{totals.totalSavingsDeposited.toLocaleString()}</strong></span>
+              <span className="text-emerald-500/40">|</span>
+              <span>পরিশোধিত বিল: <strong className="text-amber-400">৳{totals.totalSavingsWithdrawn.toLocaleString()}</strong></span>
+            </div>
+            <p className="text-[10px] font-medium text-slate-400">
+              দোকানে নিট ৳{totals.netShopSavings.toLocaleString()} &bull; ব্যাংকে নিট ৳{totals.netBankSavings.toLocaleString()}
+            </p>
           </div>
         </div>
 
         {/* Card 2: দোকানের নগদ ক্যাশ (Cash in the Shop) */}
-        <div className="bg-gradient-to-br from-amber-600 to-amber-700 text-white rounded-2xl p-4 sm:p-5 shadow-md flex flex-col justify-between space-y-2.5">
-          <div>
-            <div className="flex justify-between items-center">
-              <div className="p-2 bg-white/20 rounded-xl">
-                <Store className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-[10px] font-bold bg-white/25 text-white px-2.5 py-0.5 rounded-full backdrop-blur-xs">
-                {latestShopCashDate ? `${latestShopCashDate.slice(5)} তারিখের ক্যাশ` : "নগদ ক্যাশ ড্রয়ার"}
+        <div className="glass-panel-amber rounded-3xl p-5 sm:p-6 relative overflow-hidden flex flex-col justify-between space-y-3 transition-all group hover:scale-[1.01] hover:shadow-[0_16px_40px_rgba(245,158,11,0.2)]">
+          <div className="flex justify-between items-start">
+            <div>
+              <span className="text-[10px] sm:text-xs font-black tracking-wider text-amber-400 bg-amber-950/70 border border-amber-500/40 px-2.5 py-1 rounded-full uppercase backdrop-blur-md inline-block">
+                #{latestShopCashDate ? `${latestShopCashDate.slice(5)} তারিখের ক্যাশ` : "নগদ ক্যাশ ড্রয়ার"}
               </span>
-            </div>
-            <div className="mt-2">
-              <p className="text-xs font-bold text-amber-100">দোকানের নগদ ক্যাশ (Cash in Shop)</p>
-              <p className="text-2xl sm:text-3xl font-black text-white mt-0.5 tracking-tight">
+              <p className="text-[11px] font-bold text-slate-400 block mt-2">দোকানের নগদ ক্যাশ (Cash in Shop)</p>
+              <p className="text-2xl sm:text-3xl font-black text-amber-300 drop-shadow-[0_0_16px_rgba(245,158,11,0.45)] mt-0.5 tracking-tight">
                 ৳ {(latestShopCash > 0 ? latestShopCash : totals.netShopSavings).toLocaleString()}
               </p>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-amber-500/15 border border-amber-400/40 flex items-center justify-center text-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.3)] shrink-0">
+              <Store className="w-5 h-5" />
             </div>
           </div>
 
           {/* User Requested Exact Breakdown: অবশিষ্ট নিট ফান্ড, অবশিষ্ট নিট ব্যাংক ফান্ড, সর্বমোট মাসিক খরচ */}
-          <div className="pt-2 border-t border-white/20 space-y-1 text-[11px]">
-            <div className="flex justify-between items-center text-amber-100">
-              <span className="font-medium">অবশিষ্ট নিট ফান্ড:</span>
-              <span className="font-black text-white">৳ {totals.netShopSavings.toLocaleString()}</span>
+          <div className="pt-2.5 border-t border-white/10 space-y-1 text-[11px]">
+            <div className="flex justify-between items-center text-slate-300 font-medium">
+              <span>অবশিষ্ট নিট ফান্ড:</span>
+              <span className="font-black text-amber-300">৳ {totals.netShopSavings.toLocaleString()}</span>
             </div>
-            <div className="flex justify-between items-center text-amber-100">
-              <span className="font-medium">+ অবশিষ্ট নিট ব্যাংক ফান্ড:</span>
-              <span className="font-black text-white">৳ {totals.netBankSavings.toLocaleString()}</span>
+            <div className="flex justify-between items-center text-slate-300 font-medium">
+              <span>+ অবশিষ্ট নিট ব্যাংক ফান্ড:</span>
+              <span className="font-black text-cyan-300">৳ {totals.netBankSavings.toLocaleString()}</span>
             </div>
-            <div className="flex justify-between items-center text-amber-200">
-              <span className="font-medium">সর্বমোট মাসিক খরচ:</span>
-              <span className="font-black text-white">৳ {totals.pureExpenseTotal.toLocaleString()}</span>
+            <div className="flex justify-between items-center text-slate-300 font-medium">
+              <span>সর্বমোট মাসিক খরচ:</span>
+              <span className="font-black text-rose-400">৳ {totals.pureExpenseTotal.toLocaleString()}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 🌟 3. Unified Expense Section (কর্মচারী মোট বেতন, সর্বমোট মাসিক খরচ ও ব্যক্তিগত মোট খরচ) */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-3.5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-          <div className="flex items-center space-x-2.5">
-            <div className="p-2 bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 rounded-xl border border-amber-200 dark:border-amber-800">
+      {/* 🌟 3. Unified Expense Section (Modern Frosted Glass) */}
+      <div className="glass-panel rounded-3xl p-5 sm:p-6 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-3.5">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-2xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center text-cyan-400 shadow-[0_0_12px_rgba(0,200,255,0.25)]">
               <Receipt className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">
+                <h3 className="text-sm sm:text-base font-black text-slate-100">
                   ব্যবসায়িক ও ব্যক্তিগত খরচের সার্বিক হিসাব (Expenses & Payroll)
                 </h3>
-                <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
+                <span className="text-[10px] font-black bg-white/10 text-cyan-300 px-2.5 py-0.5 rounded-full border border-white/15">
                   ৩টি খাত
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              <p className="text-[11px] text-slate-400">
                 কর্মচারী বেতন, মাসিক পরিচালন খরচ এবং খাতার ব্যক্তিগত খরচ এক নজরে
               </p>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-800/60 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 self-start sm:self-auto">
-            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+          <div className="flex items-center space-x-2 bg-slate-900/80 px-4 py-2 rounded-full border border-white/15 self-start sm:self-auto backdrop-blur-md">
+            <span className="text-[11px] font-bold text-slate-400">
               মোট ব্যয়:
             </span>
-            <span className="text-sm sm:text-base font-black text-rose-600 dark:text-rose-400">
+            <span className="text-sm sm:text-base font-black text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.4)]">
               ৳ {(totals.pureExpenseTotal + personalExpenseTotals.displayTotal).toLocaleString()}
             </span>
           </div>
         </div>
 
         {/* 3 Columns for the 3 Expense Categories inside this 1 Component */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4">
           {/* Sub-card 1: কর্মচারী মোট বেতন (Salary) */}
-          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-blue-200/80 dark:border-blue-900/40 flex flex-col justify-between space-y-2">
+          <div className="glass-panel-cyan rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-3 transition-all group hover:scale-[1.01]">
             <div className="flex justify-between items-center">
-              <div className="p-2 bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 rounded-xl border border-blue-200 dark:border-blue-800">
+              <div className="w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-400/40 flex items-center justify-center shadow-[0_0_10px_rgba(0,200,255,0.3)]">
                 <Users className="w-4 h-4" />
               </div>
-              <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/80 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
+              <span className="text-[10px] font-black text-cyan-300 bg-cyan-950/70 px-2.5 py-0.5 rounded-full border border-cyan-500/40">
                 বেতন ও মজুরি
               </span>
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-500 dark:text-slate-400">কর্মচারী মোট বেতন (Salary)</p>
-              <p className="text-xl sm:text-2xl font-black text-blue-900 dark:text-blue-300 mt-0.5">
+              <p className="text-xs font-bold text-slate-400">কর্মচারী মোট বেতন (Salary)</p>
+              <p className="text-xl sm:text-2xl font-black text-cyan-300 drop-shadow-[0_0_12px_rgba(0,200,255,0.4)] mt-0.5">
                 ৳ {totals.employeeTotal.toLocaleString()}
               </p>
-              <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mt-1">
+              <p className="text-[10px] font-medium text-slate-400 mt-1">
                 হাজিরা ও নিয়মিত কর্মচারী খরচ
               </p>
             </div>
           </div>
 
           {/* Sub-card 2: সর্বমোট মাসিক খরচ (Monthly Cost) */}
-          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-amber-200/80 dark:border-amber-900/40 flex flex-col justify-between space-y-2">
+          <div className="glass-panel-amber rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-3 transition-all group hover:scale-[1.01]">
             <div className="flex justify-between items-center">
-              <div className="p-2 bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 rounded-xl border border-amber-200 dark:border-amber-800">
+              <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 border border-amber-400/40 flex items-center justify-center shadow-[0_0_10px_rgba(245,158,11,0.3)]">
                 <Receipt className="w-4 h-4" />
               </div>
-              <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/80 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
+              <span className="text-[10px] font-black text-amber-300 bg-amber-950/70 px-2.5 py-0.5 rounded-full border border-amber-500/40">
                 {totals.count} টি এন্ট্রি
               </span>
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-500 dark:text-slate-400">সর্বমোট মাসিক খরচ (Monthly Cost)</p>
-              <p className="text-xl sm:text-2xl font-black text-amber-800 dark:text-amber-300 mt-0.5">
+              <p className="text-xs font-bold text-slate-400">সর্বমোট মাসিক খরচ (Monthly Cost)</p>
+              <p className="text-xl sm:text-2xl font-black text-amber-300 drop-shadow-[0_0_12px_rgba(245,158,11,0.4)] mt-0.5">
                 ৳ {totals.pureExpenseTotal.toLocaleString()}
               </p>
-              <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mt-1">
+              <p className="text-[10px] font-medium text-slate-400 mt-1">
                 বেতন, ভাড়া, বিল ও অতিরিক্ত খরচ সহ
               </p>
             </div>
           </div>
 
           {/* Sub-card 3: ব্যক্তিগত মোট খরচ (Personal Cost) */}
-          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-purple-200/80 dark:border-purple-900/40 flex flex-col justify-between space-y-2">
+          <div className="glass-panel-purple rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-3 transition-all group hover:scale-[1.01]">
             <div className="flex justify-between items-center">
-              <div className="p-2 bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 rounded-xl border border-purple-200 dark:border-purple-800">
+              <div className="w-8 h-8 rounded-full bg-purple-500/20 text-purple-400 border border-purple-400/40 flex items-center justify-center shadow-[0_0_10px_rgba(168,85,247,0.3)]">
                 <UserCheck className="w-4 h-4" />
               </div>
               <button
                 type="button"
                 onClick={() => setIsPersonalListOpen(true)}
-                className="text-[10px] font-black text-cyan-400 bg-slate-900/90 hover:bg-cyan-950/50 hover:text-cyan-300 px-3 py-1 rounded-full border border-cyan-500/60 hover:border-cyan-400 shadow-[0_0_8px_rgba(0,200,255,0.2)] flex items-center space-x-1 cursor-pointer transition-all active:scale-95"
+                className="text-[10px] font-black text-cyan-300 bg-slate-900/90 hover:bg-cyan-950/60 px-3 py-1 rounded-full border border-cyan-500/60 hover:border-cyan-400 shadow-[0_0_10px_rgba(0,200,255,0.25)] flex items-center space-x-1 cursor-pointer transition-all active:scale-95"
                 title="সকল ব্যক্তিগত খরচের তালিকা দেখুন"
               >
                 <span>তালিকা</span>
@@ -608,24 +607,24 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
               </button>
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-500 dark:text-slate-400">ব্যক্তিগত মোট খরচ (Personal Cost)</p>
-              <p className="text-xl sm:text-2xl font-black text-purple-800 dark:text-purple-300 mt-0.5">
+              <p className="text-xs font-bold text-slate-400">ব্যক্তিগত মোট খরচ (Personal Cost)</p>
+              <p className="text-xl sm:text-2xl font-black text-purple-300 drop-shadow-[0_0_12px_rgba(168,85,247,0.4)] mt-0.5">
                 ৳ {personalExpenseTotals.displayTotal.toLocaleString()}
               </p>
-              <div className="mt-1 flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500">
+              <div className="mt-1 flex items-center justify-between text-[10px] text-slate-400">
                 <span>৪. দৈনিক খরচের খাত (নিজ)</span>
-                <span className="font-semibold text-purple-600 dark:text-purple-400">({personalExpenseTotals.count} দিনে এন্ট্রি)</span>
+                <span className="font-semibold text-purple-400">({personalExpenseTotals.count} দিনে এন্ট্রি)</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 🌟 3. Dedicated Savings Section with 2 Parts (দোকানে সঞ্চয় ও ব্যাংকে সঞ্চয়) */}
-      <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950 text-white rounded-3xl p-5 sm:p-6 shadow-xl border border-emerald-800/50 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-emerald-800/40 pb-3.5">
+      {/* 🌟 3. Dedicated Savings Section with 2 Parts (Modern Frosted Glass) */}
+      <div className="glass-panel rounded-3xl p-5 sm:p-6 space-y-4 border border-emerald-500/30 shadow-2xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-3.5">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-emerald-500/20 border border-emerald-500/40 rounded-2xl flex items-center justify-center text-emerald-400 shadow-inner">
+            <div className="w-10 h-10 bg-emerald-500/15 border border-emerald-400/30 rounded-2xl flex items-center justify-center text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.25)]">
               <PiggyBank className="w-6 h-6" />
             </div>
             <div>
@@ -644,13 +643,13 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
           </div>
 
           {/* Combined Net Savings Badge */}
-          <div className="flex items-center space-x-2.5 bg-black/40 border border-emerald-500/40 px-4 py-2 rounded-2xl">
+          <div className="flex items-center space-x-2.5 bg-slate-900/80 border border-emerald-500/40 px-4 py-2 rounded-full backdrop-blur-md">
             <Wallet className="w-5 h-5 text-emerald-400 shrink-0" />
             <div className="text-right">
               <span className="text-[10px] text-slate-400 block font-semibold leading-tight">
                 সর্বমোট নিট তহবিল (দোকান + ব্যাংক)
               </span>
-              <span className="text-base sm:text-lg font-black text-emerald-400 leading-none">
+              <span className="text-base sm:text-lg font-black text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.35)] leading-none">
                 ৳ {totals.netTotalSavings.toLocaleString()}
               </span>
               <span className="text-[9px] text-slate-400 block font-medium mt-0.5">
@@ -722,20 +721,20 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
           </span>
         </div>
 
-        {/* 2 Saving Components - conditionally displayed or side-by-side based on 2 buttons */}
+        {/* 2 Saving Components - Modern Frosted Glass */}
         <div className={`grid gap-3.5 sm:gap-4 ${savingsTab === "both" ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
           {/* Component 1: সমিতি / দোকানে সঞ্চয় (In-Shop Savings) */}
           {(savingsTab === "both" || savingsTab === "shop") && (
-            <div className="bg-white/5 hover:bg-white/10 transition-colors border border-emerald-500/30 rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-3">
+            <div className="glass-panel-emerald rounded-3xl p-5 sm:p-6 flex flex-col justify-between space-y-3.5 transition-all group hover:scale-[1.01]">
               <div className="flex justify-between items-start">
                 <div className="flex items-center space-x-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 flex items-center justify-center shadow-[0_0_12px_rgba(16,185,129,0.3)]">
                     <Store className="w-5 h-5" />
                   </div>
                   <div>
                     <h4 className="text-sm font-black text-slate-100 flex items-center gap-1.5">
                       <span>সমিতি / দোকানে সঞ্চয়</span>
-                      <span className="text-[10px] font-bold text-emerald-300 bg-emerald-950/80 px-2 py-0.5 rounded-md border border-emerald-600/40">
+                      <span className="text-[10px] font-black text-emerald-300 bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-500/40">
                         In-Shop
                       </span>
                     </h4>
@@ -761,7 +760,7 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
                 </div>
                 <div className="flex items-baseline justify-between pt-1 border-t border-white/10">
                   <span className="text-xs font-black text-slate-200">অবশিষ্ট নিট ফান্ড:</span>
-                  <span className="text-xl sm:text-2xl font-black text-emerald-400 tracking-tight">
+                  <span className="text-xl sm:text-2xl font-black text-emerald-400 drop-shadow-[0_0_12px_rgba(16,185,129,0.4)] tracking-tight">
                     ৳ {totals.netShopSavings.toLocaleString()}
                   </span>
                 </div>
@@ -776,9 +775,9 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
                     setFormTitle("দোকানে নগদ সঞ্চয় জমা");
                     setIsFormOpen(true);
                   }}
-                  className="py-2 bg-emerald-600/80 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1 cursor-pointer shadow-xs active:scale-98"
+                  className="py-2.5 px-3 bg-slate-900/90 hover:bg-emerald-950/60 text-emerald-300 border border-emerald-500/60 hover:border-emerald-400 rounded-full text-xs font-black transition-all flex items-center justify-center space-x-1 cursor-pointer shadow-[0_0_10px_rgba(16,185,129,0.2)] active:scale-95"
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <Plus className="w-3.5 h-3.5 text-emerald-400" />
                   <span>+ সঞ্চয় জমা</span>
                 </button>
                 <button
@@ -789,9 +788,9 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
                     setFormTitle("দোকানের সঞ্চয় হতে বিল পরিশোধ");
                     setIsFormOpen(true);
                   }}
-                  className="py-2 bg-amber-600/80 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1 cursor-pointer shadow-xs active:scale-98"
+                  className="py-2.5 px-3 bg-slate-900/90 hover:bg-amber-950/60 text-amber-300 border border-amber-500/60 hover:border-amber-400 rounded-full text-xs font-black transition-all flex items-center justify-center space-x-1 cursor-pointer shadow-[0_0_10px_rgba(245,158,11,0.2)] active:scale-95"
                 >
-                  <Receipt className="w-3.5 h-3.5" />
+                  <Receipt className="w-3.5 h-3.5 text-amber-400" />
                   <span>- বিল পরিশোধ</span>
                 </button>
               </div>
@@ -800,16 +799,16 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
 
           {/* Component 2: ব্যাংকে সঞ্চয় (In-Bank Savings / DPS) */}
           {(savingsTab === "both" || savingsTab === "bank") && (
-            <div className="bg-white/5 hover:bg-white/10 transition-colors border border-blue-500/30 rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-3">
+            <div className="glass-panel-cyan rounded-3xl p-5 sm:p-6 flex flex-col justify-between space-y-3.5 transition-all group hover:scale-[1.01]">
               <div className="flex justify-between items-start">
                 <div className="flex items-center space-x-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-blue-500/20 text-blue-300 border border-blue-500/30 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 flex items-center justify-center shadow-[0_0_12px_rgba(0,200,255,0.3)]">
                     <Landmark className="w-5 h-5" />
                   </div>
                   <div>
                     <h4 className="text-sm font-black text-slate-100 flex items-center gap-1.5">
                       <span>ব্যাংকে সঞ্চয়</span>
-                      <span className="text-[10px] font-bold text-blue-300 bg-blue-950/80 px-2 py-0.5 rounded-md border border-blue-600/40">
+                      <span className="text-[10px] font-black text-cyan-300 bg-cyan-950/80 px-2 py-0.5 rounded-full border border-cyan-500/40">
                         In-Bank / DPS
                       </span>
                     </h4>
@@ -817,7 +816,7 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
                   </div>
                 </div>
                 {savingsTab === "bank" && (
-                  <span className="text-[10px] font-bold text-blue-300 bg-blue-900/60 px-2.5 py-1 rounded-full border border-blue-500/40">
+                  <span className="text-[10px] font-bold text-cyan-300 bg-cyan-900/60 px-2.5 py-1 rounded-full border border-cyan-500/40">
                     সক্রিয় কম্পোনেন্ট
                   </span>
                 )}
@@ -827,7 +826,7 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
               <div className="pt-2 space-y-1.5 border-t border-white/10 text-xs">
                 <div className="flex justify-between text-slate-300">
                   <span>মোট ব্যাংক জমা:</span>
-                  <span className="font-bold text-blue-300">৳ {totals.savingsBankTotal.toLocaleString()}</span>
+                  <span className="font-bold text-cyan-300">৳ {totals.savingsBankTotal.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-slate-400">
                   <span>ব্যাংক হতে বিল পরিশোধ:</span>
@@ -835,7 +834,7 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
                 </div>
                 <div className="flex items-baseline justify-between pt-1 border-t border-white/10">
                   <span className="text-xs font-black text-slate-200">অবশিষ্ট নিট ব্যাংক ফান্ড:</span>
-                  <span className="text-xl sm:text-2xl font-black text-blue-400 tracking-tight">
+                  <span className="text-xl sm:text-2xl font-black text-cyan-300 drop-shadow-[0_0_12px_rgba(0,200,255,0.4)] tracking-tight">
                     ৳ {totals.netBankSavings.toLocaleString()}
                   </span>
                 </div>
@@ -850,9 +849,9 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
                     setFormTitle("ব্যাংক অ্যাকাউন্টে সঞ্চয় / DPS কিস্তি জমা");
                     setIsFormOpen(true);
                   }}
-                  className="py-2 bg-blue-600/80 hover:bg-blue-600 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1 cursor-pointer shadow-xs active:scale-98"
+                  className="py-2.5 px-3 bg-slate-900/90 hover:bg-cyan-950/60 text-cyan-300 border border-cyan-500/60 hover:border-cyan-400 rounded-full text-xs font-black transition-all flex items-center justify-center space-x-1 cursor-pointer shadow-[0_0_10px_rgba(0,200,255,0.2)] active:scale-95"
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <Plus className="w-3.5 h-3.5 text-cyan-400" />
                   <span>+ সঞ্চয় জমা</span>
                 </button>
                 <button
@@ -863,9 +862,9 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
                     setFormTitle("ব্যাংকের সঞ্চয় হতে বিল পরিশোধ");
                     setIsFormOpen(true);
                   }}
-                  className="py-2 bg-purple-600/80 hover:bg-purple-600 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1 cursor-pointer shadow-xs active:scale-98"
+                  className="py-2.5 px-3 bg-slate-900/90 hover:bg-purple-950/60 text-purple-300 border border-purple-500/60 hover:border-purple-400 rounded-full text-xs font-black transition-all flex items-center justify-center space-x-1 cursor-pointer shadow-[0_0_10px_rgba(168,85,247,0.2)] active:scale-95"
                 >
-                  <CreditCard className="w-3.5 h-3.5" />
+                  <CreditCard className="w-3.5 h-3.5 text-purple-400" />
                   <span>- বিল পরিশোধ</span>
                 </button>
               </div>
@@ -874,34 +873,34 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
         </div>
       </div>
 
-      {/* 4. Expense Entry Form (ইনপুট ফরম) */}
+      {/* 4. Expense Entry Form (ইনপুট ফরম - Modern Frosted Glass) */}
       {isFormOpen && (
         <form
           onSubmit={handleSubmit}
-          className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-4"
+          className="glass-panel rounded-3xl p-5 sm:p-6 shadow-2xl border border-white/15 space-y-4"
         >
-          <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
-            <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 flex items-center space-x-2">
-              <Plus className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+          <div className="flex justify-between items-center border-b border-white/10 pb-3">
+            <h3 className="text-sm sm:text-base font-black text-slate-100 flex items-center space-x-2">
+              <Plus className="w-4 h-4 text-cyan-400" />
               <span>নতুন খরচ ও সঞ্চয় এন্ট্রি ফরম (Input Form)</span>
             </h3>
-            <span className="text-xs text-slate-500 dark:text-slate-400">
+            <span className="text-xs text-slate-400">
               * গুগল শিটে স্বয়ংক্রিয় সিঙ্ক হবে
             </span>
           </div>
 
           {feedback && (
             <div
-              className={`p-3 rounded-xl text-xs sm:text-sm font-bold flex items-center space-x-2 ${
+              className={`p-3 rounded-2xl text-xs sm:text-sm font-bold flex items-center space-x-2 ${
                 feedback.type === "success"
-                  ? "bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-200"
-                  : "bg-rose-50 dark:bg-rose-950/60 border border-rose-300 dark:border-rose-700 text-rose-900 dark:text-rose-200"
+                  ? "bg-emerald-950/70 border border-emerald-500/50 text-emerald-200 shadow-[0_0_12px_rgba(16,185,129,0.2)]"
+                  : "bg-rose-950/70 border border-rose-500/50 text-rose-200 shadow-[0_0_12px_rgba(244,63,94,0.2)]"
               }`}
             >
               {feedback.type === "success" ? (
-                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
               ) : (
-                <AlertCircle className="w-4 h-4 shrink-0" />
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
               )}
               <span>{feedback.text}</span>
             </div>
@@ -919,7 +918,7 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
 
             {/* Category */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-bold text-slate-300 mb-1">
                 খাত / ক্যাটাগরি (Category) *
               </label>
               <select
@@ -941,10 +940,10 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
                     if (!formTitle) setFormTitle("ব্যাংকের সঞ্চয় হতে বিল পরিশোধ");
                   }
                 }}
-                className="w-full border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 bg-slate-50/50 dark:bg-slate-800/60 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full border border-slate-700/80 rounded-2xl px-3.5 py-2.5 bg-slate-900/80 text-sm font-bold text-slate-100 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/50"
               >
                 {CATEGORIES.map((c) => (
-                  <option key={c.id} value={c.id}>
+                  <option key={c.id} value={c.id} className="bg-slate-900 text-slate-100">
                     {c.label}
                   </option>
                 ))}
@@ -953,7 +952,7 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
 
             {/* Title / Description */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-bold text-slate-300 mb-1">
                 বিবরণ / কর্মচারীর নাম (Description) *
               </label>
               <input
@@ -962,13 +961,13 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
                 onChange={(e) => setFormTitle(e.target.value)}
                 placeholder="যেমন: রহিম (ভ্যানচালক বেতন), দোকান ভাড়া..."
                 required
-                className="w-full border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 bg-slate-50/50 dark:bg-slate-800/60 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500 placeholder-slate-400 dark:placeholder-slate-500"
+                className="w-full border border-slate-700/80 rounded-2xl px-3.5 py-2.5 bg-slate-900/80 text-sm font-bold text-slate-100 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/50 placeholder-slate-500"
               />
             </div>
 
             {/* Amount */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-bold text-slate-300 mb-1">
                 টাকার পরিমাণ (Amount ৳) *
               </label>
               <input
@@ -979,37 +978,37 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
                 min="1"
                 step="any"
                 required
-                className="w-full border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 bg-slate-50/50 dark:bg-slate-800/60 text-sm font-black text-amber-900 dark:text-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full border border-cyan-500/50 rounded-2xl px-3.5 py-2.5 bg-slate-900/90 text-sm font-black text-cyan-300 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/40"
               />
             </div>
 
             {/* Payment Mode */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-bold text-slate-300 mb-1">
                 পেমেন্ট মাধ্যম (Payment Mode)
               </label>
               <select
                 value={formPaymentMode}
                 onChange={(e) => setFormPaymentMode(e.target.value as any)}
-                className="w-full border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 bg-slate-50/50 dark:bg-slate-800/60 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full border border-slate-700/80 rounded-2xl px-3.5 py-2.5 bg-slate-900/80 text-sm font-bold text-slate-100 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/50"
               >
-                <optgroup label="সাধারণ পেমেন্ট মাধ্যম (Regular Payment)">
-                  <option value="cash">💵 নগদ (Cash)</option>
-                  <option value="mfs">📱 বিকাশ / নগদ (MFS)</option>
-                  <option value="bank">🏦 সাধারণ ব্যাংক চেক / ট্রান্সফার</option>
+                <optgroup label="সাধারণ পেমেন্ট মাধ্যম (Regular Payment)" className="bg-slate-900 text-slate-300">
+                  <option value="cash" className="bg-slate-900">💵 নগদ (Cash)</option>
+                  <option value="mfs" className="bg-slate-900">📱 বিকাশ / নগদ (MFS)</option>
+                  <option value="bank" className="bg-slate-900">🏦 সাধারণ ব্যাংক চেক / ট্রান্সফার</option>
                 </optgroup>
-                <optgroup label="সঞ্চয় ফান্ড হতে কর্তন (Cut / Deduct from Savings)">
-                  <option value="savings_shop">🏪 দোকানে সঞ্চয় হতে পরিশোধ (Cut from Shop Savings)</option>
-                  <option value="savings_bank">🏦 ব্যাংকে সঞ্চয় হতে পরিশোধ (Cut from Bank Savings)</option>
+                <optgroup label="সঞ্চয় ফান্ড হতে কর্তন (Cut / Deduct from Savings)" className="bg-slate-900 text-slate-300">
+                  <option value="savings_shop" className="bg-slate-900">🏪 দোকানে সঞ্চয় হতে পরিশোধ (Cut from Shop Savings)</option>
+                  <option value="savings_bank" className="bg-slate-900">🏦 ব্যাংকে সঞ্চয় হতে পরিশোধ (Cut from Bank Savings)</option>
                 </optgroup>
               </select>
               {formPaymentMode === "savings_shop" && (
-                <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
+                <p className="text-[11px] font-bold text-emerald-400 mt-1 flex items-center gap-1">
                   <span>✂️ এই খরচের টাকা সরাসরি <strong>দোকানে সঞ্চয় ফান্ড</strong> হতে স্বয়ংক্রিয় কর্তন হবে।</span>
                 </p>
               )}
               {formPaymentMode === "savings_bank" && (
-                <p className="text-[11px] font-bold text-blue-600 dark:text-blue-400 mt-1 flex items-center gap-1">
+                <p className="text-[11px] font-bold text-cyan-400 mt-1 flex items-center gap-1">
                   <span>✂️ এই খরচের টাকা সরাসরি <strong>ব্যাংকে সঞ্চয় ফান্ড</strong> হতে স্বয়ংক্রিয় কর্তন হবে।</span>
                 </p>
               )}
@@ -1017,7 +1016,7 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
 
             {/* Notes */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-bold text-slate-300 mb-1">
                 মন্তব্য / রসিদ নং (Optional Notes)
               </label>
               <input
@@ -1025,7 +1024,7 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
                 value={formNotes}
                 onChange={(e) => setFormNotes(e.target.value)}
                 placeholder="রসিদ নং, ভাউচার বা বিশেষ তথ্য..."
-                className="w-full border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 bg-slate-50/50 dark:bg-slate-800/60 text-sm font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500 placeholder-slate-400 dark:placeholder-slate-500"
+                className="w-full border border-slate-700/80 rounded-2xl px-3.5 py-2.5 bg-slate-900/80 text-sm font-medium text-slate-100 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/50 placeholder-slate-500"
               />
             </div>
           </div>
@@ -1034,7 +1033,7 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
             <button
               type="submit"
               disabled={submitting}
-              className="px-7 py-3 bg-gradient-to-r from-cyan-400 to-sky-400 hover:from-cyan-300 hover:to-sky-300 text-slate-950 rounded-full text-xs sm:text-sm font-black transition-all shadow-[0_0_18px_rgba(0,200,255,0.45)] border border-cyan-300/50 active:scale-95 disabled:opacity-50 flex items-center space-x-2 cursor-pointer"
+              className="px-8 py-3 bg-gradient-to-r from-cyan-400 to-sky-400 hover:from-cyan-300 hover:to-sky-300 text-slate-950 rounded-full text-xs sm:text-sm font-black transition-all shadow-[0_0_20px_rgba(0,200,255,0.45)] border border-cyan-300/50 active:scale-95 disabled:opacity-50 flex items-center space-x-2 cursor-pointer"
             >
               {submitting ? (
                 <>
@@ -1052,20 +1051,20 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
         </form>
       )}
 
-      {/* 4. Filters & Search Toolbar */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-3.5 sm:p-4 shadow-sm border border-slate-200/80 dark:border-slate-800 flex flex-col md:flex-row justify-between items-center gap-3">
+      {/* 4. Filters & Search Toolbar - Modern Frosted Glass */}
+      <div className="glass-panel rounded-2xl p-4 flex flex-col md:flex-row justify-between items-center gap-3">
         <div className="flex items-center space-x-2 w-full md:w-auto flex-wrap gap-y-2">
           {/* Month Selector */}
-          <div className="flex items-center space-x-1.5 bg-slate-50 dark:bg-slate-800 rounded-xl px-3 py-1.5 border border-slate-300 dark:border-slate-700">
-            <Calendar className="w-4 h-4 text-amber-600" />
+          <div className="flex items-center space-x-1.5 bg-slate-900/90 rounded-full px-3.5 py-1.5 border border-slate-700/80 shadow-inner">
+            <Calendar className="w-4 h-4 text-cyan-400" />
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="text-xs font-bold bg-transparent text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer"
+              className="text-xs font-bold bg-transparent text-slate-200 focus:outline-none cursor-pointer"
             >
-              <option value="all">সব মাস (All Months)</option>
+              <option value="all" className="bg-slate-900 text-slate-200">সব মাস (All Months)</option>
               {availableMonths.map((m) => (
-                <option key={m} value={m}>
+                <option key={m} value={m} className="bg-slate-900 text-slate-200">
                   {m}
                 </option>
               ))}
@@ -1073,16 +1072,16 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
           </div>
 
           {/* Category Selector */}
-          <div className="flex items-center space-x-1.5 bg-slate-50 dark:bg-slate-800 rounded-xl px-3 py-1.5 border border-slate-300 dark:border-slate-700">
-            <Filter className="w-4 h-4 text-slate-500" />
+          <div className="flex items-center space-x-1.5 bg-slate-900/90 rounded-full px-3.5 py-1.5 border border-slate-700/80 shadow-inner">
+            <Filter className="w-4 h-4 text-cyan-400" />
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="text-xs font-bold bg-transparent text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer"
+              className="text-xs font-bold bg-transparent text-slate-200 focus:outline-none cursor-pointer"
             >
-              <option value="all">সকল খাত (All Categories)</option>
+              <option value="all" className="bg-slate-900 text-slate-200">সকল খাত (All Categories)</option>
               {CATEGORIES.map((c) => (
-                <option key={c.id} value={c.id}>
+                <option key={c.id} value={c.id} className="bg-slate-900 text-slate-200">
                   {c.label}
                 </option>
               ))}
@@ -1092,55 +1091,55 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
 
         {/* Search Box */}
         <div className="relative w-full md:w-64">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="নাম বা বিবরণ দিয়ে খুঁজুন..."
-            className="w-full pl-9 pr-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="w-full pl-10 pr-3.5 py-2 bg-slate-900/90 border border-slate-700/80 rounded-full text-xs font-medium text-slate-100 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/50 placeholder-slate-500 shadow-inner"
           />
         </div>
       </div>
 
-      {/* 5. Itemized Expense Ledger Table & List */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 overflow-hidden">
-        <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
-          <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 flex items-center space-x-2">
-            <Coins className="w-4 h-4 text-amber-600" />
+      {/* 5. Itemized Expense Ledger Table & List - Modern Frosted Glass */}
+      <div className="glass-panel rounded-3xl shadow-2xl border border-white/10 overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
+          <span className="text-xs sm:text-sm font-black text-slate-100 flex items-center space-x-2">
+            <Coins className="w-4 h-4 text-cyan-400" />
             <span>খরচের তালিকা (আইটেম অনুযায়ী খাতা)</span>
           </span>
-          <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-            মোট ফিল্টারকৃত খরচ: <strong className="text-amber-800 dark:text-amber-300">৳ {totals.grandTotal.toLocaleString()}</strong>
+          <span className="text-xs font-bold text-slate-400">
+            মোট ফিল্টারকৃত খরচ: <strong className="text-cyan-300 drop-shadow-[0_0_8px_rgba(0,200,255,0.35)]">৳ {totals.grandTotal.toLocaleString()}</strong>
           </span>
         </div>
 
         {loading ? (
-          <div className="p-12 text-center text-slate-500 dark:text-slate-400 space-y-2">
-            <RefreshCw className="w-6 h-6 animate-spin mx-auto text-amber-600" />
+          <div className="p-12 text-center text-slate-400 space-y-2">
+            <RefreshCw className="w-6 h-6 animate-spin mx-auto text-cyan-400" />
             <p className="text-xs font-bold">খরচের হিসাব লোড হচ্ছে...</p>
           </div>
         ) : filteredExpenses.length === 0 ? (
-          <div className="p-12 text-center text-slate-500 dark:text-slate-400 space-y-2">
-            <Info className="w-8 h-8 mx-auto text-slate-400" />
-            <p className="text-sm font-bold">কোনো খরচের রেকর্ড পাওয়া যায়নি।</p>
-            <p className="text-xs">উপরে "+ নতুন খরচ এন্ট্রি" বোতাম চেপে প্রথম খরচটি যোগ করুন।</p>
+          <div className="p-12 text-center text-slate-400 space-y-2">
+            <Info className="w-8 h-8 mx-auto text-slate-500" />
+            <p className="text-sm font-bold text-slate-300">কোনো খরচের রেকর্ড পাওয়া যায়নি।</p>
+            <p className="text-xs text-slate-500">উপরে "+ নতুন খরচ এন্ট্রি" বোতাম চেপে প্রথম খরচটি যোগ করুন।</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-bold uppercase tracking-wider text-[11px]">
-                  <th className="py-3 px-4">তারিখ</th>
-                  <th className="py-3 px-4">খাত (Category)</th>
-                  <th className="py-3 px-4">বিবরণ / নাম</th>
-                  <th className="py-3 px-4">পেমেন্ট মাধ্যম</th>
-                  <th className="py-3 px-4 text-right">পরিমাণ (৳)</th>
-                  <th className="py-3 px-4">মন্তব্য</th>
-                  <th className="py-3 px-4 text-center">অ্যাকশন</th>
+                <tr className="bg-slate-950/80 border-b border-white/10 text-slate-300 font-black uppercase tracking-wider text-[11px]">
+                  <th className="py-3.5 px-4">তারিখ</th>
+                  <th className="py-3.5 px-4">খাত (Category)</th>
+                  <th className="py-3.5 px-4">বিবরণ / নাম</th>
+                  <th className="py-3.5 px-4">পেমেন্ট মাধ্যম</th>
+                  <th className="py-3.5 px-4 text-right">পরিমাণ (৳)</th>
+                  <th className="py-3.5 px-4">মন্তব্য</th>
+                  <th className="py-3.5 px-4 text-center">অ্যাকশন</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium text-slate-800 dark:text-slate-200">
+              <tbody className="divide-y divide-white/5 font-medium text-slate-200">
                 {filteredExpenses.map((item) => {
                   const meta = getCategoryMeta(item.category);
                   const Icon = meta.icon;
@@ -1148,36 +1147,36 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
                   return (
                     <tr
                       key={item.id}
-                      className="hover:bg-amber-50/40 dark:hover:bg-slate-800/50 transition-colors"
+                      className="hover:bg-cyan-500/10 transition-colors group"
                     >
-                      <td className="py-3 px-4 whitespace-nowrap font-bold text-slate-700 dark:text-slate-300">
+                      <td className="py-3.5 px-4 whitespace-nowrap font-bold text-slate-300">
                         {formatToDayMonthYear(item.date)}
                       </td>
 
-                      <td className="py-3 px-4 whitespace-nowrap">
+                      <td className="py-3.5 px-4 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${meta.bg} ${meta.color} ${meta.border}`}
+                          className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[11px] font-black border ${meta.bg} ${meta.color} ${meta.border} backdrop-blur-md shadow-xs`}
                         >
                           <Icon className="w-3.5 h-3.5 shrink-0" />
                           <span>{meta.label}</span>
                         </span>
                       </td>
 
-                      <td className="py-3 px-4 font-bold text-slate-900 dark:text-slate-100">
+                      <td className="py-3.5 px-4 font-black text-slate-100">
                         {item.title}
                       </td>
 
-                      <td className="py-3 px-4 whitespace-nowrap">
+                      <td className="py-3.5 px-4 whitespace-nowrap">
                         {item.paymentMode === "savings_shop" ? (
-                          <span className="inline-flex items-center space-x-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                          <span className="inline-flex items-center space-x-1 text-[11px] font-black px-2.5 py-1 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-500/40">
                             <span>🏪 দোকানে সঞ্চয় কর্তন</span>
                           </span>
                         ) : item.paymentMode === "savings_bank" ? (
-                          <span className="inline-flex items-center space-x-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-800">
+                          <span className="inline-flex items-center space-x-1 text-[11px] font-black px-2.5 py-1 rounded-full bg-blue-950/80 text-cyan-300 border border-blue-500/40">
                             <span>🏦 ব্যাংকে সঞ্চয় কর্তন</span>
                           </span>
                         ) : (
-                          <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                          <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-900/90 text-slate-300 border border-slate-700/80">
                             {item.paymentMode === "cash"
                               ? "💵 নগদ"
                               : item.paymentMode === "mfs"
@@ -1187,22 +1186,22 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
                         )}
                       </td>
 
-                      <td className="py-3 px-4 text-right whitespace-nowrap font-black text-amber-900 dark:text-amber-300 text-sm">
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap font-black text-cyan-300 text-sm drop-shadow-[0_0_8px_rgba(0,200,255,0.3)]">
                         ৳ {item.amount.toLocaleString()}
                       </td>
 
-                      <td className="py-3 px-4 text-slate-500 dark:text-slate-400 text-[11px]">
+                      <td className="py-3.5 px-4 text-slate-400 text-[11px]">
                         {item.notes || "—"}
                       </td>
 
-                      <td className="py-3 px-4 text-center whitespace-nowrap">
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
                         <button
                           type="button"
                           onClick={() => handleDelete(item.id, item.title)}
-                          className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/60 rounded-lg transition-colors cursor-pointer"
+                          className="w-8 h-8 mx-auto rounded-full flex items-center justify-center bg-slate-900/80 border border-slate-700 text-slate-400 hover:text-rose-400 hover:border-rose-500 hover:shadow-[0_0_8px_rgba(244,63,94,0.3)] transition-all cursor-pointer active:scale-95"
                           title="মুছে ফেলুন"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </td>
                     </tr>
@@ -1210,11 +1209,11 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
                 })}
               </tbody>
               <tfoot>
-                <tr className="bg-slate-50/90 dark:bg-slate-800/90 font-black text-xs border-t border-slate-200 dark:border-slate-800">
-                  <td colSpan={4} className="py-3 px-4 text-slate-700 dark:text-slate-300">
+                <tr className="bg-slate-950/90 font-black text-xs border-t border-white/10">
+                  <td colSpan={4} className="py-3.5 px-4 text-slate-300">
                     ফিল্টারকৃত মোট খরচের যোগফল ({filteredExpenses.length} টি রেকর্ড):
                   </td>
-                  <td className="py-3 px-4 text-right text-amber-900 dark:text-amber-300 text-sm font-black">
+                  <td className="py-3.5 px-4 text-right text-cyan-300 text-sm font-black drop-shadow-[0_0_8px_rgba(0,200,255,0.3)]">
                     ৳ {totals.grandTotal.toLocaleString()}
                   </td>
                   <td colSpan={2}></td>
@@ -1225,20 +1224,20 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
         )}
       </div>
 
-      {/* Modal: ৪. দৈনিক খরচের খাত (নিজ) তালিকা */}
+      {/* Modal: ৪. দৈনিক খরচের খাত (নিজ) তালিকা - Modern Frosted Glass */}
       {isPersonalListOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 w-full max-w-lg shadow-2xl border border-purple-200 dark:border-purple-800/80 space-y-4 max-h-[90vh] flex flex-col">
-            <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="glass-panel-purple rounded-3xl p-5 sm:p-6 w-full max-w-lg shadow-2xl border border-purple-400/40 space-y-4 max-h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center border-b border-white/10 pb-3">
               <div className="flex items-center space-x-2.5">
-                <div className="p-2 bg-purple-50 dark:bg-purple-950/70 text-purple-600 dark:text-purple-400 rounded-xl border border-purple-200 dark:border-purple-800">
+                <div className="w-9 h-9 rounded-full bg-purple-500/20 text-purple-300 border border-purple-400/40 flex items-center justify-center shadow-[0_0_10px_rgba(168,85,247,0.3)]">
                   <UserCheck className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100">
+                  <h3 className="text-sm sm:text-base font-black text-slate-100">
                     ব্যক্তিগত খরচ (নিজ) বিস্তারিত তালিকা
                   </h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                  <p className="text-[11px] text-slate-400 font-medium">
                     ৪. দৈনিক খরচের খাত (হালখাতা এন্ট্রি) হতে সংগৃহীত
                   </p>
                 </div>
@@ -1246,37 +1245,37 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
               <button
                 type="button"
                 onClick={() => setIsPersonalListOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-slate-900/80 border border-slate-700 text-slate-400 hover:text-slate-100 hover:border-slate-500 transition-all cursor-pointer"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="flex justify-between items-center p-3 rounded-2xl bg-purple-50 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-800/60 text-xs">
-              <span className="font-bold text-purple-900 dark:text-purple-200">মোট ব্যক্তিগত খরচ:</span>
-              <span className="text-base font-black text-purple-700 dark:text-purple-300">
+            <div className="flex justify-between items-center p-3.5 rounded-2xl bg-slate-900/80 border border-purple-500/40 text-xs shadow-inner">
+              <span className="font-bold text-slate-300">মোট ব্যক্তিগত খরচ:</span>
+              <span className="text-base font-black text-purple-300 drop-shadow-[0_0_8px_rgba(168,85,247,0.4)]">
                 ৳ {personalExpenseTotals.allTimeTotal.toLocaleString()} ({personalExpensesList.length} টি এন্ট্রি)
               </span>
             </div>
 
-            <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 text-xs pr-1">
+            <div className="flex-1 overflow-y-auto divide-y divide-white/5 text-xs pr-1">
               {personalExpensesList.length === 0 ? (
                 <p className="text-center text-slate-400 py-8">কোনো ব্যক্তিগত খরচ (নিজ) পাওয়া যায়নি</p>
               ) : (
                 personalExpensesList.map((item, idx) => (
-                  <div key={`personal-${item.date}-${idx}`} className="py-2.5 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/40 px-2 rounded-xl transition-colors">
+                  <div key={`personal-${item.date}-${idx}`} className="py-2.5 flex justify-between items-center hover:bg-white/5 px-2.5 rounded-xl transition-colors">
                     <div>
                       <div className="flex items-center space-x-2">
-                        <span className="font-bold text-slate-800 dark:text-slate-200">{item.date}</span>
+                        <span className="font-bold text-slate-200">{item.date}</span>
                         {item.pageNo && (
-                          <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-2 py-0.2 rounded-full font-bold text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                          <span className="text-[10px] bg-purple-950/70 border border-purple-500/40 px-2 py-0.2 rounded-full font-black text-purple-300">
                             পৃষ্ঠা #{item.pageNo}
                           </span>
                         )}
                       </div>
-                      <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">খাত: {item.type} ({item.day})</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">খাত: {item.type} ({item.day})</p>
                     </div>
-                    <span className="text-sm font-black text-purple-700 dark:text-purple-300">
+                    <span className="text-sm font-black text-purple-300 drop-shadow-[0_0_8px_rgba(168,85,247,0.3)]">
                       ৳ {item.amount.toLocaleString()}
                     </span>
                   </div>

@@ -100,3 +100,72 @@ html.dark ::-webkit-scrollbar-thumb:hover {
   transform: scale(0.96);
 }
 
+/* Frosted Modern Liquid Glassmorphism (VisionOS / Dark Cyber Glass) */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.45), inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.glass-panel-cyan {
+  background: radial-gradient(circle at 50% 0%, rgba(0, 200, 255, 0.12), transparent 75%), rgba(11, 19, 43, 0.7);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(0, 200, 255, 0.3);
+  border-top: 1px solid rgba(125, 211, 252, 0.5);
+  box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.45), 0 0 24px rgba(0, 200, 255, 0.15), inset 0 1px 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.glass-panel-amber {
+  background: radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.14), transparent 75%), rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(245, 158, 11, 0.32);
+  border-top: 1px solid rgba(251, 191, 36, 0.5);
+  box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.45), 0 0 24px rgba(245, 158, 11, 0.15), inset 0 1px 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.glass-panel-rose {
+  background: radial-gradient(circle at 50% 0%, rgba(244, 63, 94, 0.14), transparent 75%), rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(244, 63, 94, 0.32);
+  border-top: 1px solid rgba(251, 113, 133, 0.5);
+  box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.45), 0 0 24px rgba(244, 63, 94, 0.15), inset 0 1px 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.glass-panel-emerald {
+  background: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.14), transparent 75%), rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(16, 185, 129, 0.32);
+  border-top: 1px solid rgba(52, 211, 153, 0.5);
+  box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.45), 0 0 24px rgba(16, 185, 129, 0.15), inset 0 1px 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.glass-panel-purple {
+  background: radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.14), transparent 75%), rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(168, 85, 247, 0.32);
+  border-top: 1px solid rgba(192, 132, 252, 0.5);
+  box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.45), 0 0 24px rgba(168, 85, 247, 0.15), inset 0 1px 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+html:not(.dark) .glass-panel,
+html:not(.dark) .glass-panel-cyan,
+html:not(.dark) .glass-panel-amber,
+html:not(.dark) .glass-panel-rose,
+html:not(.dark) .glass-panel-emerald,
+html:not(.dark) .glass-panel-purple {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-top: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.06), inset 0 1px 1px 0 rgba(255, 255, 255, 0.9);
+}
+

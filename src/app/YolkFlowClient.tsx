@@ -1859,79 +1859,94 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
             </div>
           </div>
 
-          {/* Top Summary Cards (Upper Section) */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            {/* Cash + Stock */}
-            <div className="bg-gradient-to-br from-amber-600 to-amber-700 dark:from-amber-600/90 dark:to-amber-800/90 text-white rounded-2xl p-4 sm:p-5 shadow-sm relative overflow-hidden flex flex-col justify-between border border-amber-500/20">
+          {/* Top Summary Cards (Upper Section - Modern Frosted Glassmorphism) */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+            {/* 1. Cash + Stock */}
+            <div className="glass-panel-cyan rounded-3xl p-4 sm:p-5 relative overflow-hidden flex flex-col justify-between transition-all group hover:scale-[1.01] hover:shadow-[0_16px_40px_rgba(0,200,255,0.2)]">
               <div className="flex justify-between items-start">
                 <div>
-                  <span className="text-[10px] sm:text-xs font-bold text-amber-100 uppercase tracking-wider block">
-                    ক্যাশ + মজুদ ডিম
+                  <span className="text-[10px] sm:text-xs font-black tracking-wider text-cyan-400 bg-cyan-950/70 border border-cyan-500/40 px-2.5 py-1 rounded-full uppercase backdrop-blur-md inline-block">
+                    #ক্যাশ + মজুদ ডিম
                   </span>
-                  <h3 className="text-xl sm:text-2xl font-black mt-1">৳ {viewCashPlusStock.toLocaleString()}</h3>
+                  <span className="text-[11px] font-bold text-slate-400 block mt-2">মোট সম্পদ ভ্যালু</span>
+                  <h3 className="text-2xl sm:text-3xl font-black text-cyan-300 drop-shadow-[0_0_16px_rgba(0,200,255,0.45)] mt-0.5 tracking-tight">
+                    ৳ {viewCashPlusStock.toLocaleString()}
+                  </h3>
                 </div>
-                <div className="bg-white/20 p-2 rounded-xl backdrop-blur-sm hidden xs:block">
-                  <Coins className="w-5 h-5 text-white" />
+                <div className="w-9 h-9 rounded-full bg-cyan-500/15 border border-cyan-400/40 flex items-center justify-center text-cyan-400 shadow-[0_0_12px_rgba(0,200,255,0.3)] shrink-0">
+                  <Coins className="w-4 h-4" />
                 </div>
               </div>
-              <div className="mt-3 pt-2.5 border-t border-white/20 text-[11px] text-amber-100 font-medium truncate">
-                ক্যাশ: ৳{viewCash.toLocaleString()} | মজুদ: ৳{viewStock.toLocaleString()}
+              <div className="mt-3.5 pt-2.5 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-300 font-bold truncate">
+                <span>ক্যাশ: ৳{viewCash.toLocaleString()}</span>
+                <span className="text-cyan-400/50">|</span>
+                <span>মজুদ: ৳{viewStock.toLocaleString()}</span>
               </div>
             </div>
 
-            {/* Total Dues */}
-            <div className="bg-gradient-to-br from-rose-500 to-rose-600 dark:from-rose-600/90 dark:to-rose-800/90 text-white rounded-2xl p-4 sm:p-5 shadow-sm relative overflow-hidden flex flex-col justify-between border border-rose-500/20">
+            {/* 2. Total Dues */}
+            <div className="glass-panel-rose rounded-3xl p-4 sm:p-5 relative overflow-hidden flex flex-col justify-between transition-all group hover:scale-[1.01] hover:shadow-[0_16px_40px_rgba(244,63,94,0.2)]">
               <div className="flex justify-between items-start">
                 <div>
-                  <span className="text-[10px] sm:text-xs font-bold text-rose-100 uppercase tracking-wider block">
-                    বাকি খাতা (Dues)
+                  <span className="text-[10px] sm:text-xs font-black tracking-wider text-rose-400 bg-rose-950/70 border border-rose-500/40 px-2.5 py-1 rounded-full uppercase backdrop-blur-md inline-block">
+                    #বাকি খাতা (DUES)
                   </span>
-                  <h3 className="text-xl sm:text-2xl font-black mt-1">৳ {viewDues.toLocaleString()}</h3>
+                  <span className="text-[11px] font-bold text-slate-400 block mt-2">মোট দেনা / পাওনাদার</span>
+                  <h3 className="text-2xl sm:text-3xl font-black text-rose-400 drop-shadow-[0_0_16px_rgba(244,63,94,0.45)] mt-0.5 tracking-tight">
+                    ৳ {viewDues.toLocaleString()}
+                  </h3>
                 </div>
-                <div className="bg-white/20 p-2 rounded-xl backdrop-blur-sm hidden xs:block">
-                  <DollarSign className="w-5 h-5 text-white" />
+                <div className="w-9 h-9 rounded-full bg-rose-500/15 border border-rose-400/40 flex items-center justify-center text-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.3)] shrink-0">
+                  <DollarSign className="w-4 h-4" />
                 </div>
               </div>
-              <div className="mt-3 pt-2.5 border-t border-white/20 text-[11px] text-rose-100 font-medium truncate">
-                নগদ: ৳ {viewCash.toLocaleString()}
+              <div className="mt-3.5 pt-2.5 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-300 font-bold truncate">
+                <span>নগদ আদায়:</span>
+                <span className="text-rose-400 font-black">৳ {viewCash.toLocaleString()}</span>
               </div>
             </div>
 
-            {/* Total Business Value */}
-            <div className="bg-gradient-to-br from-emerald-600 to-teal-700 dark:from-emerald-600/90 dark:to-teal-800/90 text-white rounded-2xl p-4 sm:p-5 shadow-sm relative overflow-hidden flex flex-col justify-between border border-emerald-500/20">
+            {/* 3. Total Business Value */}
+            <div className="glass-panel-emerald rounded-3xl p-4 sm:p-5 relative overflow-hidden flex flex-col justify-between transition-all group hover:scale-[1.01] hover:shadow-[0_16px_40px_rgba(16,185,129,0.2)]">
               <div className="flex justify-between items-start">
                 <div>
-                  <span className="text-[10px] sm:text-xs font-bold text-emerald-100 uppercase tracking-wider block">
-                    সর্বমোট পাওনা
+                  <span className="text-[10px] sm:text-xs font-black tracking-wider text-emerald-400 bg-emerald-950/70 border border-emerald-500/40 px-2.5 py-1 rounded-full uppercase backdrop-blur-md inline-block">
+                    #সর্বমোট পাওনা
                   </span>
-                  <h3 className="text-xl sm:text-2xl font-black mt-1">৳ {viewBusinessValue.toLocaleString()}</h3>
+                  <span className="text-[11px] font-bold text-slate-400 block mt-2">ব্যবসার মোট তহবিল</span>
+                  <h3 className="text-2xl sm:text-3xl font-black text-emerald-400 drop-shadow-[0_0_16px_rgba(16,185,129,0.45)] mt-0.5 tracking-tight">
+                    ৳ {viewBusinessValue.toLocaleString()}
+                  </h3>
                 </div>
-                <div className="bg-white/20 p-2 rounded-xl backdrop-blur-sm hidden xs:block">
-                  <TrendingUp className="w-5 h-5 text-white" />
+                <div className="w-9 h-9 rounded-full bg-emerald-500/15 border border-emerald-400/40 flex items-center justify-center text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.3)] shrink-0">
+                  <TrendingUp className="w-4 h-4" />
                 </div>
               </div>
-              <div className="mt-3 pt-2.5 border-t border-white/20 text-[11px] text-emerald-100 font-medium truncate">
-                বাকি + নগদ + মজুদ ডিম
+              <div className="mt-3.5 pt-2.5 border-t border-white/10 text-[11px] text-emerald-300/90 font-bold truncate">
+                বাকি + নগদ ক্যাশ + মজুদ ডিম
               </div>
             </div>
 
-            {/* Total Expenses */}
-            <div className="bg-gradient-to-br from-slate-700 to-slate-800 dark:from-slate-800 dark:to-slate-900 text-white rounded-2xl p-4 sm:p-5 shadow-sm relative overflow-hidden flex flex-col justify-between border border-slate-700/40">
+            {/* 4. Total Expenses */}
+            <div className="glass-panel-amber rounded-3xl p-4 sm:p-5 relative overflow-hidden flex flex-col justify-between transition-all group hover:scale-[1.01] hover:shadow-[0_16px_40px_rgba(245,158,11,0.2)]">
               <div className="flex justify-between items-start">
                 <div>
-                  <span className="text-[10px] sm:text-xs font-bold text-slate-300 uppercase tracking-wider block">
-                    মোট খরচ
+                  <span className="text-[10px] sm:text-xs font-black tracking-wider text-amber-400 bg-amber-950/70 border border-amber-500/40 px-2.5 py-1 rounded-full uppercase backdrop-blur-md inline-block">
+                    #মোট খরচ
                   </span>
-                  <h3 className="text-xl sm:text-2xl font-black mt-1">৳ {viewExpenses.toLocaleString()}</h3>
+                  <span className="text-[11px] font-bold text-slate-400 block mt-2">দৈনিক মোট ব্যয়</span>
+                  <h3 className="text-2xl sm:text-3xl font-black text-amber-400 drop-shadow-[0_0_16px_rgba(245,158,11,0.45)] mt-0.5 tracking-tight">
+                    ৳ {viewExpenses.toLocaleString()}
+                  </h3>
                 </div>
-                <div className="bg-white/20 p-2 rounded-xl backdrop-blur-sm hidden xs:block">
-                  <Trash2 className="w-5 h-5 text-white" />
+                <div className="w-9 h-9 rounded-full bg-amber-500/15 border border-amber-400/40 flex items-center justify-center text-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.3)] shrink-0">
+                  <Trash2 className="w-4 h-4" />
                 </div>
               </div>
-              <div className="mt-3 pt-2.5 border-t border-white/20 text-[11px] text-slate-300 font-medium truncate flex justify-between items-center">
-                <span>খরচসহ মোট: ৳ {viewTotalBusinessWithExpenses.toLocaleString()}</span>
+              <div className="mt-3.5 pt-2.5 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-300 font-bold truncate">
+                <span>খরচসহ মোট: ৳{viewTotalBusinessWithExpenses.toLocaleString()}</span>
                 {viewPersonalExpense > 0 && (
-                  <span className="font-bold text-amber-300 bg-black/25 px-1.5 py-0.2 rounded-md">
+                  <span className="text-purple-300 bg-purple-950/70 border border-purple-500/40 px-2 py-0.5 rounded-full font-black text-[10px]">
                     নিজ: ৳{viewPersonalExpense.toLocaleString()}
                   </span>
                 )}
@@ -1939,36 +1954,44 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
             </div>
           </div>
 
-          {/* Secondary Summary Chips */}
+          {/* Secondary Summary Chips - Modern Frosted Glass */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-4">
-            <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-4 rounded-xl border border-blue-200/90 dark:border-blue-900/60 shadow-sm bg-gradient-to-br from-blue-50/60 to-white dark:from-blue-950/30 dark:to-slate-900 transition-colors">
-              <span className="text-[11px] font-bold text-blue-800 dark:text-blue-400 block">দৈনিক মোট বিক্রি (Sales)</span>
-              <span className="text-base sm:text-lg font-black text-blue-900 dark:text-blue-200 mt-0.5 block">
+            <div className="glass-panel rounded-2xl p-3.5 sm:p-4 transition-all group hover:border-cyan-500/40">
+              <span className="text-[11px] font-bold text-cyan-400 block">দৈনিক মোট বিক্রি (Sales)</span>
+              <span className="text-base sm:text-lg font-black text-cyan-300 drop-shadow-[0_0_10px_rgba(0,200,255,0.35)] mt-0.5 block">
                 ৳ {viewDailySalesAmount.toLocaleString()}
               </span>
-              <span className="text-[10px] text-blue-600 dark:text-blue-400 font-bold block mt-0.5">
+              <span className="text-[10px] text-slate-400 font-bold block mt-0.5">
                 বিক্রি: {viewTotalSoldQty.toLocaleString()} টি
               </span>
             </div>
-            <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
-              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block">নগদ ক্যাশ (Cash)</span>
-              <span className="text-base sm:text-lg font-black text-slate-800 dark:text-slate-100 mt-0.5 block">৳ {viewCash.toLocaleString()}</span>
+            <div className="glass-panel rounded-2xl p-3.5 sm:p-4 transition-all group hover:border-slate-500/40">
+              <span className="text-[11px] font-bold text-slate-400 block">নগদ ক্যাশ (Cash)</span>
+              <span className="text-base sm:text-lg font-black text-slate-100 mt-0.5 block">
+                ৳ {viewCash.toLocaleString()}
+              </span>
+              <span className="text-[10px] text-slate-500 font-medium block mt-0.5">ড্রয়ার ক্যাশ</span>
             </div>
-            <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm bg-gradient-to-br from-amber-50/50 to-white dark:from-amber-950/30 dark:to-slate-900 transition-colors">
-              <span className="text-[11px] font-bold text-amber-800 dark:text-amber-400 block">মজুদ ডিমের মূল্য (Stock)</span>
-              <span className="text-base sm:text-lg font-black text-amber-700 dark:text-amber-300 mt-0.5 block">৳ {viewStock.toLocaleString()}</span>
+            <div className="glass-panel rounded-2xl p-3.5 sm:p-4 transition-all group hover:border-amber-500/40">
+              <span className="text-[11px] font-bold text-amber-400 block">মজুদ ডিমের মূল্য (Stock)</span>
+              <span className="text-base sm:text-lg font-black text-amber-300 drop-shadow-[0_0_10px_rgba(245,158,11,0.35)] mt-0.5 block">
+                ৳ {viewStock.toLocaleString()}
+              </span>
+              <span className="text-[10px] text-slate-400 font-medium block mt-0.5">বর্তমান মজুদ</span>
             </div>
-            <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-4 rounded-xl border border-indigo-200/80 dark:border-indigo-900/60 shadow-sm bg-gradient-to-br from-indigo-50/60 to-white dark:from-indigo-950/30 dark:to-slate-900 transition-colors">
-              <span className="text-[11px] font-bold text-indigo-800 dark:text-indigo-400 block">সাপ্তাহিক মার্জিন (7-Day)</span>
-              <span className={`text-base sm:text-lg font-black mt-0.5 block ${sevenDayMargin >= 0 ? "text-indigo-700 dark:text-indigo-300" : "text-rose-600 dark:text-rose-400"}`}>
+            <div className="glass-panel rounded-2xl p-3.5 sm:p-4 transition-all group hover:border-indigo-500/40">
+              <span className="text-[11px] font-bold text-indigo-400 block">সাপ্তাহিক মার্জিন (7-Day)</span>
+              <span className={`text-base sm:text-lg font-black mt-0.5 block ${sevenDayMargin >= 0 ? "text-indigo-300 drop-shadow-[0_0_10px_rgba(99,102,241,0.35)]" : "text-rose-400"}`}>
                 ৳ {sevenDayMargin.toLocaleString()}
               </span>
+              <span className="text-[10px] text-slate-400 font-medium block mt-0.5">বিগত ৭ দিনের মোট</span>
             </div>
-            <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm bg-gradient-to-br from-emerald-50/50 to-white dark:from-emerald-950/30 dark:to-slate-900 col-span-2 sm:col-span-1 transition-colors">
-              <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-400 block">নিট মার্জিন (Margin)</span>
-              <span className={`text-base sm:text-lg font-black mt-0.5 block ${viewProfit >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-rose-600 dark:text-rose-400"}`}>
+            <div className="glass-panel rounded-2xl p-3.5 sm:p-4 col-span-2 sm:col-span-1 transition-all group hover:border-emerald-500/40">
+              <span className="text-[11px] font-bold text-emerald-400 block">নিট মার্জিন (Margin)</span>
+              <span className={`text-base sm:text-lg font-black mt-0.5 block ${viewProfit >= 0 ? "text-emerald-300 drop-shadow-[0_0_10px_rgba(16,185,129,0.35)]" : "text-rose-400"}`}>
                 ৳ {viewProfit.toLocaleString()}
               </span>
+              <span className="text-[10px] text-slate-400 font-medium block mt-0.5">আজকের নিট লাভ</span>
             </div>
           </div>
 
