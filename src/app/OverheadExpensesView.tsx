@@ -450,8 +450,8 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
 
       {/* 2. Top Summary Metric Cards (সর্বমোট সঞ্চয় জমা, কর্মচারী বেতন, মাসিক খরচ, দোকানের ক্যাশ ও ব্যক্তিগত খরচ) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3.5 sm:gap-4">
-        {/* Card 1: মোট সঞ্চয় জমা (Total Savings Given) */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-emerald-200/80 dark:border-emerald-800/60 flex flex-col justify-between space-y-2">
+        {/* Card 1: সর্বমোট নিট তহবিল (দোকান + ব্যাংক) */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-emerald-200/80 dark:border-emerald-800/60 flex flex-col justify-between space-y-2 transition-colors">
           <div className="flex justify-between items-center">
             <div className="p-2 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-xl border border-emerald-200 dark:border-emerald-800">
               <PiggyBank className="w-5 h-5" />
@@ -461,13 +461,20 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
             </span>
           </div>
           <div>
-            <p className="text-xs font-bold text-slate-500 dark:text-slate-400">মোট সঞ্চয় জমা (Total Savings)</p>
-            <p className="text-xl sm:text-2xl font-black text-emerald-700 dark:text-emerald-400 mt-0.5">
-              ৳ {totals.totalSavingsDeposited.toLocaleString()}
+            <p className="text-xs font-bold text-slate-500 dark:text-slate-400">সর্বমোট নিট তহবিল (দোকান + ব্যাংক)</p>
+            <p className="text-xl sm:text-2xl font-black text-emerald-700 dark:text-emerald-400 mt-0.5 tracking-tight">
+              ৳ {totals.netTotalSavings.toLocaleString()}
             </p>
-            <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-1">
-              দোকানে ৳{totals.savingsShopTotal.toLocaleString()} | ব্যাংকে ৳{totals.savingsBankTotal.toLocaleString()}
-            </p>
+            <div className="mt-1 pt-1.5 border-t border-slate-100 dark:border-slate-800 text-[10px] space-y-0.5">
+              <div className="flex justify-between items-center font-semibold text-slate-600 dark:text-slate-300">
+                <span>জমা ৳{totals.totalSavingsDeposited.toLocaleString()}</span>
+                <span className="text-slate-400 dark:text-slate-500">|</span>
+                <span className="text-amber-600 dark:text-amber-400">বিল ৳{totals.totalSavingsWithdrawn.toLocaleString()}</span>
+              </div>
+              <p className="text-[9.5px] font-medium text-slate-400 dark:text-slate-500">
+                দোকানে নিট ৳{totals.netShopSavings.toLocaleString()} | ব্যাংকে নিট ৳{totals.netBankSavings.toLocaleString()}
+              </p>
+            </div>
           </div>
         </div>
 
