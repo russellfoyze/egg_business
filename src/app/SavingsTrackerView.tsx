@@ -238,9 +238,9 @@ export default function SavingsTrackerView() {
           <button
             onClick={fetchSavings}
             disabled={isLoading}
-            className="self-start md:self-auto flex items-center space-x-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 active:scale-95 text-white rounded-2xl text-xs sm:text-sm font-bold border border-white/20 transition-all cursor-pointer disabled:opacity-50"
+            className="self-start md:self-auto flex items-center space-x-2 px-5 py-2.5 bg-slate-900/90 hover:bg-slate-800 text-cyan-300 active:scale-95 rounded-full text-xs sm:text-sm font-bold border border-cyan-500/60 hover:border-cyan-400 shadow-[0_0_12px_rgba(0,200,255,0.25)] transition-all cursor-pointer disabled:opacity-50"
           >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin text-emerald-400" : ""}`} />
+            <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin text-cyan-400" : "text-cyan-400"}`} />
             <span>{isLoading ? "সিঙ্ক হচ্ছে..." : "রিফ্রেশ ও শিট সিঙ্ক"}</span>
           </button>
         </div>
@@ -466,7 +466,7 @@ export default function SavingsTrackerView() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 active:scale-95 disabled:opacity-50 cursor-pointer"
+                className="w-full py-3 bg-gradient-to-r from-cyan-400 via-cyan-400 to-sky-400 hover:from-cyan-300 hover:to-sky-300 text-slate-950 font-black text-xs sm:text-sm rounded-full shadow-[0_0_20px_rgba(0,200,255,0.4)] border border-cyan-300/60 transition-all flex items-center justify-center space-x-2 active:scale-95 disabled:opacity-50 cursor-pointer"
               >
                 {isSubmitting ? (
                   <>
@@ -653,9 +653,9 @@ export default function SavingsTrackerView() {
                           type="button"
                           onClick={() => handleDelete(item.id, item.title)}
                           title="রেকর্ড মুছুন"
-                          className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition-colors cursor-pointer"
+                          className="w-7 h-7 mx-auto rounded-full flex items-center justify-center bg-slate-900/80 border border-slate-700 text-slate-400 hover:text-rose-400 hover:border-rose-500 hover:shadow-[0_0_8px_rgba(244,63,94,0.3)] transition-all cursor-pointer active:scale-95"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </td>
                     </tr>

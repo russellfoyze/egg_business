@@ -431,7 +431,7 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
         <div className="flex items-center space-x-2 w-full md:w-auto justify-end">
           <button
             onClick={() => setIsFormOpen(!isFormOpen)}
-            className="flex items-center space-x-1.5 px-3.5 py-2 bg-amber-600 hover:bg-amber-700 dark:bg-amber-700 dark:hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer"
+            className="flex items-center space-x-1.5 px-4 py-2 bg-gradient-to-r from-cyan-400 to-sky-400 hover:from-cyan-300 hover:to-sky-300 text-slate-950 rounded-full text-xs font-black transition-all shadow-[0_0_14px_rgba(0,200,255,0.4)] active:scale-95 cursor-pointer border border-cyan-300/40"
           >
             <Plus className="w-4 h-4" />
             <span>{isFormOpen ? "ফর্ম লুকান" : "+ নতুন খরচ এন্ট্রি"}</span>
@@ -440,10 +440,10 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
           <button
             onClick={fetchExpenses}
             disabled={refreshing}
-            className="p-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 transition-colors cursor-pointer"
+            className="w-9 h-9 flex items-center justify-center bg-slate-900/90 hover:bg-cyan-950/40 text-cyan-400 hover:text-cyan-300 rounded-full border border-cyan-500/60 hover:border-cyan-400 shadow-[0_0_10px_rgba(0,200,255,0.25)] transition-all cursor-pointer active:scale-95"
             title="রিফ্রেশ করুন"
           >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin text-amber-600" : ""}`} />
+            <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin text-cyan-300" : ""}`} />
           </button>
         </div>
       </div>
@@ -600,7 +600,7 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
               <button
                 type="button"
                 onClick={() => setIsPersonalListOpen(true)}
-                className="text-[10px] font-black text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/80 hover:bg-purple-100 dark:hover:bg-purple-900/60 px-2.5 py-0.5 rounded-full border border-purple-200 dark:border-purple-800 flex items-center space-x-1 cursor-pointer transition-colors"
+                className="text-[10px] font-black text-cyan-400 bg-slate-900/90 hover:bg-cyan-950/50 hover:text-cyan-300 px-3 py-1 rounded-full border border-cyan-500/60 hover:border-cyan-400 shadow-[0_0_8px_rgba(0,200,255,0.2)] flex items-center space-x-1 cursor-pointer transition-all active:scale-95"
                 title="সকল ব্যক্তিগত খরচের তালিকা দেখুন"
               >
                 <span>তালিকা</span>
@@ -661,21 +661,23 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
         </div>
 
         {/* 2 Buttons to Open 2 Components for Saving */}
-        <div className="flex flex-wrap items-center justify-between gap-2.5 p-2 bg-black/40 rounded-2xl border border-emerald-500/30">
+        <div className="flex flex-wrap items-center justify-between gap-2.5 p-1.5 bg-slate-950/90 rounded-full border border-cyan-500/30 shadow-inner">
           <div className="flex items-center gap-2 flex-wrap">
             {/* Button 1: দোকানে সঞ্চয় Component */}
             <button
               type="button"
               onClick={() => setSavingsTab("shop")}
-              className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+              className={`flex items-center space-x-2 px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer border ${
                 savingsTab === "shop"
-                  ? "bg-emerald-600 text-white border-emerald-400 shadow-md ring-2 ring-emerald-400/40"
-                  : "bg-white/10 hover:bg-white/15 text-slate-300 border-white/10"
+                  ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 border-cyan-300 font-black shadow-[0_0_14px_rgba(0,200,255,0.4)]"
+                  : "bg-slate-900/80 hover:bg-slate-800 text-slate-300 border-slate-700/80 hover:border-cyan-400/60"
               }`}
             >
-              <Store className="w-4 h-4 text-emerald-300" />
+              <Store className="w-4 h-4" />
               <span>১. সমিতি / দোকানে সঞ্চয় (In-Shop)</span>
-              <span className="text-[10px] bg-emerald-950/80 px-2 py-0.5 rounded-md text-emerald-300 border border-emerald-500/40 font-black">
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${
+                savingsTab === "shop" ? "bg-slate-950/25 text-slate-950" : "bg-slate-800 text-cyan-400 border border-cyan-500/30"
+              }`}>
                 ৳ {totals.netShopSavings.toLocaleString()}
               </span>
             </button>
@@ -684,15 +686,17 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
             <button
               type="button"
               onClick={() => setSavingsTab("bank")}
-              className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+              className={`flex items-center space-x-2 px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer border ${
                 savingsTab === "bank"
-                  ? "bg-blue-600 text-white border-blue-400 shadow-md ring-2 ring-blue-400/40"
-                  : "bg-white/10 hover:bg-white/15 text-slate-300 border-white/10"
+                  ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 border-cyan-300 font-black shadow-[0_0_14px_rgba(0,200,255,0.4)]"
+                  : "bg-slate-900/80 hover:bg-slate-800 text-slate-300 border-slate-700/80 hover:border-cyan-400/60"
               }`}
             >
-              <Landmark className="w-4 h-4 text-blue-300" />
+              <Landmark className="w-4 h-4" />
               <span>২. ব্যাংকে সঞ্চয় (In-Bank / DPS)</span>
-              <span className="text-[10px] bg-blue-950/80 px-2 py-0.5 rounded-md text-blue-300 border border-blue-500/40 font-black">
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${
+                savingsTab === "bank" ? "bg-slate-950/25 text-slate-950" : "bg-slate-800 text-cyan-400 border border-cyan-500/30"
+              }`}>
                 ৳ {totals.netBankSavings.toLocaleString()}
               </span>
             </button>
@@ -701,17 +705,17 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
             <button
               type="button"
               onClick={() => setSavingsTab("both")}
-              className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+              className={`px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer border ${
                 savingsTab === "both"
-                  ? "bg-slate-700 text-white border-slate-500 shadow-md ring-2 ring-slate-400/30"
-                  : "bg-white/5 hover:bg-white/10 text-slate-400 border-transparent"
+                  ? "bg-slate-800 text-cyan-300 border-cyan-400 shadow-[0_0_12px_rgba(0,200,255,0.3)] font-black"
+                  : "bg-slate-900/40 hover:bg-slate-800/60 text-slate-400 border-transparent hover:text-slate-200"
               }`}
             >
               উভয় ফান্ড (Both)
             </button>
           </div>
 
-          <span className="text-[11px] text-slate-400 font-medium px-2 hidden sm:inline">
+          <span className="text-[11px] text-slate-400 font-medium px-3 hidden sm:inline">
             {savingsTab === "shop" && "দোকানের ক্যাশ ড্রয়ার বা আড়তে রক্ষিত নগদ সঞ্চয় খতিয়ান"}
             {savingsTab === "bank" && "ব্যাংক অ্যাকাউন্ট, ডিপিএস বা এফডিআর সঞ্চয় খতিয়ান"}
             {savingsTab === "both" && "উভয় সঞ্চয় তহবিল এক সাথে প্রদর্শন"}
@@ -1030,16 +1034,16 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
             <button
               type="submit"
               disabled={submitting}
-              className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white rounded-xl text-xs sm:text-sm font-bold transition-all shadow-sm active:scale-95 disabled:opacity-50 flex items-center space-x-2 cursor-pointer"
+              className="px-7 py-3 bg-gradient-to-r from-cyan-400 to-sky-400 hover:from-cyan-300 hover:to-sky-300 text-slate-950 rounded-full text-xs sm:text-sm font-black transition-all shadow-[0_0_18px_rgba(0,200,255,0.45)] border border-cyan-300/50 active:scale-95 disabled:opacity-50 flex items-center space-x-2 cursor-pointer"
             >
               {submitting ? (
                 <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <RefreshCw className="w-4 h-4 animate-spin text-slate-950" />
                   <span>সংরক্ষণ হচ্ছে...</span>
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className="w-4 h-4" />
+                  <CheckCircle2 className="w-4 h-4 text-slate-950" />
                   <span>খরচ সংরক্ষণ করুন (Save Expense)</span>
                 </>
               )}

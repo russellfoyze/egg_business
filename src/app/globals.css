@@ -28,3 +28,71 @@ html.dark ::-webkit-scrollbar-thumb {
 html.dark ::-webkit-scrollbar-thumb:hover {
   background: #475569;
 }
+
+/* UI Kit Cyber / Tech Pill Button Styles */
+.cyber-btn-primary {
+  border-radius: 9999px;
+  background: linear-gradient(to right, #00c8ff, #38bdf8);
+  color: #020617;
+  font-weight: 900;
+  box-shadow: 0 0 16px rgba(0, 200, 255, 0.45);
+  border: 1px solid rgba(125, 211, 252, 0.5);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+}
+.cyber-btn-primary:hover {
+  background: linear-gradient(to right, #38d4ff, #7dd3fc);
+  box-shadow: 0 0 22px rgba(0, 200, 255, 0.65);
+}
+.cyber-btn-primary:active {
+  transform: scale(0.96);
+}
+
+.cyber-btn-outline {
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.9);
+  color: #00c8ff;
+  border: 1.5px solid rgba(0, 200, 255, 0.7);
+  box-shadow: 0 0 12px rgba(0, 200, 255, 0.25);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+}
+.cyber-btn-outline:hover {
+  background: rgba(0, 200, 255, 0.15);
+  color: #7dd3fc;
+  border-color: #38bdf8;
+  box-shadow: 0 0 18px rgba(0, 200, 255, 0.45);
+}
+.cyber-btn-outline:active {
+  transform: scale(0.96);
+}
+
+.cyber-btn-normal {
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.85);
+  color: #cbd5e1;
+  border: 1px solid rgba(51, 65, 85, 0.8);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+}
+.cyber-btn-normal:hover {
+  color: #00c8ff;
+  border-color: rgba(0, 200, 255, 0.7);
+  box-shadow: 0 0 14px rgba(0, 200, 255, 0.3);
+}
+.cyber-btn-normal:active {
+  transform: scale(0.96);
+}
+

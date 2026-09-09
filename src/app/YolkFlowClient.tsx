@@ -1591,13 +1591,13 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
     className: string = ""
   ) => {
     return (
-      <div className={`flex items-center justify-between bg-slate-900 dark:bg-slate-900 border border-slate-700/80 rounded-2xl px-1 sm:px-2 py-1 shadow-md min-w-0 select-none ${className}`}>
+      <div className={`flex items-center justify-between bg-slate-900/95 dark:bg-slate-950 border border-slate-700/80 rounded-full px-1.5 sm:px-2.5 py-1 shadow-[0_0_12px_rgba(0,0,0,0.4)] min-w-0 select-none ${className}`}>
         <button
           type="button"
           title="পূর্ববর্তী দিন"
           onClick={onPrev}
           disabled={!canPrev}
-          className="p-1 sm:p-1.5 text-slate-400 hover:text-white disabled:opacity-20 transition-colors cursor-pointer shrink-0"
+          className="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-cyan-400 hover:bg-cyan-950/40 hover:border hover:border-cyan-500/50 hover:shadow-[0_0_10px_rgba(0,200,255,0.3)] disabled:opacity-20 transition-all cursor-pointer shrink-0 active:scale-95"
         >
           <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
         </button>
@@ -1613,7 +1613,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
 
           {/* Bengali Day Badge */}
           {currentDayName && (
-            <span className="text-[10px] sm:text-xs font-black text-amber-200 bg-amber-950/90 hover:bg-amber-900/90 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-lg sm:rounded-xl border border-amber-600/60 shadow-inner shrink-0 block transition-colors leading-tight">
+            <span className="text-[10px] sm:text-xs font-black text-cyan-300 bg-cyan-950/80 hover:bg-cyan-900/80 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border border-cyan-500/50 shadow-[0_0_8px_rgba(0,200,255,0.2)] shrink-0 block transition-colors leading-tight">
               {getBanglaDay(currentDayName)}
             </span>
           )}
@@ -1624,7 +1624,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
           title="পরবর্তী দিন"
           onClick={onNext}
           disabled={!canNext}
-          className="p-1 sm:p-1.5 text-slate-400 hover:text-white disabled:opacity-20 transition-colors cursor-pointer shrink-0"
+          className="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-cyan-400 hover:bg-cyan-950/40 hover:border hover:border-cyan-500/50 hover:shadow-[0_0_10px_rgba(0,200,255,0.3)] disabled:opacity-20 transition-all cursor-pointer shrink-0 active:scale-95"
         >
           <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
         </button>
@@ -1706,10 +1706,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
             <button
               onClick={handleRefreshData}
               disabled={isRefreshing}
-              className="p-1.5 sm:px-3 sm:py-1.5 bg-white/15 hover:bg-white/25 active:scale-95 text-white rounded-lg sm:rounded-xl text-xs font-bold border border-white/20 shadow-xs transition-all cursor-pointer disabled:opacity-50 shrink-0"
+              className="p-1.5 sm:px-3.5 sm:py-1.5 bg-slate-900/90 hover:bg-cyan-950/40 active:scale-95 text-cyan-400 hover:text-cyan-300 rounded-full text-xs font-bold border border-cyan-500/60 hover:border-cyan-400 shadow-[0_0_10px_rgba(0,200,255,0.25)] transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5 shrink-0"
               title="তথ্য রিফ্রেশ করুন"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-amber-300" : ""}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-cyan-300" : ""}`} />
               <span className="hidden sm:inline">{isRefreshing ? "সিঙ্ক হচ্ছে..." : "রিফ্রেশ"}</span>
             </button>
 
@@ -1752,15 +1752,15 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
         <div className="space-y-4 sm:space-y-6">
           {/* Sticky Secondary Navigation (Tabs on Left, Date Navigator on Right) */}
           <div className="hidden sm:flex sticky top-[56px] sm:top-[64px] z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-2 sm:p-2.5 rounded-2xl shadow-md border border-slate-200/90 dark:border-slate-800/90 transition-all justify-between items-center gap-3">
-            {/* Tab Switcher (RBAC Filtered) */}
-            <div className="flex items-center p-1 bg-slate-100/90 dark:bg-slate-800/90 rounded-xl shrink-0">
+            {/* Tab Switcher (RBAC Filtered) - Pill Track from UI Kit */}
+            <div className="flex items-center p-1.5 bg-slate-900/95 dark:bg-slate-950 border border-slate-700/80 rounded-full shrink-0 gap-1.5 shadow-inner">
               {isAllowed("dashboard") && (
                 <button
                   onClick={() => handleSwitchTab("dashboard")}
-                  className={`flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                  className={`flex items-center justify-center space-x-1.5 sm:space-x-2 px-4 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                     activeTab === "dashboard"
-                      ? "bg-white dark:bg-slate-700 text-amber-800 dark:text-amber-300 shadow-sm font-black"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                      ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 font-black shadow-[0_0_14px_rgba(0,200,255,0.45)] border border-cyan-300/60"
+                      : "text-slate-400 hover:text-cyan-300 hover:bg-slate-800/60"
                   }`}
                 >
                   <TrendingUp className="w-4 h-4" />
@@ -1771,10 +1771,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
               {isAllowed("entry") && (
                 <button
                   onClick={() => handleSwitchTab("entry")}
-                  className={`flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                  className={`flex items-center justify-center space-x-1.5 sm:space-x-2 px-4 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                     activeTab === "entry"
-                      ? "bg-white dark:bg-slate-700 text-amber-800 dark:text-amber-300 shadow-sm font-black"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                      ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 font-black shadow-[0_0_14px_rgba(0,200,255,0.45)] border border-cyan-300/60"
+                      : "text-slate-400 hover:text-cyan-300 hover:bg-slate-800/60"
                   }`}
                 >
                   <FileText className="w-4 h-4" />
@@ -1785,10 +1785,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
               {isAllowed("overhead") && (
                 <button
                   onClick={() => handleSwitchTab("overhead")}
-                  className={`flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                  className={`flex items-center justify-center space-x-1.5 sm:space-x-2 px-4 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                     activeTab === "overhead"
-                      ? "bg-white dark:bg-slate-700 text-amber-800 dark:text-amber-300 shadow-sm font-black"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                      ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 font-black shadow-[0_0_14px_rgba(0,200,255,0.45)] border border-cyan-300/60"
+                      : "text-slate-400 hover:text-cyan-300 hover:bg-slate-800/60"
                   }`}
                 >
                   <Building2 className="w-4 h-4" />
@@ -1799,13 +1799,13 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
               {isAllowed("savings") && (
                 <button
                   onClick={() => handleSwitchTab("savings")}
-                  className={`flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                  className={`flex items-center justify-center space-x-1.5 sm:space-x-2 px-4 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                     activeTab === "savings"
-                      ? "bg-white dark:bg-slate-700 text-emerald-800 dark:text-emerald-300 shadow-sm font-black"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                      ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 font-black shadow-[0_0_14px_rgba(0,200,255,0.45)] border border-cyan-300/60"
+                      : "text-slate-400 hover:text-cyan-300 hover:bg-slate-800/60"
                   }`}
                 >
-                  <PiggyBank className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <PiggyBank className="w-4 h-4" />
                   <span>সঞ্চয় ও অতিরিক্ত আয়</span>
                 </button>
               )}
@@ -1997,7 +1997,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                   {/* Filter Controls: Date Range (7D, 14D, 30D, All) & Product Dropdown */}
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     {/* Date range selector pills */}
-                    <div className="inline-flex p-1 bg-slate-100/90 dark:bg-slate-800/90 rounded-xl">
+                    <div className="inline-flex p-1 bg-slate-900/90 border border-slate-700/80 rounded-full shadow-inner">
                       {[
                         { id: "7d", label: "7D" },
                         { id: "14d", label: "14D" },
@@ -2008,10 +2008,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                           key={rng.id}
                           type="button"
                           onClick={() => setSelectedStockDateRange(rng.id)}
-                          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
                             selectedStockDateRange === rng.id
-                              ? "bg-white dark:bg-slate-700 text-amber-900 dark:text-amber-300 shadow-sm font-black"
-                              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                              ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 shadow-[0_0_10px_rgba(0,200,255,0.4)] font-black"
+                              : "text-slate-400 hover:text-cyan-300"
                           }`}
                         >
                           {rng.label}
@@ -2476,14 +2476,14 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
 
                     <div className="flex items-center flex-wrap gap-2">
                       {/* Metric Toggle: Qty vs Value */}
-                      <div className="inline-flex p-0.5 rounded-xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 text-[11px] font-bold">
+                      <div className="inline-flex p-1 rounded-full bg-slate-900/90 border border-slate-700/80 text-[11px] font-bold shadow-inner">
                         <button
                           type="button"
                           onClick={() => setItemSellPieMetric("qty")}
-                          className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                          className={`px-3.5 py-1 rounded-full transition-all cursor-pointer ${
                             itemSellPieMetric === "qty"
-                              ? "bg-white dark:bg-slate-700 text-amber-800 dark:text-amber-300 shadow-2xs font-black"
-                              : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                              ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 font-black shadow-[0_0_10px_rgba(0,200,255,0.4)]"
+                              : "text-slate-400 hover:text-cyan-300"
                           }`}
                           title="সংখ্যা অনুপাতে পাই চার্ট"
                         >
@@ -2492,10 +2492,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                         <button
                           type="button"
                           onClick={() => setItemSellPieMetric("value")}
-                          className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                          className={`px-3.5 py-1 rounded-full transition-all cursor-pointer ${
                             itemSellPieMetric === "value"
-                              ? "bg-white dark:bg-slate-700 text-amber-800 dark:text-amber-300 shadow-2xs font-black"
-                              : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                              ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 font-black shadow-[0_0_10px_rgba(0,200,255,0.4)]"
+                              : "text-slate-400 hover:text-cyan-300"
                           }`}
                           title="টাকার মূল্যে পাই চার্ট"
                         >
@@ -2821,14 +2821,14 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                     </div>
 
                     {/* Timeframe Selector Pills */}
-                    <div className="inline-flex items-center gap-0.5 p-0.5 bg-slate-100/90 dark:bg-slate-800/90 rounded-xl border border-slate-200/60 dark:border-slate-700/50 text-[10px]">
+                    <div className="inline-flex items-center gap-1 p-1 bg-slate-950/90 rounded-full border border-slate-800 shadow-inner text-[10px]">
                       <button
                         type="button"
                         onClick={() => setSelectedDateRange("weekly")}
-                        className={`px-2 py-0.5 rounded-lg font-black transition-all cursor-pointer ${
+                        className={`px-3 py-1 rounded-full font-black transition-all cursor-pointer ${
                           selectedDateRange === "weekly" || selectedDateRange === "7"
-                            ? "bg-white dark:bg-slate-700 text-amber-900 dark:text-amber-300 shadow-xs font-black"
-                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                            ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 shadow-[0_0_12px_rgba(0,200,255,0.45)]"
+                            : "text-slate-400 hover:text-cyan-300"
                         }`}
                       >
                         ৭ দিন
@@ -2836,10 +2836,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                       <button
                         type="button"
                         onClick={() => setSelectedDateRange("monthly")}
-                        className={`px-2 py-0.5 rounded-lg font-black transition-all cursor-pointer ${
+                        className={`px-3 py-1 rounded-full font-black transition-all cursor-pointer ${
                           selectedDateRange === "monthly" || selectedDateRange === "30"
-                            ? "bg-white dark:bg-slate-700 text-amber-900 dark:text-amber-300 shadow-xs font-black"
-                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                            ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 shadow-[0_0_12px_rgba(0,200,255,0.45)]"
+                            : "text-slate-400 hover:text-cyan-300"
                         }`}
                       >
                         ৩০ দিন
@@ -2847,10 +2847,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                       <button
                         type="button"
                         onClick={() => setSelectedDateRange("yearly")}
-                        className={`px-2 py-0.5 rounded-lg font-black transition-all cursor-pointer ${
+                        className={`px-3 py-1 rounded-full font-black transition-all cursor-pointer ${
                           selectedDateRange === "yearly" || selectedDateRange === "365"
-                            ? "bg-white dark:bg-slate-700 text-amber-900 dark:text-amber-300 shadow-xs font-black"
-                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                            ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 shadow-[0_0_12px_rgba(0,200,255,0.45)]"
+                            : "text-slate-400 hover:text-cyan-300"
                         }`}
                       >
                         ১ বছর
@@ -2858,10 +2858,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                       <button
                         type="button"
                         onClick={() => setSelectedDateRange("all")}
-                        className={`px-2 py-0.5 rounded-lg font-black transition-all cursor-pointer ${
+                        className={`px-3 py-1 rounded-full font-black transition-all cursor-pointer ${
                           selectedDateRange === "all"
-                            ? "bg-white dark:bg-slate-700 text-amber-900 dark:text-amber-300 shadow-xs font-black"
-                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                            ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 shadow-[0_0_12px_rgba(0,200,255,0.45)]"
+                            : "text-slate-400 hover:text-cyan-300"
                         }`}
                       >
                         সব
@@ -3082,14 +3082,14 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                 </div>
 
                 {/* Egg Series Filter Buttons */}
-                <div className="flex flex-wrap justify-center items-center gap-1 sm:gap-1.5 pt-1 text-xs font-bold text-slate-700 dark:text-slate-300">
+                <div className="flex flex-wrap justify-center items-center gap-1.5 pt-1 text-xs font-bold">
                   <button
                     type="button"
                     onClick={() => setSelectedEggPriceFilter("all")}
-                    className={`flex items-center space-x-1 cursor-pointer hover:opacity-90 transition-all px-2 py-1 rounded-lg border shadow-2xs text-[10.5px] ${
+                    className={`flex items-center space-x-1.5 cursor-pointer hover:opacity-90 transition-all px-3 py-1 rounded-full text-[11px] font-black ${
                       selectedEggPriceFilter === "all"
-                        ? "bg-amber-600 dark:bg-amber-500 text-white border-amber-600 dark:border-amber-500 ring-1 ring-amber-300"
-                        : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60"
+                        ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 shadow-[0_0_12px_rgba(0,200,255,0.45)] border border-cyan-300"
+                        : "bg-slate-900/90 text-slate-300 border border-slate-700/80 hover:border-cyan-400 hover:text-cyan-300"
                     }`}
                   >
                     <span>🌈</span>
@@ -3106,16 +3106,16 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                         onClick={() =>
                           setSelectedEggPriceFilter(selectedEggPriceFilter === eggType ? "all" : eggType)
                         }
-                        className={`flex items-center space-x-1 cursor-pointer hover:opacity-90 transition-all px-2 py-1 rounded-lg border shadow-2xs text-[10.5px] ${
+                        className={`flex items-center space-x-1.5 cursor-pointer hover:opacity-90 transition-all px-3 py-1 rounded-full text-[11px] font-black ${
                           isSelected
-                            ? "bg-slate-900 dark:bg-slate-700 text-white border-slate-900 dark:border-slate-600 ring-1 ring-amber-400"
-                            : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60"
+                            ? "bg-slate-900 text-cyan-300 border border-cyan-400 shadow-[0_0_12px_rgba(0,200,255,0.4)]"
+                            : "bg-slate-900/85 text-slate-300 border border-slate-700/80 hover:border-cyan-500/60 hover:text-cyan-200"
                         }`}
                       >
                         {eggType === "সাদা (White Egg)" ? (
-                          <span className="w-2.5 h-1.5 rounded-full inline-block bg-white border border-slate-400 shadow-2xs" />
+                          <span className="w-2.5 h-2 rounded-full inline-block bg-white border border-slate-400 shadow-2xs" />
                         ) : (
-                          <span className="w-2.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: color.stroke }} />
+                          <span className="w-2.5 h-2 rounded-full inline-block" style={{ backgroundColor: color.stroke }} />
                         )}
                         <span>{color.label || eggType.split(" (")[0]}</span>
                       </button>
@@ -3148,7 +3148,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                   {/* Filter Controls: Date Range (7D, 14D, 30D, All) & Metric Toggle */}
                   <div className="flex flex-wrap items-center justify-between gap-1.5">
                     {/* Date range selector pills */}
-                    <div className="inline-flex p-0.5 bg-slate-100/90 dark:bg-slate-800/90 rounded-lg">
+                    <div className="inline-flex p-1 bg-slate-950/90 rounded-full border border-slate-800 shadow-inner">
                       {[
                         { id: "7d", label: "7D" },
                         { id: "14d", label: "14D" },
@@ -3159,10 +3159,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                           key={rng.id}
                           type="button"
                           onClick={() => setSelectedSalesDateRange(rng.id)}
-                          className={`px-2 py-0.5 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
+                          className={`px-2.5 py-0.5 rounded-full text-[11px] font-black transition-all cursor-pointer ${
                             selectedSalesDateRange === rng.id
-                              ? "bg-white dark:bg-slate-700 text-blue-900 dark:text-blue-300 shadow-xs font-black"
-                              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                              ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 shadow-[0_0_10px_rgba(0,200,255,0.45)]"
+                              : "text-slate-400 hover:text-cyan-300"
                           }`}
                         >
                           {rng.label}
@@ -3171,14 +3171,14 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                     </div>
 
                     {/* Metric Display Mode Pills */}
-                    <div className="inline-flex p-0.5 bg-slate-100/90 dark:bg-slate-800/90 rounded-lg text-[10px]">
+                    <div className="inline-flex p-1 bg-slate-950/90 rounded-full border border-slate-800 shadow-inner text-[10px]">
                       <button
                         type="button"
                         onClick={() => setSalesGraphMetric("both")}
-                        className={`px-1.5 py-0.5 rounded-md font-bold transition-all cursor-pointer flex items-center space-x-1 ${
+                        className={`px-2.5 py-0.5 rounded-full font-black transition-all cursor-pointer flex items-center space-x-1 ${
                           salesGraphMetric === "both"
-                            ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-xs font-black"
-                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                            ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 shadow-[0_0_10px_rgba(0,200,255,0.45)]"
+                            : "text-slate-400 hover:text-cyan-300"
                         }`}
                         title="উভয় বিক্রি ও মার্জিন"
                       >
@@ -3189,10 +3189,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                       <button
                         type="button"
                         onClick={() => setSalesGraphMetric("sales")}
-                        className={`px-1.5 py-0.5 rounded-md font-bold transition-all cursor-pointer flex items-center space-x-1 ${
+                        className={`px-2.5 py-0.5 rounded-full font-black transition-all cursor-pointer flex items-center space-x-1 ${
                           salesGraphMetric === "sales"
-                            ? "bg-white dark:bg-slate-700 text-blue-900 dark:text-blue-300 shadow-xs font-black"
-                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                            ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 shadow-[0_0_10px_rgba(0,200,255,0.45)]"
+                            : "text-slate-400 hover:text-cyan-300"
                         }`}
                         title="শুধু মোট বিক্রি"
                       >
@@ -3202,10 +3202,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                       <button
                         type="button"
                         onClick={() => setSalesGraphMetric("margin")}
-                        className={`px-1.5 py-0.5 rounded-md font-bold transition-all cursor-pointer flex items-center space-x-1 ${
+                        className={`px-2.5 py-0.5 rounded-full font-black transition-all cursor-pointer flex items-center space-x-1 ${
                           salesGraphMetric === "margin"
-                            ? "bg-white dark:bg-slate-700 text-emerald-900 dark:text-emerald-300 shadow-xs font-black"
-                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                            ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 shadow-[0_0_10px_rgba(0,200,255,0.45)]"
+                            : "text-slate-400 hover:text-cyan-300"
                         }`}
                         title="শুধু নিট মার্জিন"
                       >
@@ -3755,15 +3755,15 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                         <button
                           type="button"
                           onClick={() => setSalesTableSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))}
-                          className="text-[9px] sm:text-[10px] font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-1.5 sm:px-2 py-0.5 rounded-md border border-slate-300/80 dark:border-slate-700 cursor-pointer flex items-center space-x-1 transition-colors"
+                          className="text-[9px] sm:text-[10px] font-bold text-cyan-300 bg-slate-900/90 hover:bg-slate-800 px-3 py-1 rounded-full border border-cyan-500/40 hover:border-cyan-400 hover:shadow-[0_0_10px_rgba(0,200,255,0.3)] cursor-pointer flex items-center space-x-1 transition-all"
                           title="তারিখের ক্রম পরিবর্তন করুন"
                         >
-                          <ArrowUpDown className="w-2.5 h-2.5 text-slate-500" />
+                          <ArrowUpDown className="w-2.5 h-2.5 text-cyan-400" />
                           <span>{salesTableSortOrder === "asc" ? "পুরাতন→নতুন" : "নতুন→পুরাতন"}</span>
                         </button>
                       </div>
 
-                      <div className="flex items-center space-x-1">
+                      <div className="flex items-center space-x-1.5">
                         <button
                           type="button"
                           onClick={() => {
@@ -3771,7 +3771,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                               salesTableRef.current.scrollTo({ top: 0, behavior: "smooth" });
                             }
                           }}
-                          className="text-[9px] sm:text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-1.5 sm:px-2 py-0.5 rounded border border-slate-300/70 dark:border-slate-700 cursor-pointer transition-colors"
+                          className="text-[9px] sm:text-[10px] font-bold text-slate-300 hover:text-cyan-300 bg-slate-900/90 hover:bg-slate-800 px-3 py-1 rounded-full border border-slate-700/80 hover:border-cyan-500/50 cursor-pointer transition-all"
                           title="এক ক্লিকে একদম শুরুতে স্ক্রোল করুন"
                         >
                           উপরে ↑
@@ -3783,7 +3783,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                               salesTableRef.current.scrollTo({ top: salesTableRef.current.scrollHeight, behavior: "smooth" });
                             }
                           }}
-                          className="text-[9px] sm:text-[10px] font-bold text-blue-700 dark:text-blue-300 hover:text-blue-800 bg-blue-50 dark:bg-blue-950/70 hover:bg-blue-100 dark:hover:bg-blue-900/60 px-1.5 sm:px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800/80 cursor-pointer transition-colors"
+                          className="text-[9px] sm:text-[10px] font-bold text-cyan-300 hover:text-cyan-200 bg-cyan-950/60 hover:bg-cyan-900/60 px-3 py-1 rounded-full border border-cyan-500/50 hover:shadow-[0_0_10px_rgba(0,200,255,0.35)] cursor-pointer transition-all"
                           title="এক ক্লিকে একদম শেষে (আজকের দিনে) স্ক্রোল করুন"
                         >
                           নিচে / আজ ↓
@@ -4196,7 +4196,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                 <button
                   type="button"
                   onClick={handleSetToday}
-                  className="text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/70 hover:bg-amber-100 dark:hover:bg-amber-900/50 px-3 py-1.5 rounded-xl border border-amber-200 dark:border-amber-800/60 transition-colors cursor-pointer shrink-0"
+                  className="text-[11px] font-bold text-cyan-300 bg-slate-900/90 hover:bg-cyan-950/50 hover:text-cyan-200 px-3.5 py-1.5 rounded-full border border-cyan-500/60 hover:border-cyan-400 shadow-[0_0_10px_rgba(0,200,255,0.2)] transition-all cursor-pointer shrink-0 active:scale-95"
                 >
                   আজকের দিন (Today)
                 </button>
@@ -4474,10 +4474,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                             <button
                               type="button"
                               onClick={() => removeDueItem(idx)}
-                              className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors cursor-pointer"
+                              className="w-8 h-8 rounded-full flex items-center justify-center bg-slate-900/80 border border-slate-700 text-slate-400 hover:text-rose-400 hover:border-rose-500 hover:shadow-[0_0_10px_rgba(244,63,94,0.3)] transition-all cursor-pointer shrink-0 active:scale-95"
                               title="মুছে ফেলুন"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
 
@@ -4525,9 +4525,9 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                   <button
                     type="button"
                     onClick={addDueItem}
-                    className="w-full border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-slate-400 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-200 font-bold text-xs py-2 px-3 rounded-xl flex items-center justify-center space-x-1.5 transition-all shadow-sm cursor-pointer"
+                    className="w-full border border-dashed border-cyan-500/60 hover:border-cyan-400 bg-slate-900/90 hover:bg-cyan-950/40 text-cyan-300 font-bold text-xs py-2 px-4 rounded-full flex items-center justify-center space-x-1.5 transition-all shadow-[0_0_10px_rgba(0,200,255,0.15)] hover:shadow-[0_0_15px_rgba(0,200,255,0.3)] cursor-pointer active:scale-95"
                   >
-                    <Plus className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                    <Plus className="w-4 h-4 text-cyan-400" />
                     <span>অন্যান্য দেনা / মহাজন খাত যোগ করুন</span>
                   </button>
                 </div>
@@ -4623,10 +4623,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                           <button
                             type="button"
                             onClick={() => removeCollectionItem(idx)}
-                            className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors cursor-pointer"
+                            className="w-8 h-8 rounded-full flex items-center justify-center bg-slate-900/80 border border-slate-700 text-slate-400 hover:text-rose-400 hover:border-rose-500 hover:shadow-[0_0_10px_rgba(244,63,94,0.3)] transition-all cursor-pointer shrink-0 active:scale-95"
                             title="মুছে ফেলুন"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       ))}
@@ -4637,9 +4637,9 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                   <button
                     type="button"
                     onClick={addCollectionItem}
-                    className="w-full border-2 border-dashed border-amber-300 dark:border-amber-700 hover:border-amber-500 bg-amber-50/60 dark:bg-amber-950/40 hover:bg-amber-100/80 text-amber-900 dark:text-amber-300 font-bold text-xs py-2 px-3 rounded-xl flex items-center justify-center space-x-1.5 transition-all shadow-sm cursor-pointer"
+                    className="w-full border border-dashed border-cyan-500/60 hover:border-cyan-400 bg-slate-900/90 hover:bg-cyan-950/40 text-cyan-300 font-bold text-xs py-2 px-4 rounded-full flex items-center justify-center space-x-1.5 transition-all shadow-[0_0_10px_rgba(0,200,255,0.15)] hover:shadow-[0_0_15px_rgba(0,200,255,0.3)] cursor-pointer active:scale-95"
                   >
-                    <Plus className="w-4 h-4" />
+                    <Plus className="w-4 h-4 text-cyan-400" />
                     <span>অন্যান্য পাওনা / আদায় খাত যোগ করুন</span>
                   </button>
                 </div>
@@ -4678,13 +4678,13 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                   <button
                     type="button"
                     onClick={addExpenseRow}
-                    className="text-xs font-bold text-slate-700 dark:text-slate-300 bg-rose-50 dark:bg-rose-950/70 border border-rose-200 dark:border-rose-800/60 px-2.5 py-1.5 rounded-xl cursor-pointer hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-all active:scale-95"
+                    className="text-xs font-bold text-cyan-300 bg-slate-900/90 border border-cyan-500/60 px-3.5 py-1.5 rounded-full cursor-pointer hover:bg-cyan-950/40 transition-all active:scale-95 shadow-[0_0_10px_rgba(0,200,255,0.2)]"
                     title="নতুন খরচ যোগ করুন"
                   >
-                    মোট খরচ: <strong className="text-rose-600 dark:text-rose-400 font-black">৳ {formLiveTotalExpenses.toLocaleString()}</strong>
+                    মোট খরচ: <strong className="text-cyan-400 font-black">৳ {formLiveTotalExpenses.toLocaleString()}</strong>
                   </button>
                   {formLivePersonalExpense > 0 && (
-                    <span className="text-xs font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/70 border border-purple-200 dark:border-purple-800/60 px-2.5 py-1.5 rounded-xl" title="ব্যক্তিগত খরচ (নিজ)">
+                    <span className="text-xs font-bold text-purple-300 bg-purple-950/80 border border-purple-500/60 px-3 py-1.5 rounded-full shadow-[0_0_8px_rgba(168,85,247,0.25)]" title="ব্যক্তিগত খরচ (নিজ)">
                       নিজ খরচ: <strong className="font-black">৳ {formLivePersonalExpense.toLocaleString()}</strong>
                     </span>
                   )}
@@ -4692,7 +4692,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                 <button
                   type="button"
                   onClick={addExpenseRow}
-                  className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-3.5 py-1.5 rounded-xl flex items-center space-x-1.5 transition shadow-sm active:scale-95 cursor-pointer"
+                  className="bg-gradient-to-r from-cyan-400 to-sky-400 hover:from-cyan-300 hover:to-sky-300 text-slate-950 font-black text-xs px-4 py-1.5 rounded-full flex items-center space-x-1.5 transition shadow-[0_0_14px_rgba(0,200,255,0.45)] border border-cyan-300/50 active:scale-95 cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
                   <span>খরচ যোগ</span>
@@ -4806,21 +4806,21 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                           }
                           setExpenses(updated);
                         }}
-                        className={`inline-flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer border ${
+                        className={`inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full text-[11px] font-bold transition-all cursor-pointer border ${
                           exp.isOverheadLinked
-                            ? "bg-amber-600 text-white border-amber-700 shadow-xs"
-                            : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
+                            ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 border-cyan-300 font-black shadow-[0_0_12px_rgba(0,200,255,0.4)]"
+                            : "bg-slate-900/90 text-cyan-400 border-cyan-500/60 hover:border-cyan-400 hover:bg-cyan-950/40 shadow-[0_0_8px_rgba(0,200,255,0.15)]"
                         }`}
                         title="কর্মচারী, দোকান ভাড়া বা সঞ্চয় ফান্ডে যুক্ত করুন"
                       >
                         {exp.isOverheadLinked ? (
                           <>
-                            <ToggleRight className="w-4 h-4 text-amber-200" />
+                            <ToggleRight className="w-4 h-4 text-slate-950" />
                             <span>ফান্ড লিঙ্ক চালু</span>
                           </>
                         ) : (
                           <>
-                            <ToggleLeft className="w-4 h-4 text-slate-400" />
+                            <ToggleLeft className="w-4 h-4 text-cyan-400" />
                             <span>+ ওভারহেড/সঞ্চয়</span>
                           </>
                         )}
@@ -4831,10 +4831,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                         <button
                           type="button"
                           onClick={() => removeExpenseRow(index)}
-                          className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors cursor-pointer"
+                          className="w-8 h-8 rounded-full flex items-center justify-center bg-slate-900/80 border border-slate-700 text-slate-400 hover:text-rose-400 hover:border-rose-500 hover:shadow-[0_0_10px_rgba(244,63,94,0.3)] transition-all cursor-pointer shrink-0 active:scale-95"
                           title="মুছুন"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       )}
                     </div>
@@ -4980,16 +4980,16 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-600 hover:to-amber-800 text-white font-black text-sm sm:text-base py-3.5 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2.5 active:scale-[0.99] disabled:opacity-50 cursor-pointer"
+              className="w-full bg-gradient-to-r from-cyan-400 via-cyan-400 to-sky-400 hover:from-cyan-300 hover:to-sky-300 text-slate-950 font-black text-sm sm:text-base py-3.5 px-6 rounded-full shadow-[0_0_24px_rgba(0,200,255,0.45)] border border-cyan-300/60 transition-all flex items-center justify-center space-x-2.5 active:scale-[0.99] disabled:opacity-50 cursor-pointer"
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="w-5 h-5 animate-spin text-slate-950" />
                   <span>গুগল শিটে পেজ তৈরি ও ডাটা সংরক্ষণ হচ্ছে...</span>
                 </>
               ) : (
                 <>
-                  <ShieldCheck className="w-5 h-5" />
+                  <ShieldCheck className="w-5 h-5 text-slate-950" />
                   <span>সংরক্ষণ ও গুগল শিটে পেজ তৈরি করুন (Save & Sync)</span>
                 </>
               )}
@@ -5005,71 +5005,79 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
       )}
 
       {/* Floating Bottom Nav for Mobile Screens */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 sm:hidden px-1.5 py-2 flex justify-around items-center shadow-lg transition-colors">
+      <div className="fixed bottom-2 left-3 right-3 z-50 bg-slate-950/95 backdrop-blur-xl border border-cyan-500/30 rounded-full sm:hidden px-3 py-1.5 flex justify-around items-center shadow-[0_8px_30px_rgba(0,0,0,0.8)] shadow-cyan-950/30 transition-all">
         {isAllowed("dashboard") && (
           <button
             onClick={() => handleSwitchTab("dashboard")}
-            className={`flex flex-col items-center space-y-1 py-1 px-1.5 rounded-xl transition-all cursor-pointer ${
-              activeTab === "dashboard" ? "text-amber-600 dark:text-amber-400 font-black" : "text-slate-500 dark:text-slate-400 font-semibold"
+            className={`flex flex-col items-center space-y-0.5 py-1 px-2.5 rounded-full transition-all cursor-pointer ${
+              activeTab === "dashboard"
+                ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 font-black shadow-[0_0_12px_rgba(0,200,255,0.45)]"
+                : "text-slate-400 hover:text-cyan-300 font-semibold"
             }`}
           >
-            <TrendingUp className="w-5 h-5" />
-            <span className="text-[10px]">ড্যাশবোর্ড</span>
+            <TrendingUp className="w-4 h-4" />
+            <span className="text-[9px]">ড্যাশবোর্ড</span>
           </button>
         )}
 
         {isAllowed("entry") && (
           <button
             onClick={() => handleSwitchTab("entry")}
-            className={`flex flex-col items-center space-y-1 py-1 px-1.5 rounded-xl transition-all cursor-pointer ${
-              activeTab === "entry" ? "text-amber-600 dark:text-amber-400 font-black" : "text-slate-500 dark:text-slate-400 font-semibold"
+            className={`flex flex-col items-center space-y-0.5 py-1 px-2.5 rounded-full transition-all cursor-pointer ${
+              activeTab === "entry"
+                ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 font-black shadow-[0_0_12px_rgba(0,200,255,0.45)]"
+                : "text-slate-400 hover:text-cyan-300 font-semibold"
             }`}
           >
-            <FileText className="w-5 h-5" />
-            <span className="text-[10px]">হালখাতা</span>
+            <FileText className="w-4 h-4" />
+            <span className="text-[9px]">হালখাতা</span>
           </button>
         )}
 
         {isAllowed("overhead") && (
           <button
             onClick={() => handleSwitchTab("overhead")}
-            className={`flex flex-col items-center space-y-1 py-1 px-1.5 rounded-xl transition-all cursor-pointer ${
-              activeTab === "overhead" ? "text-amber-600 dark:text-amber-400 font-black" : "text-slate-500 dark:text-slate-400 font-semibold"
+            className={`flex flex-col items-center space-y-0.5 py-1 px-2.5 rounded-full transition-all cursor-pointer ${
+              activeTab === "overhead"
+                ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 font-black shadow-[0_0_12px_rgba(0,200,255,0.45)]"
+                : "text-slate-400 hover:text-cyan-300 font-semibold"
             }`}
           >
-            <Building2 className="w-5 h-5" />
-            <span className="text-[10px]">মাসিক খরচ</span>
+            <Building2 className="w-4 h-4" />
+            <span className="text-[9px]">মাসিক খরচ</span>
           </button>
         )}
 
         {isAllowed("savings") && (
           <button
             onClick={() => handleSwitchTab("savings")}
-            className={`flex flex-col items-center space-y-1 py-1 px-1.5 rounded-xl transition-all cursor-pointer ${
-              activeTab === "savings" ? "text-emerald-600 dark:text-emerald-400 font-black" : "text-slate-500 dark:text-slate-400 font-semibold"
+            className={`flex flex-col items-center space-y-0.5 py-1 px-2.5 rounded-full transition-all cursor-pointer ${
+              activeTab === "savings"
+                ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 font-black shadow-[0_0_12px_rgba(0,200,255,0.45)]"
+                : "text-slate-400 hover:text-cyan-300 font-semibold"
             }`}
           >
-            <PiggyBank className="w-5 h-5" />
-            <span className="text-[10px]">সঞ্চয়</span>
+            <PiggyBank className="w-4 h-4" />
+            <span className="text-[9px]">সঞ্চয়</span>
           </button>
         )}
 
         <button
           onClick={handleRefreshData}
           disabled={isRefreshing}
-          className="flex flex-col items-center space-y-1 py-1 px-1.5 text-slate-500 dark:text-slate-400 font-semibold active:scale-95 cursor-pointer"
+          className="flex flex-col items-center space-y-0.5 py-1 px-2 text-slate-400 hover:text-cyan-300 font-semibold active:scale-95 cursor-pointer"
         >
-          <RefreshCw className={`w-5 h-5 ${isRefreshing ? "animate-spin text-amber-600 dark:text-amber-400" : ""}`} />
-          <span className="text-[10px]">রিফ্রেশ</span>
+          <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-cyan-400" : ""}`} />
+          <span className="text-[9px]">রিফ্রেশ</span>
         </button>
 
         <button
           onClick={handleLogout}
           title="লগআউট"
-          className="flex flex-col items-center space-y-1 py-1 px-1.5 text-rose-500 dark:text-rose-400 font-semibold active:scale-95 cursor-pointer"
+          className="flex flex-col items-center space-y-0.5 py-1 px-2 text-rose-400 hover:text-rose-300 font-semibold active:scale-95 cursor-pointer"
         >
-          <LogOut className="w-5 h-5" />
-          <span className="text-[10px]">লগআউট</span>
+          <LogOut className="w-4 h-4" />
+          <span className="text-[9px]">লগআউট</span>
         </button>
       </div>
     </div>

@@ -160,17 +160,17 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3 bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-600 hover:to-amber-800 text-white font-black text-sm rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 active:scale-[0.99] disabled:opacity-50 cursor-pointer"
+              className="w-full py-3.5 bg-gradient-to-r from-cyan-400 via-cyan-400 to-sky-400 hover:from-cyan-300 hover:to-sky-300 text-slate-950 font-black text-sm rounded-full shadow-[0_0_24px_rgba(0,200,255,0.45)] border border-cyan-300/60 transition-all flex items-center justify-center space-x-2 active:scale-[0.99] disabled:opacity-50 cursor-pointer"
             >
               <span>{isSubmitting ? "যাচাই করা হচ্ছে..." : "প্রবেশ করুন (Login)"}</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 text-slate-950" />
             </button>
           </form>
 
           {/* 1-Click Fast Login Shortcuts */}
           <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
             <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 text-center flex items-center justify-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
               <span>১-ক্লিকে দ্রুত লগইন করুন (ডেমো একাউন্টস)</span>
             </p>
 
@@ -179,18 +179,18 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
               <button
                 type="button"
                 onClick={() => handleQuickLogin("russellfoyze")}
-                className="flex items-center justify-between p-2.5 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/40 hover:bg-amber-100/70 dark:hover:bg-amber-900/50 transition-colors text-left cursor-pointer group"
+                className="flex items-center justify-between p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/60 hover:border-cyan-500/50 transition-all text-left cursor-pointer group"
               >
                 <div className="flex items-center space-x-2.5">
                   <span className="text-lg">👑</span>
                   <div>
-                    <p className="text-xs font-black text-slate-900 dark:text-slate-100 group-hover:text-amber-800 dark:group-hover:text-amber-300">
+                    <p className="text-xs font-black text-slate-900 dark:text-slate-100 group-hover:text-cyan-400">
                       russellfoyze <span className="font-semibold text-slate-500">(অ্যাডমিন)</span>
                     </p>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400">ড্যাশবোর্ড, হালখাতা ও মাসিক খরচ সব অ্যাক্সেস</p>
                   </div>
                 </div>
-                <span className="text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100/90 dark:bg-amber-900/80 px-2 py-0.5 rounded-lg">
+                <span className="text-[10px] font-black text-cyan-300 bg-slate-900 border border-cyan-500/60 px-3 py-1 rounded-full shadow-[0_0_8px_rgba(0,200,255,0.2)] group-hover:bg-gradient-to-r group-hover:from-cyan-400 group-hover:to-sky-400 group-hover:text-slate-950 transition-all">
                   লগইন ↗
                 </span>
               </button>
@@ -199,18 +199,18 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
               <button
                 type="button"
                 onClick={() => handleQuickLogin("billal")}
-                className="flex items-center justify-between p-2.5 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-950/40 hover:bg-blue-100/70 dark:hover:bg-blue-900/50 transition-colors text-left cursor-pointer group"
+                className="flex items-center justify-between p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/60 hover:border-cyan-500/50 transition-all text-left cursor-pointer group"
               >
                 <div className="flex items-center space-x-2.5">
                   <span className="text-lg">👔</span>
                   <div>
-                    <p className="text-xs font-black text-slate-900 dark:text-slate-100 group-hover:text-blue-800 dark:group-hover:text-blue-300">
+                    <p className="text-xs font-black text-slate-900 dark:text-slate-100 group-hover:text-cyan-400">
                       billal <span className="font-semibold text-slate-500">(ম্যানেজার)</span>
                     </p>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400">হালখাতা এন্ট্রি ও কর্মচারী ও মাসিক খরচ অ্যাক্সেস</p>
                   </div>
                 </div>
-                <span className="text-[10px] font-bold text-blue-800 dark:text-blue-300 bg-blue-100/90 dark:bg-blue-900/80 px-2 py-0.5 rounded-lg">
+                <span className="text-[10px] font-black text-cyan-300 bg-slate-900 border border-cyan-500/60 px-3 py-1 rounded-full shadow-[0_0_8px_rgba(0,200,255,0.2)] group-hover:bg-gradient-to-r group-hover:from-cyan-400 group-hover:to-sky-400 group-hover:text-slate-950 transition-all">
                   লগইন ↗
                 </span>
               </button>
@@ -219,18 +219,18 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
               <button
                 type="button"
                 onClick={() => handleQuickLogin("kayes")}
-                className="flex items-center justify-between p-2.5 rounded-xl border border-purple-200 dark:border-purple-900/60 bg-purple-50/50 dark:bg-purple-950/40 hover:bg-purple-100/70 dark:hover:bg-purple-900/50 transition-colors text-left cursor-pointer group"
+                className="flex items-center justify-between p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/60 hover:border-cyan-500/50 transition-all text-left cursor-pointer group"
               >
                 <div className="flex items-center space-x-2.5">
                   <span className="text-lg">💼</span>
                   <div>
-                    <p className="text-xs font-black text-slate-900 dark:text-slate-100 group-hover:text-purple-800 dark:group-hover:text-purple-300">
+                    <p className="text-xs font-black text-slate-900 dark:text-slate-100 group-hover:text-cyan-400">
                       kayes <span className="font-semibold text-slate-500">(ম্যানেজার)</span>
                     </p>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400">ড্যাশবোর্ড, হালখাতা ও মাসিক খরচ অ্যাক্সেস</p>
                   </div>
                 </div>
-                <span className="text-[10px] font-bold text-purple-800 dark:text-purple-300 bg-purple-100/90 dark:bg-purple-900/80 px-2 py-0.5 rounded-lg">
+                <span className="text-[10px] font-black text-cyan-300 bg-slate-900 border border-cyan-500/60 px-3 py-1 rounded-full shadow-[0_0_8px_rgba(0,200,255,0.2)] group-hover:bg-gradient-to-r group-hover:from-cyan-400 group-hover:to-sky-400 group-hover:text-slate-950 transition-all">
                   লগইন ↗
                 </span>
               </button>
@@ -239,18 +239,18 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
               <button
                 type="button"
                 onClick={() => handleQuickLogin("juel")}
-                className="flex items-center justify-between p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/40 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/50 transition-colors text-left cursor-pointer group"
+                className="flex items-center justify-between p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/60 hover:border-cyan-500/50 transition-all text-left cursor-pointer group"
               >
                 <div className="flex items-center space-x-2.5">
                   <span className="text-lg">👁️</span>
                   <div>
-                    <p className="text-xs font-black text-slate-900 dark:text-slate-100 group-hover:text-emerald-800 dark:group-hover:text-emerald-300">
+                    <p className="text-xs font-black text-slate-900 dark:text-slate-100 group-hover:text-cyan-400">
                       juel <span className="font-semibold text-slate-500">(ভিউয়ার)</span>
                     </p>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400">শুধুমাত্র ড্যাশবোর্ড ও রিপোর্ট দেখার সুবিধা</p>
                   </div>
                 </div>
-                <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100/90 dark:bg-emerald-900/80 px-2 py-0.5 rounded-lg">
+                <span className="text-[10px] font-black text-cyan-300 bg-slate-900 border border-cyan-500/60 px-3 py-1 rounded-full shadow-[0_0_8px_rgba(0,200,255,0.2)] group-hover:bg-gradient-to-r group-hover:from-cyan-400 group-hover:to-sky-400 group-hover:text-slate-950 transition-all">
                   লগইন ↗
                 </span>
               </button>
