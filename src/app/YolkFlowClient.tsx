@@ -42,6 +42,7 @@ import {
   Boxes,
   BarChart3,
   ArrowUpDown,
+  Egg,
 } from "lucide-react";
 import { ComputedDayData, saveLedgerEntryAction } from "./actions";
 import OverheadExpensesView from "./OverheadExpensesView";
@@ -881,6 +882,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
           percent: number;
           path: string;
           midAngle: number;
+          outerEdgePt: { x: number; y: number } | null;
         }[],
         totalQty: 0,
         totalVal: 0,
@@ -955,12 +957,18 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
         path = `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${rOuter} ${rOuter} 0 ${largeArc} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} L ${x3.toFixed(2)} ${y3.toFixed(2)} A ${rInner} ${rInner} 0 ${largeArc} 0 ${x4.toFixed(2)} ${y4.toFixed(2)} Z`;
       }
 
+      const outerEdgePt = metricVal > 0 && activeMetricTotal > 0 ? {
+        x: 130 + 65.5 * Math.cos(midAngle),
+        y: 90 + 65.5 * Math.sin(midAngle)
+      } : null;
+
       return {
         ...item,
         metricVal,
         percent,
         path,
         midAngle,
+        outerEdgePt,
       };
     });
 
@@ -1380,6 +1388,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
         totalSales: 0,
         totalMargin: 0,
         totalCost: 0,
+        totalSoldQty: 0,
         avgSales: 0,
         avgMargin: 0,
         avgMarginPercent: 0,
@@ -1399,10 +1408,15 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
         yMin: 0,
         yMax: 10000,
         yTicks: [0, 2500, 5000, 7500, 10000],
+        ySalesMin: 0,
         ySalesMax: 10000,
         ySalesTicks: [0, 2500, 5000, 7500, 10000],
+        yMarginMin: 0,
         yMarginMax: 5000,
         yMarginTicks: [0, 1000, 2000, 3000, 4000, 5000],
+        isBoth: salesGraphMetric === "both",
+        isMarginOnly: salesGraphMetric === "margin",
+        isSalesOnly: salesGraphMetric === "sales",
       };
     }
 
@@ -1488,11 +1502,14 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
     const yMax = salesGraphMetric === "margin" ? yMarginMax : ySalesMax;
     const yTicks = salesGraphMetric === "margin" ? yMarginTicks : ySalesTicks;
 
+    const totalSoldQty = points.reduce((s, p) => s + p.soldQty, 0);
+
     return {
       points,
       totalSales,
       totalMargin,
       totalCost,
+      totalSoldQty,
       avgSales,
       avgMargin,
       avgMarginPercent,
@@ -1504,10 +1521,15 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
       yMin,
       yMax,
       yTicks,
+      ySalesMin: 0,
       ySalesMax,
       ySalesTicks,
+      yMarginMin: 0,
       yMarginMax,
       yMarginTicks,
+      isBoth: salesGraphMetric === "both",
+      isMarginOnly: salesGraphMetric === "margin",
+      isSalesOnly: salesGraphMetric === "sales",
     };
   }, [salesFilteredData, currentViewDay, salesGraphMetric]);
 
@@ -1686,15 +1708,18 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
   return (
     <div className="min-h-screen flex flex-col">
       {/* 🌟 Top Navigation Bar with Refresh & Login/Profile */}
-      <header className="bg-gradient-to-r from-amber-600 via-amber-600 to-amber-700 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 text-white shadow-md sticky top-0 z-50 backdrop-blur-md border-b border-amber-700/50 dark:border-slate-800 transition-colors duration-200">
-        <div className="w-full max-w-none mx-auto px-2 sm:px-6 lg:px-[100px] py-2 sm:py-3 flex justify-between items-center gap-2">
+      <header className="glass-panel sticky top-0 z-50 text-white shadow-lg border-b border-white/10 transition-colors duration-200">
+        <div className="w-full max-w-none mx-auto px-2 sm:px-6 lg:px-[100px] py-2.5 sm:py-3 flex justify-between items-center gap-2">
           {/* Branding */}
-          <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0 min-w-0">
+          <div className="flex items-center space-x-2 shrink-0 min-w-0">
+            <div className="w-9 h-9 rounded-2xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center text-cyan-300 shadow-[0_0_12px_rgba(0,200,255,0.25)] shrink-0">
+              <Egg className="w-5 h-5 text-cyan-300" />
+            </div>
             <div>
-              <span className="text-sm sm:text-lg font-black tracking-tight leading-none whitespace-nowrap block">
+              <span className="text-sm sm:text-lg font-black tracking-tight leading-none whitespace-nowrap block text-slate-100">
                 M.A Khalek Sarker
               </span>
-              <p className="text-[10px] text-amber-200/90 dark:text-slate-400 font-medium hidden md:block mt-0.5">
+              <p className="text-[10px] text-cyan-300/80 font-medium hidden md:block mt-0.5">
                 এম. এ. খালেক সরকার — ডিমের পাইকারি আড়ত ও ডিজিটাল খতিয়ান
               </p>
             </div>
@@ -1715,17 +1740,17 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
 
             {/* 👤 লগইন ও ইউজার প্রোফাইল (Login / Profile in Top Bar) */}
             {currentUser && (
-              <div className="flex items-center space-x-1 sm:space-x-1.5 bg-black/25 dark:bg-slate-800/90 border border-white/20 dark:border-slate-700/80 px-1.5 sm:px-2.5 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold shadow-xs shrink-0">
+              <div className="flex items-center space-x-1 sm:space-x-1.5 bg-slate-900/80 border border-white/15 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold shadow-xs shrink-0">
                 <span className="text-xs sm:text-sm">{currentUser.avatarEmoji}</span>
-                <span className="text-white font-black max-w-[60px] sm:max-w-[120px] truncate">{currentUser.username}</span>
-                <span className="hidden md:inline text-[10px] text-amber-200 bg-white/10 px-1.5 py-0.5 rounded-md font-semibold">
+                <span className="text-slate-100 font-black max-w-[60px] sm:max-w-[120px] truncate">{currentUser.username}</span>
+                <span className="hidden md:inline text-[10px] text-cyan-300 bg-cyan-950/60 border border-cyan-500/30 px-2 py-0.5 rounded-full font-semibold">
                   {currentUser.roleLabel.split(" ")[1]}
                 </span>
                 <button
                   type="button"
                   onClick={handleLogout}
                   title="লগআউট করুন"
-                  className="p-0.5 sm:p-1 text-amber-200 hover:text-rose-300 transition-colors cursor-pointer"
+                  className="p-0.5 sm:p-1 text-slate-400 hover:text-rose-400 transition-colors cursor-pointer"
                 >
                   <LogOut className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 </button>
@@ -1739,7 +1764,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
             <ThemeToggle />
 
             {/* 🟢 লাইভ সিঙ্ক ব্যাজ */}
-            <span className="hidden lg:inline-flex items-center gap-1.5 bg-emerald-500/20 dark:bg-emerald-950/50 text-emerald-100 dark:text-emerald-300 text-[11px] font-bold px-2.5 py-1.5 rounded-full border border-emerald-400/30 dark:border-emerald-700/50 shadow-xs">
+            <span className="hidden lg:inline-flex items-center gap-1.5 bg-emerald-500/15 text-emerald-300 text-[11px] font-bold px-3 py-1.5 rounded-full border border-emerald-400/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>লাইভ সিঙ্ক</span>
             </span>
@@ -1751,9 +1776,9 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
       <main className="w-full max-w-none mx-auto px-2 sm:px-6 lg:px-[100px] py-4 sm:py-6 flex-1">
         <div className="space-y-4 sm:space-y-6">
           {/* Sticky Secondary Navigation (Tabs on Left, Date Navigator on Right) */}
-          <div className="hidden sm:flex sticky top-[56px] sm:top-[64px] z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-2 sm:p-2.5 rounded-2xl shadow-md border border-slate-200/90 dark:border-slate-800/90 transition-all justify-between items-center gap-3">
+          <div className="hidden sm:flex sticky top-[56px] sm:top-[64px] z-30 glass-panel p-2 sm:p-2.5 rounded-2xl sm:rounded-3xl shadow-lg justify-between items-center gap-3">
             {/* Tab Switcher (RBAC Filtered) - Pill Track from UI Kit */}
-            <div className="flex items-center p-1.5 bg-slate-900/95 dark:bg-slate-950 border border-slate-700/80 rounded-full shrink-0 gap-1.5 shadow-inner">
+            <div className="flex items-center p-1.5 bg-slate-900/90 border border-slate-700/80 rounded-full shrink-0 gap-1.5 shadow-inner">
               {isAllowed("dashboard") && (
                 <button
                   onClick={() => handleSwitchTab("dashboard")}
@@ -1825,7 +1850,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
           </div>
 
           {/* Sticky Mobile Sub-Header (Date Navigator for Mobile Phone View) */}
-          <div className="sm:hidden sticky top-[54px] z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-1.5 rounded-2xl shadow-md border border-slate-200/90 dark:border-slate-800/90 flex items-center gap-1.5 w-full min-w-0">
+          <div className="sm:hidden sticky top-[54px] z-30 glass-panel p-2 rounded-2xl shadow-md flex items-center gap-1.5 w-full min-w-0">
             {activeTab !== "overhead" && activeTab !== "savings" &&
               renderDateNavigatorPill(
                 activeDisplayDate,
@@ -1843,17 +1868,17 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
             /* ================= DASHBOARD TAB ================= */
         <div className="space-y-4 sm:space-y-6">
           {/* Dashboard Title Bar */}
-          <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 flex justify-between items-center transition-colors">
+          <div className="glass-panel p-4 sm:p-5 rounded-2xl sm:rounded-3xl shadow-md flex justify-between items-center transition-all">
             <div>
               <div className="flex items-center space-x-2">
-                <h2 className="text-lg sm:text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight">হিসাব বিবরণী ও ব্যবসার অবস্থা</h2>
+                <h2 className="text-lg sm:text-xl font-black text-slate-100 tracking-tight">হিসাব বিবরণী ও ব্যবসার অবস্থা</h2>
                 {currentViewDay && (
-                  <span className="bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 text-xs px-2.5 py-0.5 rounded-full font-black border border-amber-300 dark:border-amber-700/60">
+                  <span className="bg-cyan-500/20 text-cyan-300 text-xs px-2.5 py-0.5 rounded-full font-black border border-cyan-400/40">
                     পৃষ্ঠা #{currentViewDay.pageNo}
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+              <p className="text-xs text-slate-400 font-medium mt-0.5">
                 {currentViewDay ? `নির্বাচিত তারিখ: ${formatDisplayDate(currentViewDay.date)} (${getBanglaDay(currentViewDay.day)})` : "তথ্য নেই"}
               </p>
             </div>
@@ -1999,20 +2024,20 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
           {currentViewDay && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-stretch">
               {/* Left 65%: Historic Stock Product Graph */}
-              <div className="lg:col-span-8 bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-3.5 flex flex-col justify-between transition-colors">
+              <div className="lg:col-span-8 glass-panel rounded-3xl p-4 sm:p-5 lg:p-6 space-y-3.5 flex flex-col justify-between shadow-xl">
                 <div className="space-y-3">
                   {/* Header */}
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-white/10 pb-3">
                     <div>
-                      <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 flex items-center space-x-2">
-                        <Boxes className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                      <h3 className="text-sm sm:text-base font-black text-slate-100 flex items-center space-x-2">
+                        <Boxes className="w-4 h-4 text-amber-400" />
                         <span>ঐতিহাসিক স্টক পণ্যের গ্রাফ (Historic Stock)</span>
                       </h3>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                      <p className="text-[11px] text-slate-400 font-medium mt-0.5">
                         দিনভিত্তিক মজুদ পণ্যের পরিমাণ ও মূল্যের ইতিহাস
                       </p>
                     </div>
-                    <span className="text-[11px] font-black text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/70 px-2.5 py-1 rounded-full border border-amber-200 dark:border-amber-800/60">
+                    <span className="text-[11px] font-black text-amber-300 bg-amber-500/15 px-3 py-1 rounded-full border border-amber-400/30 shadow-[0_0_10px_rgba(245,158,11,0.2)]">
                       স্টক: {stockGraphStats.currentDayPoint ? `${stockGraphStats.currentDayPoint.val.toLocaleString()} ${stockGraphStats.unit}` : "—"}
                     </span>
                   </div>
@@ -2047,7 +2072,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                       <select
                         value={selectedStockProductFilter}
                         onChange={(e) => setSelectedStockProductFilter(e.target.value)}
-                        className="text-xs font-bold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-lg px-2.5 py-1 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                        className="text-xs font-bold bg-slate-900/90 border border-slate-700/80 text-slate-200 rounded-xl px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-cyan-400"
                       >
                         <option value="total_qty">মোট সংখ্যা (Total Qty)</option>
                         <option value="total_val">মোট মূল্যায়ন (Total ৳)</option>
@@ -2065,10 +2090,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                     <button
                       type="button"
                       onClick={() => setSelectedStockProductFilter("total_qty")}
-                      className={`px-2.5 py-0.5 rounded-full font-bold whitespace-nowrap transition-colors border ${
+                      className={`px-3 py-1 rounded-full font-bold whitespace-nowrap transition-all border ${
                         selectedStockProductFilter === "total_qty"
-                          ? "bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 border-amber-300 dark:border-amber-700 font-black"
-                          : "bg-slate-50 dark:bg-slate-800/70 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                          ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 border-cyan-300 font-black shadow-[0_0_10px_rgba(0,200,255,0.35)]"
+                          : "bg-slate-900/80 text-slate-300 border-slate-700/80 hover:border-cyan-500/50 hover:text-cyan-200"
                       }`}
                     >
                       মোট ডিম
@@ -2076,10 +2101,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                     <button
                       type="button"
                       onClick={() => setSelectedStockProductFilter("total_val")}
-                      className={`px-2.5 py-0.5 rounded-full font-bold whitespace-nowrap transition-colors border ${
+                      className={`px-3 py-1 rounded-full font-bold whitespace-nowrap transition-all border ${
                         selectedStockProductFilter === "total_val"
-                          ? "bg-emerald-100 dark:bg-emerald-950/80 text-emerald-900 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700 font-black"
-                          : "bg-slate-50 dark:bg-slate-800/70 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                          ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 border-cyan-300 font-black shadow-[0_0_10px_rgba(0,200,255,0.35)]"
+                          : "bg-slate-900/80 text-slate-300 border-slate-700/80 hover:border-cyan-500/50 hover:text-cyan-200"
                       }`}
                     >
                       মোট মূল্য (৳)
@@ -2093,20 +2118,11 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                           key={type}
                           type="button"
                           onClick={() => setSelectedStockProductFilter(type)}
-                          className={`px-2.5 py-0.5 rounded-full font-bold whitespace-nowrap transition-colors flex items-center space-x-1 border ${
+                          className={`px-3 py-1 rounded-full font-bold whitespace-nowrap transition-all flex items-center space-x-1.5 border ${
                             isSelected
-                              ? "ring-1 ring-amber-500 shadow-sm font-black"
-                              : "bg-slate-50 dark:bg-slate-800/70 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                              ? "bg-slate-900 text-cyan-300 border-cyan-400 shadow-[0_0_10px_rgba(0,200,255,0.3)] font-black"
+                              : "bg-slate-900/80 text-slate-300 border-slate-700/80 hover:border-cyan-500/50 hover:text-cyan-200"
                           }`}
-                          style={
-                            isSelected && eggCol
-                              ? {
-                                  backgroundColor: eggCol.fill,
-                                  borderColor: eggCol.stroke,
-                                  color: eggCol.dot,
-                                }
-                              : undefined
-                          }
                         >
                           <span
                             className="w-2 h-2 rounded-full inline-block"
@@ -2400,14 +2416,14 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
               </div>
 
               {/* Right 35%: Stock Data Table */}
-              <div className="lg:col-span-4 bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-3 sm:space-y-4 flex flex-col justify-between transition-colors">
+              <div className="lg:col-span-4 glass-panel rounded-3xl p-4 sm:p-5 lg:p-6 space-y-3 sm:space-y-4 flex flex-col justify-between shadow-xl">
                 <div>
-                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
-                    <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 flex items-center space-x-2">
-                      <Package className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  <div className="flex justify-between items-center border-b border-white/10 pb-3">
+                    <h3 className="text-sm sm:text-base font-black text-slate-100 flex items-center space-x-2">
+                      <Package className="w-4 h-4 text-amber-400" />
                       <span>মজুদ ডিমের বিস্তারিত তালিকা</span>
                     </h3>
-                    <span className="text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/70 px-2.5 py-1 rounded-full border border-amber-200 dark:border-amber-800/60">
+                    <span className="text-[11px] font-bold text-amber-300 bg-amber-500/15 px-2.5 py-1 rounded-full border border-amber-400/30">
                       মোট: ৳ {viewStock.toLocaleString()}
                     </span>
                   </div>
@@ -2416,35 +2432,35 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                   <div className="hidden md:block overflow-x-auto mt-2">
                     <table className="w-full text-left text-[11px] sm:text-xs border-collapse">
                       <thead>
-                        <tr className="bg-slate-50 dark:bg-slate-800/70 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 uppercase font-bold text-[10px] sm:text-[11px]">
-                          <th className="py-2.5 px-2">ডিমের ধরন</th>
-                          <th className="py-2.5 px-1.5 text-right whitespace-nowrap">মজুদ (Qty)</th>
-                          <th className="py-2.5 px-1.5 text-right whitespace-nowrap">দর</th>
-                          <th className="py-2.5 px-2 text-right whitespace-nowrap">মোট মূল্য (৳)</th>
+                        <tr className="bg-slate-900/80 text-slate-300 border-b border-white/10 uppercase font-bold text-[10px] sm:text-[11px]">
+                          <th className="py-2.5 px-2.5">ডিমের ধরন</th>
+                          <th className="py-2.5 px-2 text-right whitespace-nowrap">মজুদ (Qty)</th>
+                          <th className="py-2.5 px-2 text-right whitespace-nowrap">দর</th>
+                          <th className="py-2.5 px-2.5 text-right whitespace-nowrap">মোট মূল্য (৳)</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-semibold text-slate-800 dark:text-slate-200">
+                      <tbody className="divide-y divide-white/5 font-semibold text-slate-200">
                         {Object.entries(currentViewDay.stock).map(([eggName, item]) => {
                           const rate = item.purchaseRate > 0 ? item.purchaseRate : DEFAULT_RATES[eggName] || 0;
                           const totalVal = item.stockValue || item.currentStock * rate;
                           return (
-                            <tr key={eggName} className="hover:bg-amber-50/30 dark:hover:bg-slate-800/50 transition-colors">
-                              <td className="py-2.5 px-2 font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap">{eggName}</td>
-                              <td className="py-2.5 px-1.5 text-right font-black text-slate-800 dark:text-slate-200 whitespace-nowrap">{item.currentStock.toLocaleString()}</td>
-                              <td className="py-2.5 px-1.5 text-right text-slate-600 dark:text-slate-400 whitespace-nowrap">৳{rate}</td>
-                              <td className="py-2.5 px-2 text-right font-black text-amber-800 dark:text-amber-400 whitespace-nowrap">৳{totalVal.toLocaleString()}</td>
+                            <tr key={eggName} className="hover:bg-amber-500/10 transition-colors">
+                              <td className="py-2.5 px-2.5 font-bold text-slate-100 whitespace-nowrap">{eggName}</td>
+                              <td className="py-2.5 px-2 text-right font-black text-slate-200 whitespace-nowrap">{item.currentStock.toLocaleString()}</td>
+                              <td className="py-2.5 px-2 text-right text-slate-400 whitespace-nowrap">৳{rate}</td>
+                              <td className="py-2.5 px-2.5 text-right font-black text-amber-300 whitespace-nowrap">৳{totalVal.toLocaleString()}</td>
                             </tr>
                           );
                         })}
                       </tbody>
                       <tfoot>
-                        <tr className="bg-amber-50/70 dark:bg-amber-950/40 border-t-2 border-amber-300 dark:border-amber-800/70 font-black text-[11px] sm:text-xs text-slate-900 dark:text-slate-100">
-                          <td className="py-2.5 px-2 text-amber-950 dark:text-amber-300 whitespace-nowrap">সর্বমোট</td>
-                          <td className="py-2.5 px-1.5 text-right text-slate-900 dark:text-slate-100 font-black whitespace-nowrap">
+                        <tr className="bg-slate-900/90 border-t-2 border-amber-500/40 font-black text-[11px] sm:text-xs text-slate-100">
+                          <td className="py-2.5 px-2.5 text-amber-300 whitespace-nowrap">সর্বমোট</td>
+                          <td className="py-2.5 px-2 text-right text-slate-100 font-black whitespace-nowrap">
                             {Object.values(currentViewDay.stock).reduce((sum, item) => sum + (item.currentStock || 0), 0).toLocaleString()} টি
                           </td>
-                          <td className="py-2.5 px-1.5 text-right text-slate-400">—</td>
-                          <td className="py-2.5 px-2 text-right text-amber-900 dark:text-amber-300 font-black whitespace-nowrap">৳{viewStock.toLocaleString()}</td>
+                          <td className="py-2.5 px-2 text-right text-slate-400">—</td>
+                          <td className="py-2.5 px-2.5 text-right text-amber-300 font-black whitespace-nowrap">৳{viewStock.toLocaleString()}</td>
                         </tr>
                       </tfoot>
                     </table>
@@ -2456,15 +2472,15 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                       const rate = item.purchaseRate > 0 ? item.purchaseRate : DEFAULT_RATES[eggName] || 0;
                       const totalVal = item.stockValue || item.currentStock * rate;
                       return (
-                        <div key={eggName} className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200/90 dark:border-slate-700/60 flex justify-between items-center">
+                        <div key={eggName} className="bg-slate-900/70 p-3 rounded-2xl border border-white/10 flex justify-between items-center">
                           <div>
-                            <div className="font-bold text-xs text-slate-900 dark:text-slate-100">{eggName}</div>
-                            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                            <div className="font-bold text-xs text-slate-100">{eggName}</div>
+                            <div className="text-[11px] text-slate-400 mt-0.5">
                               মজুদ: {item.currentStock.toLocaleString()} টি × ৳{rate}
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="font-black text-xs text-amber-900 dark:text-amber-300">৳ {totalVal.toLocaleString()}</div>
+                            <div className="font-black text-xs text-amber-300">৳ {totalVal.toLocaleString()}</div>
                           </div>
                         </div>
                       );
@@ -2479,19 +2495,19 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
           {currentViewDay && (
             <div className="flex flex-col lg:flex-row gap-4 sm:gap-5 lg:gap-6 items-stretch">
               {/* Left 70%: Merged Donut Chart & Graph Table in 1 Unified Section */}
-              <div className="w-full lg:w-[70%] bg-white dark:bg-slate-900/95 backdrop-blur-sm rounded-3xl p-4 sm:p-5 lg:p-6 shadow-xl shadow-slate-900/5 dark:shadow-2xl dark:shadow-black/40 border border-slate-200/90 dark:border-slate-800 flex flex-col justify-between space-y-4 transition-colors min-w-0">
+              <div className="w-full lg:w-[70%] glass-panel rounded-3xl p-4 sm:p-5 lg:p-6 shadow-xl flex flex-col justify-between space-y-4 min-w-0">
                 <div className="space-y-4">
                   {/* Top Unified Header */}
-                  <div className="flex flex-wrap justify-between items-center gap-2.5 border-b border-slate-200/80 dark:border-slate-800/80 pb-3">
+                  <div className="flex flex-wrap justify-between items-center gap-2.5 border-b border-white/10 pb-3">
                     <div className="flex items-center space-x-2.5 min-w-0">
-                      <div className="bg-amber-500/10 dark:bg-amber-950/70 p-2 rounded-xl border border-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0">
+                      <div className="bg-amber-500/15 p-2 rounded-2xl border border-amber-500/30 text-amber-400 shrink-0 shadow-[0_0_10px_rgba(245,158,11,0.2)]">
                         <PieChart className="w-4 h-4" />
                       </div>
                       <div className="min-w-0">
-                        <h4 className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100 truncate">
+                        <h4 className="text-xs sm:text-sm font-black text-slate-100 truncate">
                           ডিম অনুযায়ী বিক্রি ও বিস্তারিত বিবরণী
                         </h4>
-                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate">
+                        <p className="text-[10px] text-slate-400 font-medium truncate">
                           আইটেম অনুযায়ী বিক্রয় দর, সংখ্যা, মোট টাকা ও অনুপাত
                         </p>
                       </div>
@@ -2499,7 +2515,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
 
                     <div className="flex items-center flex-wrap gap-2">
                       {/* Metric Toggle: Qty vs Value */}
-                      <div className="inline-flex p-1 rounded-full bg-slate-900/90 border border-slate-700/80 text-[11px] font-bold shadow-inner">
+                      <div className="inline-flex p-1 rounded-full bg-slate-950/90 border border-slate-700/80 text-[11px] font-bold shadow-inner">
                         <button
                           type="button"
                           onClick={() => setItemSellPieMetric("qty")}
@@ -2526,13 +2542,13 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                         </button>
                       </div>
 
-                      <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/90 px-2.5 py-1 rounded-xl border border-slate-200/80 dark:border-slate-700/80 flex items-center space-x-1">
-                        <Calendar className="w-3 h-3 text-amber-500" />
+                      <span className="text-[11px] font-bold text-slate-300 bg-slate-900/80 px-2.5 py-1 rounded-full border border-white/10 flex items-center space-x-1">
+                        <Calendar className="w-3 h-3 text-amber-400" />
                         <span>{currentViewDay ? currentViewDay.date.slice(5) : ""}</span>
                       </span>
 
-                      <span className="text-[11px] font-black text-blue-800 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 px-2.5 py-1 rounded-xl border border-blue-200/80 dark:border-blue-800/60 flex items-center space-x-1">
-                        <ShoppingCart className="w-3 h-3" />
+                      <span className="text-[11px] font-black text-cyan-300 bg-cyan-950/60 px-3 py-1 rounded-full border border-cyan-500/40 flex items-center space-x-1 shadow-[0_0_10px_rgba(0,200,255,0.2)]">
+                        <ShoppingCart className="w-3 h-3 text-cyan-300" />
                         <span>সর্বমোট {itemSellPieData.totalQty.toLocaleString()} টি</span>
                       </span>
                     </div>
@@ -2553,7 +2569,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                             fill="none"
                             stroke="currentColor"
                             strokeWidth="22"
-                            className="text-slate-100 dark:text-slate-800/70"
+                            className="text-slate-800/80"
                           />
 
                           {/* Slices */}
@@ -2586,7 +2602,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                           fill={item.color.stroke}
                                           stroke="currentColor"
                                           strokeWidth={isTarget ? 2.5 : 1.5}
-                                          className="text-white dark:text-slate-900 transition-all duration-150"
+                                          className="text-slate-950 transition-all duration-150"
                                           style={{
                                             opacity: hoveredSellEgg && !isHovered ? 0.35 : 1,
                                             filter: isTarget ? `drop-shadow(0 3px 8px ${item.color.stroke}80)` : undefined,
@@ -2598,38 +2614,47 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
 
                                   {/* Dotted Callout Line & External Label */}
                                   {(() => {
-                                    const targetItem = itemSellPieData.items.find((it) => it.eggType === activeTargetEgg);
-                                    if (!targetItem || targetItem.percent <= 0) return null;
+                                    const calloutEgg = hoveredSellEgg || itemSellPieData.topItem?.eggType;
+                                    const calloutItem = itemSellPieData.items.find((it) => it.eggType === calloutEgg);
+                                    if (!calloutItem || !calloutItem.outerEdgePt) return null;
 
-                                    const shift = 7;
-                                    const cos = Math.cos(targetItem.midAngle);
-                                    const sin = Math.sin(targetItem.midAngle);
-                                    const lineStartX = 130 + (65 + shift + 2) * cos;
-                                    const lineStartY = 90 + (65 + shift + 2) * sin;
-                                    const isRight = cos >= 0;
-                                    const lineEndX = isRight ? Math.min(252, lineStartX + 26) : Math.max(8, lineStartX - 26);
-                                    const labelX = isRight ? lineEndX + 4 : lineEndX - 4;
-                                    const clampedY = Math.max(16, Math.min(164, lineStartY));
+                                    const { midAngle, outerEdgePt, percent, shortName } = calloutItem;
+                                    const isRight = outerEdgePt.x >= 130;
+                                    const elbowX = isRight ? outerEdgePt.x + 18 : outerEdgePt.x - 18;
+                                    const elbowY = outerEdgePt.y + Math.sin(midAngle) * 8;
+                                    const targetX = isRight ? elbowX + 16 : elbowX - 16;
+                                    const textAnchor = isRight ? "start" : "end";
 
                                     return (
-                                      <g className="transition-all duration-200 pointer-events-none">
-                                        <line
-                                          x1={lineStartX}
-                                          y1={lineStartY}
-                                          x2={lineEndX}
-                                          y2={clampedY}
-                                          stroke={targetItem.color.stroke}
+                                      <g className="pointer-events-none transition-all duration-200">
+                                        <polyline
+                                          points={`${outerEdgePt.x.toFixed(1)},${outerEdgePt.y.toFixed(1)} ${elbowX.toFixed(1)},${elbowY.toFixed(1)} ${targetX.toFixed(1)},${elbowY.toFixed(1)}`}
+                                          fill="none"
+                                          stroke={calloutItem.color.stroke}
                                           strokeWidth="1.5"
-                                          strokeDasharray="2 3"
+                                          strokeDasharray="2 2"
+                                          className="opacity-80"
                                         />
-                                        <circle cx={lineEndX} cy={clampedY} r="2" fill={targetItem.color.stroke} />
+                                        <circle
+                                          cx={outerEdgePt.x}
+                                          cy={outerEdgePt.y}
+                                          r="2"
+                                          fill={calloutItem.color.stroke}
+                                        />
+                                        <circle
+                                          cx={targetX}
+                                          cy={elbowY}
+                                          r="1.5"
+                                          fill={calloutItem.color.stroke}
+                                        />
                                         <text
-                                          x={labelX}
-                                          y={clampedY + 3.5}
-                                          textAnchor={isRight ? "start" : "end"}
-                                          className="text-[9.5px] font-black fill-slate-800 dark:fill-slate-100 select-none tracking-tight"
+                                          x={targetX + (isRight ? 3 : -3)}
+                                          y={elbowY + 3.5}
+                                          textAnchor={textAnchor}
+                                          className="text-[9.5px] font-black"
+                                          fill={calloutItem.color.stroke}
                                         >
-                                          {targetItem.shortName} ({targetItem.percent.toFixed(0)}%)
+                                          {shortName} {percent.toFixed(0)}%
                                         </text>
                                       </g>
                                     );
@@ -2638,14 +2663,16 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                               );
                             })()}
 
-                          {/* Center Statistics */}
-                          {activeHoveredEggData && activeHoveredEggData.metricVal > 0 ? (
+                          {/* Center Donut Hole & Dynamic Center Text */}
+                          <circle cx="130" cy="90" r="42" className="fill-slate-950/80" />
+
+                          {hoveredSellEgg && activeHoveredEggData ? (
                             <g className="pointer-events-none transition-all duration-200">
                               <text
                                 x="130"
                                 y="75"
                                 textAnchor="middle"
-                                className="text-[10px] font-bold fill-slate-500 dark:fill-slate-400"
+                                className="text-[9px] font-bold fill-slate-400 uppercase tracking-wider"
                               >
                                 {activeHoveredEggData.shortName}
                               </text>
@@ -2653,7 +2680,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                 x="130"
                                 y="93"
                                 textAnchor="middle"
-                                className="text-sm sm:text-base font-black fill-slate-900 dark:fill-white"
+                                className="text-sm sm:text-base font-black fill-white"
                               >
                                 {itemSellPieMetric === "qty"
                                   ? `${activeHoveredEggData.soldQty.toLocaleString()} টি`
@@ -2675,7 +2702,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                 x="130"
                                 y="75"
                                 textAnchor="middle"
-                                className="text-[9px] font-bold fill-slate-400 dark:fill-slate-500 uppercase tracking-widest"
+                                className="text-[9px] font-bold fill-slate-400 uppercase tracking-widest"
                               >
                                 {itemSellPieMetric === "qty" ? "মোট ডিম বিক্রি" : "বিক্রি মূল্য"}
                               </text>
@@ -2683,7 +2710,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                 x="130"
                                 y="93"
                                 textAnchor="middle"
-                                className="text-base sm:text-lg font-black fill-slate-900 dark:fill-white"
+                                className="text-base sm:text-lg font-black fill-white"
                               >
                                 {itemSellPieMetric === "qty"
                                   ? `${itemSellPieData.totalQty.toLocaleString()} টি`
@@ -2693,7 +2720,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                 x="130"
                                 y="108"
                                 textAnchor="middle"
-                                className="text-[9.5px] font-bold fill-amber-600 dark:fill-amber-400"
+                                className="text-[9.5px] font-bold fill-amber-400"
                               >
                                 {itemSellPieData.activeMetricTotal > 0 ? "সর্বমোট ১০০%" : "বিক্রি নেই"}
                               </text>
@@ -2711,18 +2738,18 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                               key={`legend-${item.eggType}`}
                               onMouseEnter={() => setHoveredSellEgg(item.eggType)}
                               onMouseLeave={() => setHoveredSellEgg(null)}
-                              className={`flex items-center space-x-1.5 px-2 py-0.5 rounded-lg transition-all cursor-pointer border ${
+                              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-full transition-all cursor-pointer border ${
                                 isHovered
-                                  ? "bg-amber-50 dark:bg-slate-800 border-amber-300 dark:border-slate-700 shadow-2xs font-bold"
-                                  : "bg-slate-50/70 dark:bg-slate-800/40 border-slate-200/60 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                  ? "bg-slate-900 border-cyan-400 shadow-[0_0_10px_rgba(0,200,255,0.3)] font-bold text-white"
+                                  : "bg-slate-900/70 border-white/10 text-slate-300 hover:border-cyan-500/50 hover:text-cyan-200"
                               }`}
                             >
                               <span
-                                className="w-2 h-2 rounded-sm shrink-0"
+                                className="w-2 h-2 rounded-full shrink-0"
                                 style={{ backgroundColor: item.color.stroke }}
                               />
                               <span className="text-[10.5px] font-semibold">{item.shortName}</span>
-                              <span className="text-[9.5px] font-bold text-slate-400 dark:text-slate-500">
+                              <span className="text-[9.5px] font-bold text-slate-400">
                                 ({item.percent.toFixed(0)}%)
                               </span>
                             </div>
@@ -2733,18 +2760,18 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
 
                     {/* Right: The Graph Table */}
                     <div className="md:col-span-7 overflow-x-auto">
-                      <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800/80 overflow-hidden">
+                      <div className="rounded-2xl border border-white/10 overflow-hidden">
                         <table className="w-full text-left text-xs border-collapse">
                           <thead>
-                            <tr className="bg-slate-100/70 dark:bg-slate-800/70 text-slate-600 dark:text-slate-400 font-bold text-[10px] sm:text-[11px] uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
-                              <th className="py-2 px-2.5">ডিমের ধরন</th>
-                              <th className="py-2 px-2 text-right whitespace-nowrap">দর (৳)</th>
-                              <th className="py-2 px-2 text-right whitespace-nowrap">বিক্রি (সংখ্যা)</th>
-                              <th className="py-2 px-2 text-right whitespace-nowrap">মোট মূল্য (৳)</th>
-                              <th className="py-2 px-2.5 text-right whitespace-nowrap">অনুপাত</th>
+                            <tr className="bg-slate-900/80 text-slate-300 font-bold text-[10px] sm:text-[11px] uppercase tracking-wider border-b border-white/10">
+                              <th className="py-2.5 px-2.5">ডিমের ধরন</th>
+                              <th className="py-2.5 px-2 text-right whitespace-nowrap">দর (৳)</th>
+                              <th className="py-2.5 px-2 text-right whitespace-nowrap">বিক্রি (সংখ্যা)</th>
+                              <th className="py-2.5 px-2 text-right whitespace-nowrap">মোট মূল্য (৳)</th>
+                              <th className="py-2.5 px-2.5 text-right whitespace-nowrap">অনুপাত</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 font-medium">
+                          <tbody className="divide-y divide-white/5 font-medium">
                             {itemSellPieData.items.map((item) => {
                               const isHovered = hoveredSellEgg === item.eggType;
                               return (
@@ -2754,8 +2781,8 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                   onMouseLeave={() => setHoveredSellEgg(null)}
                                   className={`cursor-pointer transition-colors ${
                                     isHovered
-                                      ? "bg-amber-50/80 dark:bg-slate-800/90 text-slate-900 dark:text-white"
-                                      : "hover:bg-slate-50 dark:hover:bg-slate-800/40 text-slate-700 dark:text-slate-300"
+                                      ? "bg-cyan-500/15 text-white"
+                                      : "hover:bg-white/5 text-slate-200"
                                   }`}
                                 >
                                   <td className="py-2 px-2.5 whitespace-nowrap">
@@ -2767,18 +2794,18 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                       <span className="font-bold text-[11px]">{item.shortName}</span>
                                     </div>
                                   </td>
-                                  <td className="py-2 px-2 text-right text-slate-500 dark:text-slate-400 whitespace-nowrap text-[11px]">
+                                  <td className="py-2 px-2 text-right text-slate-400 whitespace-nowrap text-[11px]">
                                     ৳{item.rate}
                                   </td>
-                                  <td className="py-2 px-2 text-right font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap text-[11px]">
+                                  <td className="py-2 px-2 text-right font-bold text-slate-100 whitespace-nowrap text-[11px]">
                                     {item.soldQty > 0 ? `${item.soldQty.toLocaleString()} টি` : "০"}
                                   </td>
-                                  <td className="py-2 px-2 text-right font-black text-amber-700 dark:text-amber-400 whitespace-nowrap text-[11px]">
+                                  <td className="py-2 px-2 text-right font-black text-amber-300 whitespace-nowrap text-[11px]">
                                     {item.soldVal > 0 ? `৳${item.soldVal.toLocaleString()}` : "৳০"}
                                   </td>
                                   <td className="py-2 px-2.5 text-right">
                                     <div className="flex items-center justify-end space-x-1.5">
-                                      <div className="w-10 bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden hidden sm:block">
+                                      <div className="w-10 bg-slate-800 h-1.5 rounded-full overflow-hidden hidden sm:block">
                                         <div
                                           className="h-full rounded-full transition-all duration-300"
                                           style={{
@@ -2802,17 +2829,17 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                               );
                             })}
                           </tbody>
-                          <tfoot className="border-t-2 border-slate-200 dark:border-slate-700 font-black text-xs text-slate-900 dark:text-slate-100 bg-slate-50 dark:bg-slate-800/60">
+                          <tfoot className="border-t-2 border-white/10 font-black text-xs text-slate-100 bg-slate-900/90">
                             <tr>
-                              <td className="py-2 px-2.5">সর্বমোট</td>
-                              <td className="py-2 px-2 text-right text-slate-400 dark:text-slate-500">—</td>
-                              <td className="py-2 px-2 text-right text-slate-900 dark:text-white">
+                              <td className="py-2.5 px-2.5">সর্বমোট</td>
+                              <td className="py-2.5 px-2 text-right text-slate-400">—</td>
+                              <td className="py-2.5 px-2 text-right text-white">
                                 {itemSellPieData.totalQty.toLocaleString()} টি
                               </td>
-                              <td className="py-2 px-2 text-right text-amber-800 dark:text-amber-300 font-black">
+                              <td className="py-2.5 px-2 text-right text-amber-300 font-black">
                                 ৳{itemSellPieData.totalVal.toLocaleString()}
                               </td>
-                              <td className="py-2 px-2.5 text-right text-emerald-600 dark:text-emerald-400 font-black">
+                              <td className="py-2.5 px-2.5 text-right text-emerald-400 font-black">
                                 ১০০%
                               </td>
                             </tr>
@@ -2825,19 +2852,19 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
               </div>
 
               {/* Right 30%: Egg Price Trend Graph fitted neatly */}
-              <div className="w-full lg:w-[30%] bg-white dark:bg-slate-900/95 backdrop-blur-sm rounded-3xl p-4 sm:p-5 shadow-xl shadow-slate-900/5 dark:shadow-2xl dark:shadow-black/40 border border-slate-200/90 dark:border-slate-800 flex flex-col justify-between space-y-3.5 transition-colors min-w-0">
+              <div className="w-full lg:w-[30%] glass-panel rounded-3xl p-4 sm:p-5 lg:p-6 shadow-xl flex flex-col justify-between space-y-3.5 min-w-0">
                 <div className="space-y-3">
                   {/* Header Title + Timeframe Selector */}
-                  <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row justify-between items-start xl:items-center gap-2 border-b border-slate-200/80 dark:border-slate-800/80 pb-2.5">
+                  <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row justify-between items-start xl:items-center gap-2 border-b border-white/10 pb-2.5">
                     <div className="flex items-center space-x-2 min-w-0">
-                      <div className="bg-amber-500/10 dark:bg-amber-950/70 p-1.5 rounded-xl border border-amber-500/20 text-amber-500 shrink-0">
+                      <div className="bg-amber-500/15 p-1.5 rounded-xl border border-amber-500/30 text-amber-400 shrink-0">
                         <TrendingUp className="w-4 h-4" />
                       </div>
                       <div className="min-w-0">
-                        <h4 className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100 truncate">
+                        <h4 className="text-xs sm:text-sm font-black text-slate-100 truncate">
                           দরের পরিবর্তন ও ট্রেন্ড গ্রাফ
                         </h4>
-                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate">
+                        <p className="text-[10px] text-slate-400 font-medium truncate">
                           Price Trend & Wave Graph
                         </p>
                       </div>
@@ -3153,17 +3180,17 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
           {currentViewDay && (
             <div className="grid grid-cols-1 landscape:grid-cols-12 sm:landscape:grid-cols-12 lg:grid-cols-12 gap-3 sm:gap-4 lg:gap-5 items-stretch">
               {/* Left 35%: Minimal Sales vs Margin Comparison Graph */}
-              <div className="col-span-1 landscape:col-span-4 sm:landscape:col-span-4 lg:col-span-4 bg-white dark:bg-slate-900 rounded-2xl p-3 sm:p-4 lg:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-2.5 flex flex-col justify-between transition-colors">
+              <div className="col-span-1 landscape:col-span-4 sm:landscape:col-span-4 lg:col-span-4 glass-panel rounded-3xl p-3.5 sm:p-4 lg:p-5 space-y-2.5 flex flex-col justify-between shadow-xl">
                 <div className="space-y-2.5">
                   {/* Header */}
-                  <div className="flex justify-between items-center gap-1.5 border-b border-slate-200 dark:border-slate-800 pb-2">
+                  <div className="flex justify-between items-center gap-1.5 border-b border-white/10 pb-2">
                     <div className="flex items-center space-x-1.5 min-w-0">
-                      <ShoppingCart className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
-                      <h3 className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100 truncate">
+                      <ShoppingCart className="w-4 h-4 text-cyan-400 shrink-0" />
+                      <h3 className="text-xs sm:text-sm font-black text-slate-100 truncate">
                         বিক্রি ও মার্জিন গ্রাফ
                       </h3>
                     </div>
-                    <span className="text-[10px] font-black text-blue-800 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800/60 whitespace-nowrap shrink-0">
+                    <span className="text-[10px] font-black text-cyan-300 bg-cyan-950/60 px-2.5 py-0.5 rounded-full border border-cyan-500/40 whitespace-nowrap shrink-0 shadow-[0_0_10px_rgba(0,200,255,0.2)]">
                       আজ: ৳{salesVsMarginStats.currentDayPoint ? salesVsMarginStats.currentDayPoint.sales.toLocaleString() : "—"}
                     </span>
                   </div>
@@ -3242,143 +3269,139 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                   <div className="grid grid-cols-2 gap-1.5 sm:gap-2 pt-0.5">
                     {salesGraphMetric === "margin" ? (
                       <>
-                        <div className="bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-2">
-                          <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-400 block truncate">মোট মার্জিন</span>
-                          <span className="text-xs sm:text-sm font-black text-emerald-950 dark:text-emerald-200 block truncate">
+                        <div className="bg-emerald-950/40 border border-emerald-500/30 rounded-2xl p-2.5">
+                          <span className="text-[10px] font-bold text-emerald-400 block truncate">মোট মার্জিন</span>
+                          <span className="text-xs sm:text-sm font-black text-emerald-200 block truncate">
                             ৳ {salesVsMarginStats.totalMargin.toLocaleString()}
                           </span>
-                          <span className="text-[9px] text-emerald-700/80 dark:text-emerald-400/80 block mt-0.5 truncate">
-                            গড়: ৳{salesVsMarginStats.avgMargin.toLocaleString()}
+                          <span className="text-[9px] text-emerald-400/80 block mt-0.5 truncate">
+                            গড় হার: {salesVsMarginStats.avgMarginPercent}%
                           </span>
                         </div>
-                        <div className="bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200/80 dark:border-teal-900/50 rounded-xl p-2">
-                          <span className="text-[10px] font-bold text-teal-800 dark:text-teal-400 block truncate">সর্বোচ্চ মার্জিন</span>
-                          <span className="text-xs sm:text-sm font-black text-teal-950 dark:text-teal-200 block truncate">
-                            ৳ {salesVsMarginStats.maxMargin.toLocaleString()}
+                        <div className="bg-slate-900/80 border border-white/10 rounded-2xl p-2.5">
+                          <span className="text-[10px] font-bold text-slate-400 block truncate">আজকের মার্জিন</span>
+                          <span className="text-xs sm:text-sm font-black text-emerald-300 block truncate">
+                            ৳ {salesVsMarginStats.currentDayPoint ? salesVsMarginStats.currentDayPoint.margin.toLocaleString() : "—"}
                           </span>
-                          <span className="text-[9px] text-teal-700/80 dark:text-teal-400/80 block mt-0.5 truncate">
-                            তারিখ: {salesVsMarginStats.peakMarginDay?.date ? salesVsMarginStats.peakMarginDay.date.slice(5) : "-"}
+                          <span className="text-[9px] text-slate-400 block mt-0.5 truncate">
+                            হার: {salesVsMarginStats.currentDayPoint ? `${salesVsMarginStats.currentDayPoint.marginPercent}%` : "—"}
                           </span>
                         </div>
                       </>
                     ) : salesGraphMetric === "sales" ? (
                       <>
-                        <div className="bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-900/50 rounded-xl p-2">
-                          <span className="text-[10px] font-bold text-blue-800 dark:text-blue-400 block truncate">মোট বিক্রি</span>
-                          <span className="text-xs sm:text-sm font-black text-blue-950 dark:text-blue-200 block truncate">
+                        <div className="bg-blue-950/40 border border-blue-500/30 rounded-2xl p-2.5">
+                          <span className="text-[10px] font-bold text-blue-400 block truncate">মোট বিক্রি</span>
+                          <span className="text-xs sm:text-sm font-black text-blue-200 block truncate">
                             ৳ {salesVsMarginStats.totalSales.toLocaleString()}
                           </span>
-                          <span className="text-[9px] text-blue-700/80 dark:text-blue-400/80 block mt-0.5 truncate">
-                            গড়: ৳{salesVsMarginStats.avgSales.toLocaleString()}
+                          <span className="text-[9px] text-blue-300/80 block mt-0.5 truncate">
+                            মোট ডিম: {salesVsMarginStats.totalSoldQty.toLocaleString()}
                           </span>
                         </div>
-                        <div className="bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-900/50 rounded-xl p-2">
-                          <span className="text-[10px] font-bold text-indigo-800 dark:text-indigo-400 block truncate">সর্বোচ্চ বিক্রি</span>
-                          <span className="text-xs sm:text-sm font-black text-indigo-950 dark:text-indigo-200 block truncate">
-                            ৳ {salesVsMarginStats.maxSales.toLocaleString()}
+                        <div className="bg-slate-900/80 border border-white/10 rounded-2xl p-2.5">
+                          <span className="text-[10px] font-bold text-slate-400 block truncate">আজকের বিক্রি</span>
+                          <span className="text-xs sm:text-sm font-black text-blue-300 block truncate">
+                            ৳ {salesVsMarginStats.currentDayPoint ? salesVsMarginStats.currentDayPoint.sales.toLocaleString() : "—"}
                           </span>
-                          <span className="text-[9px] text-indigo-700/80 dark:text-indigo-400/80 block mt-0.5 truncate">
-                            তারিখ: {salesVsMarginStats.peakSalesDay?.date ? salesVsMarginStats.peakSalesDay.date.slice(5) : "-"}
+                          <span className="text-[9px] text-slate-400 block mt-0.5 truncate">
+                            ডিম: {salesVsMarginStats.currentDayPoint ? `${salesVsMarginStats.currentDayPoint.soldQty.toLocaleString()} টি` : "—"}
                           </span>
                         </div>
                       </>
                     ) : (
                       <>
-                        <div className="bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-900/50 rounded-xl p-2">
-                          <span className="text-[10px] font-bold text-blue-800 dark:text-blue-400 block truncate">মোট বিক্রি</span>
-                          <span className="text-xs sm:text-sm font-black text-blue-950 dark:text-blue-200 block truncate">
+                        <div className="bg-blue-950/40 border border-blue-500/30 rounded-2xl p-2.5">
+                          <span className="text-[10px] font-bold text-blue-400 block truncate">মোট বিক্রি</span>
+                          <span className="text-xs sm:text-sm font-black text-blue-200 block truncate">
                             ৳ {salesVsMarginStats.totalSales.toLocaleString()}
                           </span>
-                          <span className="text-[9px] text-blue-700/80 dark:text-blue-400/80 block mt-0.5 truncate">
-                            গড়: ৳{salesVsMarginStats.avgSales.toLocaleString()}
+                          <span className="text-[9px] text-blue-300/80 block mt-0.5 truncate">
+                            আজ: ৳{salesVsMarginStats.currentDayPoint ? salesVsMarginStats.currentDayPoint.sales.toLocaleString() : 0}
                           </span>
                         </div>
-                        <div className="bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl p-2">
-                          <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-400 block truncate">মোট মার্জিন</span>
-                          <span className="text-xs sm:text-sm font-black text-emerald-950 dark:text-emerald-200 block truncate">
+                        <div className="bg-emerald-950/40 border border-emerald-500/30 rounded-2xl p-2.5">
+                          <span className="text-[10px] font-bold text-emerald-400 block truncate">মোট মার্জিন</span>
+                          <span className="text-xs sm:text-sm font-black text-emerald-200 block truncate">
                             ৳ {salesVsMarginStats.totalMargin.toLocaleString()}
                           </span>
-                          <span className="text-[9px] text-emerald-700/80 dark:text-emerald-400/80 block mt-0.5 truncate">
-                            হার: {salesVsMarginStats.avgMarginPercent}%
+                          <span className="text-[9px] text-emerald-400/80 block mt-0.5 truncate">
+                            গড়: {salesVsMarginStats.avgMarginPercent}%
                           </span>
                         </div>
                       </>
                     )}
                   </div>
 
-                  {/* Interactive Compact SVG Chart */}
-                  <div className="overflow-hidden bg-slate-50/80 dark:bg-slate-950/60 rounded-xl border border-slate-200/90 dark:border-slate-800 p-2 sm:p-2.5 relative">
-                    <svg viewBox="0 0 420 220" className="w-full h-auto select-none block">
+                  {/* SVG Line & Area Dual-Axis Graph Container */}
+                  <div className="relative w-full aspect-[260/150] sm:aspect-[280/160] lg:aspect-[280/160]">
+                    <svg viewBox="0 0 280 160" className="w-full h-full select-none block overflow-visible">
                       <defs>
-                        <linearGradient id="salesBarGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.80" />
-                          <stop offset="100%" stopColor="#1d4ed8" stopOpacity="0.95" />
-                        </linearGradient>
-                        <linearGradient id="marginBarGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#10b981" stopOpacity="0.85" />
-                          <stop offset="100%" stopColor="#047857" stopOpacity="0.95" />
-                        </linearGradient>
                         <linearGradient id="salesAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.30" />
-                          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.02" />
+                          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.3" />
+                          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.0" />
                         </linearGradient>
                         <linearGradient id="marginAreaGrad" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor="#10b981" stopOpacity="0.35" />
-                          <stop offset="100%" stopColor="#10b981" stopOpacity="0.02" />
+                          <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
+                        </linearGradient>
+                        <linearGradient id="salesBarGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#60a5fa" stopOpacity="0.8" />
+                          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.2" />
+                        </linearGradient>
+                        <linearGradient id="marginBarGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#34d399" stopOpacity="0.9" />
+                          <stop offset="100%" stopColor="#059669" stopOpacity="0.25" />
                         </linearGradient>
                       </defs>
 
                       {(() => {
-                        const isMarginOnly = salesGraphMetric === "margin";
-                        const isSalesOnly = salesGraphMetric === "sales";
-                        const isBoth = salesGraphMetric === "both";
+                        const { points, isBoth, isMarginOnly, isSalesOnly, ySalesMin, ySalesMax, yMarginMin, yMarginMax } = salesVsMarginStats;
+                        if (!points || points.length === 0) return null;
 
-                        const plotTop = 22;
-                        const plotHeight = 150;
-                        const leftMargin = isMarginOnly ? 40 : 44;
-                        const rightMargin = isBoth ? 376 : 405;
+                        const plotTop = 18;
+                        const plotHeight = 118;
+                        const leftMargin = 38;
+                        const rightMargin = isBoth ? 245 : 265;
                         const plotWidth = rightMargin - leftMargin;
+                        const totalDays = points.length;
+                        const stepX = totalDays > 1 ? plotWidth / (totalDays - 1) : 0;
+                        const barWidth = Math.max(3, Math.min(10, (plotWidth / Math.max(1, totalDays)) * 0.45));
 
                         const getYSales = (v: number) => {
-                          const yMax = salesVsMarginStats.ySalesMax;
-                          const clamped = Math.max(0, Math.min(yMax, v));
-                          return plotTop + plotHeight - (clamped / Math.max(1, yMax)) * plotHeight;
+                          if (ySalesMax === ySalesMin) return plotTop + plotHeight / 2;
+                          return plotTop + plotHeight - ((v - ySalesMin) / (ySalesMax - ySalesMin)) * plotHeight;
                         };
 
                         const getYMargin = (v: number) => {
-                          const yMax = salesVsMarginStats.yMarginMax;
-                          const clamped = Math.max(0, Math.min(yMax, v));
-                          return plotTop + plotHeight - (clamped / Math.max(1, yMax)) * plotHeight;
+                          if (yMarginMax === yMarginMin) return plotTop + plotHeight / 2;
+                          return plotTop + plotHeight - ((v - yMarginMin) / (yMarginMax - yMarginMin)) * plotHeight;
                         };
 
-                        const getX = (index: number, total: number) => {
-                          if (total <= 1) return leftMargin + plotWidth / 2;
-                          return leftMargin + (index / (total - 1)) * plotWidth;
-                        };
-
-                        const totalDays = salesVsMarginStats.points.length;
-                        const barWidth = Math.min(18, Math.max(4, (plotWidth / Math.max(1, totalDays)) * 0.45));
-
-                        const pts = salesVsMarginStats.points.map((p, i) => {
-                          const x = getX(i, totalDays);
+                        const pts = points.map((p, i) => {
+                          const x = totalDays === 1 ? leftMargin + plotWidth / 2 : leftMargin + i * stepX;
                           const ySales = getYSales(p.sales);
                           const yMargin = getYMargin(p.margin);
                           return { ...p, x, ySales, yMargin };
                         });
 
-                        const pathSales = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.ySales}`).join(" ");
-                        const areaSales = pts.length > 0
+                        const pathSales = (isBoth || isSalesOnly)
+                          ? pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.ySales}`).join(" ")
+                          : "";
+                        const areaSales = pathSales && pts.length > 0
                           ? `${pathSales} L ${pts[pts.length - 1].x} ${plotTop + plotHeight} L ${pts[0].x} ${plotTop + plotHeight} Z`
                           : "";
 
-                        const pathMargin = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.yMargin}`).join(" ");
-                        const areaMargin = pts.length > 0
+                        const pathMargin = (isBoth || isMarginOnly)
+                          ? pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.yMargin}`).join(" ")
+                          : "";
+                        const areaMargin = isMarginOnly && pathMargin && pts.length > 0
                           ? `${pathMargin} L ${pts[pts.length - 1].x} ${plotTop + plotHeight} L ${pts[0].x} ${plotTop + plotHeight} Z`
                           : "";
 
                         return (
                           <g>
-                            {/* Y-axis dashed grid lines & left labels */}
+                            {/* Y-axis horizontal grid lines & Left Y labels */}
                             {isMarginOnly ? (
                               salesVsMarginStats.yMarginTicks.map((tickVal) => {
                                 const yP = getYMargin(tickVal);
@@ -3389,7 +3412,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                       y1={yP}
                                       x2={rightMargin}
                                       y2={yP}
-                                      className="stroke-slate-200 dark:stroke-slate-800"
+                                      className="stroke-slate-800"
                                       strokeWidth="1"
                                       strokeDasharray="3 3"
                                     />
@@ -3397,7 +3420,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                       x={leftMargin - 4}
                                       y={yP + 3}
                                       textAnchor="end"
-                                      className="text-[8px] font-bold fill-emerald-600 dark:fill-emerald-400"
+                                      className="text-[8px] font-bold fill-emerald-400"
                                     >
                                       ৳{tickVal >= 1000 ? `${(tickVal / 1000).toFixed(tickVal % 1000 === 0 ? 0 : 1)}k` : tickVal}
                                     </text>
@@ -3414,7 +3437,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                       y1={yP}
                                       x2={rightMargin}
                                       y2={yP}
-                                      className="stroke-slate-200 dark:stroke-slate-800"
+                                      className="stroke-slate-800"
                                       strokeWidth="1"
                                       strokeDasharray="3 3"
                                     />
@@ -3422,7 +3445,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                       x={leftMargin - 4}
                                       y={yP + 3}
                                       textAnchor="end"
-                                      className="text-[8px] font-bold fill-blue-600 dark:fill-blue-400"
+                                      className="text-[8px] font-bold fill-cyan-400"
                                     >
                                       ৳{tickVal >= 1000 ? `${(tickVal / 1000).toFixed(tickVal % 1000 === 0 ? 0 : 1)}k` : tickVal}
                                     </text>
@@ -3442,14 +3465,14 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                       y1={yP}
                                       x2={rightMargin + 3}
                                       y2={yP}
-                                      className="stroke-emerald-500/60 dark:stroke-emerald-400/60"
+                                      className="stroke-emerald-400/60"
                                       strokeWidth="1"
                                     />
                                     <text
                                       x={rightMargin + 4}
                                       y={yP + 3}
                                       textAnchor="start"
-                                      className="text-[8px] font-bold fill-emerald-600 dark:fill-emerald-400"
+                                      className="text-[8px] font-bold fill-emerald-400"
                                     >
                                       ৳{tickVal >= 1000 ? `${(tickVal / 1000).toFixed(tickVal % 1000 === 0 ? 0 : 1)}k` : tickVal}
                                     </text>
@@ -3463,7 +3486,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                               y1={plotTop - 4}
                               x2={leftMargin}
                               y2={plotTop + plotHeight}
-                              className={isMarginOnly ? "stroke-emerald-500" : "stroke-blue-500"}
+                              className={isMarginOnly ? "stroke-emerald-500" : "stroke-cyan-500"}
                               strokeWidth="1.5"
                             />
 
@@ -3485,7 +3508,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                               y="12"
                               textAnchor="start"
                               className={`text-[8px] font-black uppercase tracking-wider ${
-                                isMarginOnly ? "fill-emerald-600 dark:fill-emerald-400" : "fill-blue-600 dark:fill-blue-400"
+                                isMarginOnly ? "fill-emerald-400" : "fill-cyan-400"
                               }`}
                             >
                               {isMarginOnly ? "মার্জিন (৳) ↑" : "বিক্রি (৳) ↑"}
@@ -3495,7 +3518,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                 x={rightMargin + 2}
                                 y="12"
                                 textAnchor="start"
-                                className="text-[8px] font-black fill-emerald-600 dark:fill-emerald-400 uppercase tracking-wider"
+                                className="text-[8px] font-black fill-emerald-400 uppercase tracking-wider"
                               >
                                 মার্জিন ↑
                               </text>
@@ -3504,7 +3527,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                 x={rightMargin}
                                 y="12"
                                 textAnchor="end"
-                                className="text-[8px] font-black fill-slate-500 dark:fill-slate-400 uppercase tracking-wider"
+                                className="text-[8px] font-black fill-slate-400 uppercase tracking-wider"
                               >
                                 তারিখ →
                               </text>
@@ -3525,7 +3548,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                               <path
                                 d={pathSales}
                                 fill="none"
-                                stroke="#3b82f6"
+                                stroke="#06b6d4"
                                 strokeWidth="2"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
@@ -3571,7 +3594,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                       y1={plotTop}
                                       x2={p.x}
                                       y2={plotTop + plotHeight}
-                                      stroke={isCurrent ? (isMarginOnly ? "#10b981" : "#3b82f6") : "rgba(100, 116, 139, 0.4)"}
+                                      stroke={isCurrent ? (isMarginOnly ? "#10b981" : "#06b6d4") : "rgba(100, 116, 139, 0.4)"}
                                       strokeWidth={isCurrent ? "1.5" : "1"}
                                       strokeDasharray="2 2"
                                     />
@@ -3585,7 +3608,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                       width={barWidth + 4}
                                       height={plotHeight}
                                       rx="3"
-                                      fill={isMarginOnly ? "rgba(16, 185, 129, 0.12)" : "rgba(59, 130, 246, 0.12)"}
+                                      fill={isMarginOnly ? "rgba(16, 185, 129, 0.2)" : "rgba(6, 182, 212, 0.2)"}
                                     />
                                   )}
 
@@ -3623,8 +3646,8 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                       cx={p.x}
                                       cy={p.ySales}
                                       r={isCurrent || isHovered ? 4.5 : 2.5}
-                                      fill={isCurrent ? "#2563eb" : "#fff"}
-                                      stroke="#3b82f6"
+                                      fill={isCurrent ? "#06b6d4" : "#fff"}
+                                      stroke="#0891b2"
                                       strokeWidth={isCurrent ? "2" : "1.5"}
                                     />
                                   )}
@@ -3635,8 +3658,8 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                       cx={p.x}
                                       cy={p.yMargin}
                                       r={isCurrent || isHovered ? (isMarginOnly ? 5.5 : 4.5) : 3}
-                                      fill={isCurrent ? "#059669" : "#fff"}
-                                      stroke="#10b981"
+                                      fill={isCurrent ? "#10b981" : "#fff"}
+                                      stroke="#059669"
                                       strokeWidth={isCurrent ? "2.5" : "1.5"}
                                       className="transition-all"
                                     />
@@ -3648,7 +3671,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                     y1={plotTop + plotHeight}
                                     x2={p.x}
                                     y2={plotTop + plotHeight + 3}
-                                    className="stroke-slate-500 dark:stroke-slate-400"
+                                    className="stroke-slate-500"
                                     strokeWidth="1"
                                   />
 
@@ -3659,11 +3682,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                       y={plotTop + plotHeight + 14}
                                       textAnchor="middle"
                                       className={`text-[8px] font-bold ${
-                                        isCurrent
-                                          ? isMarginOnly
-                                            ? "fill-emerald-600 dark:fill-emerald-400 font-black"
-                                            : "fill-blue-600 dark:fill-blue-400 font-black"
-                                          : "fill-slate-600 dark:fill-slate-400"
+                                        isCurrent ? "fill-cyan-400 font-black" : "fill-slate-400"
                                       }`}
                                     >
                                       {p.date.slice(8)}
@@ -3677,7 +3696,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                       })()}
                     </svg>
 
-                    {/* Active / Hovered Minimal Stat Pill */}
+                    {/* Active Point Hover Overlay */}
                     {(() => {
                       const activeIndex =
                         hoveredSalesIndex !== null
@@ -3688,15 +3707,16 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                       if (!activePoint) return null;
 
                       return (
-                        <div className="mt-1.5 px-2.5 py-1.5 bg-slate-900/90 dark:bg-slate-800/90 text-white rounded-lg text-[10px] flex items-center justify-between shadow-xs">
-                          <span className="font-black text-amber-300 truncate">
-                            {activePoint.date.slice(5)} ({activePoint.day.slice(0, 3)})
-                          </span>
+                        <div className="mt-1.5 p-2 bg-slate-900/90 text-white rounded-xl border border-white/10 text-[10px] flex flex-wrap items-center justify-between gap-1.5 shadow-lg">
                           <div className="flex items-center space-x-1.5">
+                            <span className="font-black text-cyan-300">
+                              {activePoint.date} ({activePoint.day})
+                            </span>
+                            <span className="text-slate-500">|</span>
                             {salesGraphMetric !== "margin" && (
-                              <span className="text-blue-300 font-bold">বিক্রি: ৳{activePoint.sales.toLocaleString()}</span>
+                              <span className="text-cyan-300 font-bold">বিক্রি: ৳{activePoint.sales.toLocaleString()}</span>
                             )}
-                            {salesGraphMetric === "both" && <span className="text-slate-500">|</span>}
+                            <span className="text-slate-500">|</span>
                             {salesGraphMetric !== "sales" && (
                               <span className="text-emerald-300 font-bold">মার্জিন: ৳{activePoint.margin.toLocaleString()}</span>
                             )}
@@ -3710,56 +3730,56 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
               </div>
 
               {/* Right 65%: Sales & Margin Comprehensive Data Table & Widget */}
-              <div className="col-span-1 landscape:col-span-8 sm:landscape:col-span-8 lg:col-span-8 bg-white dark:bg-slate-900 rounded-2xl p-3 sm:p-4 lg:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-2.5 sm:space-y-3 flex flex-col justify-between transition-colors">
+              <div className="col-span-1 landscape:col-span-8 sm:landscape:col-span-8 lg:col-span-8 glass-panel rounded-3xl p-3.5 sm:p-4 lg:p-5 space-y-2.5 sm:space-y-3 flex flex-col justify-between shadow-xl">
                 <div className="space-y-2.5 sm:space-y-3">
                   {/* Card Header */}
-                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-2">
+                  <div className="flex justify-between items-center border-b border-white/10 pb-2">
                     <div className="flex items-center space-x-1.5 min-w-0">
-                      <ShoppingCart className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
-                      <h3 className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100 truncate">
+                      <ShoppingCart className="w-4 h-4 text-cyan-400 shrink-0" />
+                      <h3 className="text-xs sm:text-sm font-black text-slate-100 truncate">
                         বিক্রি ও মার্জিন ডাটা
                       </h3>
                     </div>
-                    <span className="text-[10px] sm:text-[11px] font-bold text-blue-800 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 px-2 sm:px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800/60 whitespace-nowrap shrink-0">
+                    <span className="text-[10px] sm:text-[11px] font-bold text-cyan-300 bg-cyan-950/60 px-2.5 py-0.5 rounded-full border border-cyan-500/40 whitespace-nowrap shrink-0">
                       {currentViewDay.date} ({getBanglaDay(currentViewDay.day)})
                     </span>
                   </div>
 
                   {/* Featured "আজকের বিক্রি" Widget */}
-                  <div className="bg-slate-900 text-white rounded-xl p-2.5 sm:p-3 shadow-xs border border-slate-800 space-y-2">
-                    <div className="flex justify-between items-center border-b border-slate-800 pb-1.5">
+                  <div className="bg-slate-900/80 text-white rounded-2xl p-3 sm:p-3.5 shadow-md border border-white/10 space-y-2">
+                    <div className="flex justify-between items-center border-b border-white/10 pb-1.5">
                       <div className="flex items-center space-x-1.5 min-w-0">
-                        <ShoppingCart className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                        <ShoppingCart className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
                         <h4 className="text-xs sm:text-sm font-black text-slate-100 truncate">আজকের বিক্রি ও লাভ</h4>
                       </div>
-                      <span className="text-[10px] sm:text-xs font-black text-blue-300 bg-blue-950/90 px-2 sm:px-2.5 py-0.5 rounded-full border border-blue-800/60 shrink-0">
+                      <span className="text-[10px] sm:text-xs font-black text-cyan-300 bg-cyan-950/90 px-2.5 py-0.5 rounded-full border border-cyan-500/40 shrink-0">
                         {salesVsMarginStats.currentDayPoint ? salesVsMarginStats.currentDayPoint.soldQty.toLocaleString() : 0} টি ডিম
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2 text-xs">
-                      <div className="bg-slate-800/70 rounded-lg p-2 border border-slate-700/60">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                      <div className="bg-slate-950/60 rounded-xl p-2 border border-white/5">
                         <span className="text-slate-400 text-[10px] block">ক্রয়মূল্য</span>
                         <span className="text-xs sm:text-sm font-bold text-slate-100 mt-0.5 block truncate">
                           ৳ {salesVsMarginStats.currentDayPoint ? salesVsMarginStats.currentDayPoint.cost.toLocaleString() : 0}
                         </span>
                       </div>
 
-                      <div className="bg-slate-800/70 rounded-lg p-2 border border-blue-900/50">
-                        <span className="text-blue-300 text-[10px] font-bold block">মোট বিক্রি</span>
-                        <span className="text-xs sm:text-sm font-black text-blue-400 mt-0.5 block truncate">
+                      <div className="bg-slate-950/60 rounded-xl p-2 border border-cyan-500/20">
+                        <span className="text-cyan-300 text-[10px] font-bold block">মোট বিক্রি</span>
+                        <span className="text-xs sm:text-sm font-black text-cyan-400 mt-0.5 block truncate">
                           ৳ {salesVsMarginStats.currentDayPoint ? salesVsMarginStats.currentDayPoint.sales.toLocaleString() : 0}
                         </span>
                       </div>
 
-                      <div className="bg-slate-800/70 rounded-lg p-2 border border-emerald-900/50">
+                      <div className="bg-slate-950/60 rounded-xl p-2 border border-emerald-500/20">
                         <span className="text-emerald-300 text-[10px] font-bold block">মার্জিন (লাভ)</span>
                         <span className="text-xs sm:text-sm font-black text-emerald-400 mt-0.5 block truncate">
                           ৳ {salesVsMarginStats.currentDayPoint ? salesVsMarginStats.currentDayPoint.margin.toLocaleString() : 0}
                         </span>
                       </div>
 
-                      <div className="bg-slate-800/70 rounded-lg p-2 border border-purple-900/50">
+                      <div className="bg-slate-950/60 rounded-xl p-2 border border-purple-500/20">
                         <span className="text-purple-300 text-[10px] font-bold block">মার্জিন হার</span>
                         <span className="text-xs sm:text-sm font-black text-purple-300 mt-0.5 block truncate">
                           {salesVsMarginStats.currentDayPoint ? salesVsMarginStats.currentDayPoint.marginPercent : 0}%
@@ -3772,7 +3792,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                   <div>
                     <div className="flex flex-wrap items-center justify-between gap-1.5 pb-1.5 pt-0.5">
                       <div className="flex items-center space-x-1.5">
-                        <span className="text-[10px] sm:text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                        <span className="text-[10px] sm:text-[11px] font-black text-slate-200 uppercase tracking-wider">
                           খাতা ({salesFilteredData.length} দিন)
                         </span>
                         <button
@@ -3816,10 +3836,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
 
                     <div
                       ref={salesTableRef}
-                      className="max-h-[220px] landscape:max-h-[175px] sm:max-h-[260px] overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-xl scroll-smooth"
+                      className="max-h-[220px] landscape:max-h-[175px] sm:max-h-[260px] overflow-y-auto border border-white/10 rounded-2xl scroll-smooth"
                     >
                       <table className="w-full text-left text-[10px] sm:text-xs border-collapse">
-                        <thead className="sticky top-0 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase font-bold text-[9px] sm:text-[10px] border-b border-slate-200 dark:border-slate-700 z-10">
+                        <thead className="sticky top-0 bg-slate-900/90 text-slate-300 uppercase font-bold text-[9px] sm:text-[10px] border-b border-white/10 z-10 backdrop-blur-md">
                           <tr>
                             <th className="py-2 px-2.5">তারিখ</th>
                             <th className="py-2 px-1.5 text-right whitespace-nowrap">ডিম</th>
@@ -3830,7 +3850,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                             <th className="py-2 px-2 text-center whitespace-nowrap">স্ট্যাটাস</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-semibold text-slate-800 dark:text-slate-200">
+                        <tbody className="divide-y divide-white/5 font-semibold text-slate-200">
                           {(salesTableSortOrder === "desc"
                             ? [...salesVsMarginStats.points].reverse()
                             : salesVsMarginStats.points
@@ -3843,38 +3863,38 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                                 onClick={() => setSelectedDashboardDate(p.date)}
                                 className={`cursor-pointer transition-colors ${
                                   isSelected
-                                    ? "bg-blue-50 dark:bg-blue-950/70 font-black text-blue-950 dark:text-blue-100"
-                                    : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                                    ? "bg-cyan-500/20 font-black text-cyan-200"
+                                    : "hover:bg-cyan-500/10"
                                 }`}
                               >
                                 <td className="py-1.5 px-2.5 whitespace-nowrap">
-                                  <div className="font-bold">{p.date.slice(5)}</div>
-                                  <div className="text-[9px] text-slate-500 dark:text-slate-400 font-normal">
+                                  <div className="font-bold text-slate-100">{p.date.slice(5)}</div>
+                                  <div className="text-[9px] text-slate-400 font-normal">
                                     {getBanglaDay(p.day)}
                                   </div>
                                 </td>
-                                <td className="py-1.5 px-1.5 text-right font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                                <td className="py-1.5 px-1.5 text-right font-bold text-slate-200 whitespace-nowrap">
                                   {p.soldQty.toLocaleString()} টি
                                 </td>
-                                <td className="py-1.5 px-1.5 text-right font-bold text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                                <td className="py-1.5 px-1.5 text-right font-bold text-slate-400 whitespace-nowrap">
                                   ৳{p.cost.toLocaleString()}
                                 </td>
-                                <td className="py-1.5 px-1.5 text-right font-black text-blue-700 dark:text-blue-300 whitespace-nowrap">
+                                <td className="py-1.5 px-1.5 text-right font-black text-cyan-300 whitespace-nowrap">
                                   ৳{p.sales.toLocaleString()}
                                 </td>
-                                <td className="py-1.5 px-1.5 text-right font-black text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
+                                <td className="py-1.5 px-1.5 text-right font-black text-emerald-400 whitespace-nowrap">
                                   ৳{p.margin.toLocaleString()}
                                 </td>
-                                <td className="py-1.5 px-1.5 text-right font-bold text-purple-700 dark:text-purple-300 whitespace-nowrap">
+                                <td className="py-1.5 px-1.5 text-right font-bold text-purple-300 whitespace-nowrap">
                                   {p.marginPercent}%
                                 </td>
                                 <td className="py-1.5 px-2 text-center whitespace-nowrap">
                                   {isSelected ? (
-                                    <span className="inline-block text-[9px] font-black bg-blue-600 text-white px-1.5 py-0.5 rounded-full shadow-xs">
+                                    <span className="inline-block text-[9px] font-black bg-cyan-500 text-slate-950 px-2 py-0.5 rounded-full shadow-xs">
                                       নির্বাচিত
                                     </span>
                                   ) : (
-                                    <span className="inline-block text-[9px] font-semibold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">
+                                    <span className="inline-block text-[9px] font-semibold text-slate-400 bg-slate-900/80 px-2 py-0.5 rounded-full border border-white/10">
                                       দেখুন
                                     </span>
                                   )}
@@ -3883,22 +3903,22 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                             );
                           })}
                         </tbody>
-                        <tfoot className="sticky bottom-0 bg-slate-50 dark:bg-slate-800/95 font-black text-[10px] sm:text-xs border-t-2 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 z-10">
+                        <tfoot className="sticky bottom-0 bg-slate-900/95 font-black text-[10px] sm:text-xs border-t-2 border-white/15 text-slate-100 z-10 backdrop-blur-md">
                           <tr>
                             <td className="py-2 px-2.5 whitespace-nowrap">মোট ({salesVsMarginStats.points.length}দিন)</td>
-                            <td className="py-2 px-1.5 text-right text-slate-900 dark:text-slate-100 whitespace-nowrap">
+                            <td className="py-2 px-1.5 text-right text-slate-100 whitespace-nowrap">
                               {salesVsMarginStats.points.reduce((s, p) => s + (p.soldQty || 0), 0).toLocaleString()} টি
                             </td>
-                            <td className="py-2 px-1.5 text-right text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                            <td className="py-2 px-1.5 text-right text-slate-300 whitespace-nowrap">
                               ৳{salesVsMarginStats.totalCost.toLocaleString()}
                             </td>
-                            <td className="py-2 px-1.5 text-right text-blue-900 dark:text-blue-300 whitespace-nowrap">
+                            <td className="py-2 px-1.5 text-right text-cyan-300 whitespace-nowrap">
                               ৳{salesVsMarginStats.totalSales.toLocaleString()}
                             </td>
-                            <td className="py-2 px-1.5 text-right text-emerald-900 dark:text-emerald-300 whitespace-nowrap">
+                            <td className="py-2 px-1.5 text-right text-emerald-300 whitespace-nowrap">
                               ৳{salesVsMarginStats.totalMargin.toLocaleString()}
                             </td>
-                            <td className="py-2 px-1.5 text-right text-purple-900 dark:text-purple-300 whitespace-nowrap">
+                            <td className="py-2 px-1.5 text-right text-purple-300 whitespace-nowrap">
                               {salesVsMarginStats.avgMarginPercent}%
                             </td>
                             <td className="py-2 px-2 text-center whitespace-nowrap">—</td>
@@ -3916,126 +3936,126 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
           {currentViewDay && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
               {/* 1. Collection Breakdown */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-3 flex flex-col justify-between transition-colors">
+              <div className="glass-panel rounded-3xl p-4 sm:p-6 space-y-3 flex flex-col justify-between shadow-xl">
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-2">
-                    <span className="text-xs font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider flex items-center space-x-1.5">
-                      <DollarSign className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <div className="flex justify-between items-center border-b border-white/10 pb-2.5">
+                    <span className="text-xs font-black text-slate-100 uppercase tracking-wider flex items-center space-x-1.5">
+                      <DollarSign className="w-4 h-4 text-emerald-400" />
                       <span>পাওনা ও আদায় বিবরণী</span>
                     </span>
-                    <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/70 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/60">
+                    <span className="text-[11px] font-bold text-emerald-300 bg-emerald-500/15 px-2.5 py-0.5 rounded-full border border-emerald-400/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
                       মোট: ৳ {viewBusinessValue.toLocaleString()}
                     </span>
                   </div>
 
                   <div className="space-y-2 text-xs">
-                    <div className="flex justify-between items-center py-1.5 border-b border-slate-100 dark:border-slate-800">
-                      <span className="text-slate-600 dark:text-slate-400 font-medium">বাকি খাতা (Customer Due):</span>
-                      <span className="font-bold text-slate-900 dark:text-slate-100">৳ {(currentViewDay.financials.totalDue || 0).toLocaleString()}</span>
+                    <div className="flex justify-between items-center py-1.5 border-b border-white/5">
+                      <span className="text-slate-300 font-medium">বাকি খাতা (Customer Due):</span>
+                      <span className="font-bold text-slate-100">৳ {(currentViewDay.financials.totalDue || 0).toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between items-center py-1.5 border-b border-slate-100 dark:border-slate-800">
-                      <span className="text-slate-600 dark:text-slate-400 font-medium">নগদ ক্যাশ (Cash in Hand):</span>
-                      <span className="font-bold text-emerald-700 dark:text-emerald-400">৳ {(currentViewDay.financials.totalCash || 0).toLocaleString()}</span>
+                    <div className="flex justify-between items-center py-1.5 border-b border-white/5">
+                      <span className="text-slate-300 font-medium">নগদ ক্যাশ (Cash in Hand):</span>
+                      <span className="font-bold text-emerald-400">৳ {(currentViewDay.financials.totalCash || 0).toLocaleString()}</span>
                     </div>
                     {currentViewDay.financials.extraCollections && currentViewDay.financials.extraCollections.length > 0 ? (
                       currentViewDay.financials.extraCollections.map((colItem, cIdx) => (
-                        <div key={cIdx} className="flex justify-between items-center py-1.5 border-b border-slate-100 dark:border-slate-800 bg-amber-50/50 dark:bg-amber-950/40 px-2 rounded-lg">
-                          <span className="text-amber-800 dark:text-amber-300 font-bold">{colItem.label || "অন্যান্য আদায়"}:</span>
-                          <span className="font-bold text-amber-900 dark:text-amber-200">৳ {(colItem.amount || 0).toLocaleString()}</span>
+                        <div key={cIdx} className="flex justify-between items-center py-1.5 border-b border-white/5 bg-slate-900/60 px-2.5 rounded-xl">
+                          <span className="text-amber-300 font-bold">{colItem.label || "অন্যান্য আদায়"}:</span>
+                          <span className="font-bold text-amber-200">৳ {(colItem.amount || 0).toLocaleString()}</span>
                         </div>
                       ))
                     ) : currentViewDay.financials.extraDue > 0 ? (
-                      <div className="flex justify-between items-center py-1.5 border-b border-slate-100 dark:border-slate-800 bg-amber-50/50 dark:bg-amber-950/40 px-2 rounded-lg">
-                        <span className="text-amber-800 dark:text-amber-300 font-bold">অন্যান্য আদায় / বাটা:</span>
-                        <span className="font-bold text-amber-900 dark:text-amber-200">৳ {currentViewDay.financials.extraDue.toLocaleString()}</span>
+                      <div className="flex justify-between items-center py-1.5 border-b border-white/5 bg-slate-900/60 px-2.5 rounded-xl">
+                        <span className="text-amber-300 font-bold">অন্যান্য আদায় / বাটা:</span>
+                        <span className="font-bold text-amber-200">৳ {currentViewDay.financials.extraDue.toLocaleString()}</span>
                       </div>
                     ) : null}
-                    <div className="flex justify-between items-center py-1.5 border-b border-slate-100 dark:border-slate-800">
-                      <span className="text-slate-600 dark:text-slate-400 font-medium">মজুদ ডিমের মূল্য (Stock Valuation):</span>
-                      <span className="font-bold text-amber-800 dark:text-amber-400">৳ {viewStock.toLocaleString()}</span>
+                    <div className="flex justify-between items-center py-1.5 border-b border-white/5">
+                      <span className="text-slate-300 font-medium">মজুদ ডিমের মূল্য (Stock Valuation):</span>
+                      <span className="font-bold text-amber-300">৳ {viewStock.toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-3 pt-2.5 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center text-xs font-black text-slate-900 dark:text-slate-100">
+                <div className="mt-3 pt-2.5 border-t border-white/10 flex justify-between items-center text-xs font-black text-slate-100">
                   <span>সর্বমোট পাওনা (B25):</span>
-                  <span className="text-emerald-700 dark:text-emerald-400 text-sm">৳ {viewBusinessValue.toLocaleString()}</span>
+                  <span className="text-emerald-400 text-sm">৳ {viewBusinessValue.toLocaleString()}</span>
                 </div>
               </div>
 
               {/* 2. Dues & Liabilities Breakdown */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-3 flex flex-col justify-between transition-colors">
+              <div className="glass-panel rounded-3xl p-4 sm:p-6 space-y-3 flex flex-col justify-between shadow-xl">
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-2">
-                    <span className="text-xs font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider flex items-center space-x-1.5">
-                      <Package className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                  <div className="flex justify-between items-center border-b border-white/10 pb-2.5">
+                    <span className="text-xs font-black text-slate-100 uppercase tracking-wider flex items-center space-x-1.5">
+                      <Package className="w-4 h-4 text-rose-400" />
                       <span>দেনা ও সাবেক বিবরণী</span>
                     </span>
-                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
+                    <span className="text-[11px] font-bold text-rose-300 bg-rose-500/15 px-2.5 py-0.5 rounded-full border border-rose-400/30">
                       মোট: ৳ {viewTotalBusinessWithDue.toLocaleString()}
                     </span>
                   </div>
 
                   <div className="space-y-2 text-xs">
-                    <div className="flex justify-between items-center py-1.5 border-b border-slate-100 dark:border-slate-800">
-                      <span className="text-slate-600 dark:text-slate-400 font-medium">সাবেক ব্যালেন্স (Opening):</span>
-                      <span className="font-bold text-slate-900 dark:text-slate-100">৳ {(currentViewDay.financials.prevDayBalance || 0).toLocaleString()}</span>
+                    <div className="flex justify-between items-center py-1.5 border-b border-white/5">
+                      <span className="text-slate-300 font-medium">সাবেক ব্যালেন্স (Opening):</span>
+                      <span className="font-bold text-slate-100">৳ {(currentViewDay.financials.prevDayBalance || 0).toLocaleString()}</span>
                     </div>
                     {currentViewDay.financials.extraDues && currentViewDay.financials.extraDues.length > 0 ? (
                       currentViewDay.financials.extraDues.map((dueItem, dIdx) => (
-                        <div key={dIdx} className="flex justify-between items-center py-1.5 border-b border-slate-100 dark:border-slate-800 bg-rose-50/50 dark:bg-rose-950/40 px-2 rounded-lg">
-                          <span className="text-rose-800 dark:text-rose-300 font-bold">{dueItem.label || "অন্যান্য দেনা"}:</span>
-                          <span className="font-bold text-rose-900 dark:text-rose-200">৳ {(dueItem.amount || 0).toLocaleString()}</span>
+                        <div key={dIdx} className="flex justify-between items-center py-1.5 border-b border-white/5 bg-slate-900/60 px-2.5 rounded-xl">
+                          <span className="text-rose-300 font-bold">{dueItem.label || "অন্যান্য দেনা"}:</span>
+                          <span className="font-bold text-rose-200">৳ {(dueItem.amount || 0).toLocaleString()}</span>
                         </div>
                       ))
                     ) : currentViewDay.financials.providerDueMoney > 0 ? (
-                      <div className="flex justify-between items-center py-1.5 border-b border-slate-100 dark:border-slate-800 bg-rose-50/50 dark:bg-rose-950/40 px-2 rounded-lg">
-                        <span className="text-rose-800 dark:text-rose-300 font-bold">
+                      <div className="flex justify-between items-center py-1.5 border-b border-white/5 bg-slate-900/60 px-2.5 rounded-xl">
+                        <span className="text-rose-300 font-bold">
                           {currentViewDay.financials.providerName ? `${currentViewDay.financials.providerName} (মহাজন)` : "মহাজন দেনা"}:
                         </span>
-                        <span className="font-bold text-rose-900 dark:text-rose-200">৳ {currentViewDay.financials.providerDueMoney.toLocaleString()}</span>
+                        <span className="font-bold text-rose-200">৳ {currentViewDay.financials.providerDueMoney.toLocaleString()}</span>
                       </div>
                     ) : null}
                   </div>
                 </div>
 
-                <div className="mt-3 pt-2.5 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center text-xs font-black text-slate-900 dark:text-slate-100">
+                <div className="mt-3 pt-2.5 border-t border-white/10 flex justify-between items-center text-xs font-black text-slate-100">
                   <span>মোট জমা / দেনা (E24):</span>
-                  <span className="text-slate-800 dark:text-slate-200 text-sm">৳ {viewTotalBusinessWithDue.toLocaleString()}</span>
+                  <span className="text-slate-200 text-sm">৳ {viewTotalBusinessWithDue.toLocaleString()}</span>
                 </div>
               </div>
 
               {/* 3. Expenses Breakdown */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-3 flex flex-col justify-between transition-colors">
+              <div className="glass-panel rounded-3xl p-4 sm:p-6 space-y-3 flex flex-col justify-between shadow-xl">
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-2">
-                    <span className="text-xs font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider flex items-center space-x-1.5">
-                      <Trash2 className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  <div className="flex justify-between items-center border-b border-white/10 pb-2.5">
+                    <span className="text-xs font-black text-slate-100 uppercase tracking-wider flex items-center space-x-1.5">
+                      <Trash2 className="w-4 h-4 text-amber-400" />
                       <span>দৈনিক খরচ তালিকা ({currentViewDay.expenses.list.length} টি)</span>
                     </span>
-                    <span className="text-[11px] font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/70 px-2 py-0.5 rounded-full border border-rose-200 dark:border-rose-800/60">
+                    <span className="text-[11px] font-bold text-rose-300 bg-rose-500/15 px-2.5 py-0.5 rounded-full border border-rose-400/30">
                       মোট: ৳ {viewExpenses.toLocaleString()}
                     </span>
                   </div>
 
-                  <div className="space-y-1.5 text-xs max-h-44 overflow-y-auto pr-1 divide-y divide-slate-100 dark:divide-slate-800">
+                  <div className="space-y-1.5 text-xs max-h-44 overflow-y-auto pr-1 divide-y divide-white/5">
                     {currentViewDay.expenses.list.map((exp, eIdx) => (
-                      <div key={eIdx} className="flex justify-between items-center py-1">
-                        <span className="text-slate-700 dark:text-slate-300 font-semibold">{exp.type}</span>
-                        <span className="font-bold text-rose-700 dark:text-rose-400">৳ {exp.amount.toLocaleString()}</span>
+                      <div key={eIdx} className="flex justify-between items-center py-1.5">
+                        <span className="text-slate-300 font-semibold">{exp.type}</span>
+                        <span className="font-bold text-rose-400">৳ {exp.amount.toLocaleString()}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="mt-3 pt-2.5 border-t border-slate-200 dark:border-slate-800 space-y-1 text-xs">
-                  <div className="flex justify-between items-center text-slate-600 dark:text-slate-400">
+                <div className="mt-3 pt-2.5 border-t border-white/10 space-y-1 text-xs">
+                  <div className="flex justify-between items-center text-slate-400">
                     <span>মোট খরচ / Total Expense (B43):</span>
-                    <span className="text-rose-700 dark:text-rose-400 font-bold">৳ {viewExpenses.toLocaleString()}</span>
+                    <span className="text-rose-400 font-bold">৳ {viewExpenses.toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between items-center pt-1 border-t border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100">
+                  <div className="flex justify-between items-center pt-1 border-t border-white/10 text-xs sm:text-sm font-black text-slate-100">
                     <span>Total (খরচসহ সর্বমোট - B44):</span>
-                    <span className="text-amber-900 dark:text-amber-300 font-black">৳ {viewTotalBusinessWithExpenses.toLocaleString()}</span>
+                    <span className="text-amber-300 font-black">৳ {viewTotalBusinessWithExpenses.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
@@ -4075,100 +4095,100 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                 {/* 2 Core Business Metric Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
                   {/* Card 1: ভাঙ্গা ডিম ও অপচয় হার */}
-                  <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-3 transition-colors">
+                  <div className="glass-panel-rose rounded-3xl p-4 sm:p-6 space-y-3 shadow-xl">
                     <div className="flex justify-between items-start">
-                      <div className="flex items-center space-x-2">
-                        <div className="p-2 bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 rounded-xl border border-rose-200 dark:border-rose-800/60">
+                      <div className="flex items-center space-x-2.5">
+                        <div className="p-2 bg-rose-500/20 text-rose-300 rounded-2xl border border-rose-400/30">
                           <AlertTriangle className="w-5 h-5" />
                         </div>
                         <div>
-                          <h4 className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100">ভাঙ্গা ডিম ও অপচয় হার</h4>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400">ডিমের মোট অপচয় ও ক্ষতির শতকরা অনুপাত</p>
+                          <h4 className="text-xs sm:text-sm font-black text-slate-100">ভাঙ্গা ডিম ও অপচয় হার</h4>
+                          <p className="text-[11px] text-rose-200/80">ডিমের মোট অপচয় ও ক্ষতির শতকরা অনুপাত</p>
                         </div>
                       </div>
                       <span
                         className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border ${
                           breakagePercent < 0.5
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/80 dark:text-emerald-300 dark:border-emerald-700"
+                            ? "bg-emerald-500/20 text-emerald-300 border-emerald-400/40"
                             : breakagePercent <= 1.5
-                            ? "bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/80 dark:text-amber-300 dark:border-amber-700"
-                            : "bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-950/80 dark:text-rose-300 dark:border-rose-700"
+                            ? "bg-amber-500/20 text-amber-300 border-amber-400/40"
+                            : "bg-rose-500/20 text-rose-300 border-rose-400/40"
                         }`}
                       >
                         {breakagePercent < 0.5 ? "🟢 চমৎকার নিয়ন্ত্রণ" : breakagePercent <= 1.5 ? "🟡 স্বাভাবিক" : "🔴 অপচয় বেশি"}
                       </span>
                     </div>
 
-                    <div className="bg-rose-50/40 dark:bg-rose-950/30 p-3 rounded-xl border border-rose-100 dark:border-rose-900/40 flex justify-between items-center">
+                    <div className="bg-slate-950/50 p-3.5 rounded-2xl border border-white/10 flex justify-between items-center">
                       <div>
-                        <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">মোট অপচয় হার:</span>
-                        <p className="text-xl sm:text-2xl font-black text-rose-700 dark:text-rose-400">
+                        <span className="text-[11px] font-bold text-slate-400">মোট অপচয় হার:</span>
+                        <p className="text-xl sm:text-2xl font-black text-rose-400">
                           {breakagePercent.toFixed(2)}%
                         </p>
                       </div>
                       <div className="text-right">
-                        <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">ভাঙ্গা ডিমের সংখ্যা:</span>
-                        <p className="text-lg font-black text-slate-900 dark:text-slate-100">
+                        <span className="text-[11px] font-bold text-slate-400">ভাঙ্গা ডিমের সংখ্যা:</span>
+                        <p className="text-lg font-black text-slate-100">
                           {brokenQty} টি ডিম
                         </p>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100 dark:border-slate-800 text-xs">
-                      <div className="flex justify-between py-1 px-2 rounded-lg bg-slate-50 dark:bg-slate-800/60">
-                        <span className="text-slate-600 dark:text-slate-400">ভাঙ্গায় আর্থিক ক্ষতি:</span>
-                        <span className="font-bold text-rose-700 dark:text-rose-400">৳ {brokenCost.toLocaleString()}</span>
+                    <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/10 text-xs">
+                      <div className="flex justify-between py-1.5 px-2.5 rounded-xl bg-slate-950/40 border border-white/5">
+                        <span className="text-slate-400">ভাঙ্গায় আর্থিক ক্ষতি:</span>
+                        <span className="font-bold text-rose-400">৳ {brokenCost.toLocaleString()}</span>
                       </div>
-                      <div className="flex justify-between py-1 px-2 rounded-lg bg-slate-50 dark:bg-slate-800/60">
-                        <span className="text-slate-600 dark:text-slate-400">মোট খরচের অংশ:</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-200">{breakageLossRatio.toFixed(1)}%</span>
+                      <div className="flex justify-between py-1.5 px-2.5 rounded-xl bg-slate-950/40 border border-white/5">
+                        <span className="text-slate-400">মোট খরচের অংশ:</span>
+                        <span className="font-bold text-slate-200">{breakageLossRatio.toFixed(1)}%</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Card 2: ডিম প্রতি গড় নিট লাভ */}
-                  <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-3 transition-colors">
+                  <div className="glass-panel-emerald rounded-3xl p-4 sm:p-6 space-y-3 shadow-xl">
                     <div className="flex justify-between items-start">
-                      <div className="flex items-center space-x-2">
-                        <div className="p-2 bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 rounded-xl border border-amber-200 dark:border-amber-800/60">
+                      <div className="flex items-center space-x-2.5">
+                        <div className="p-2 bg-emerald-500/20 text-emerald-300 rounded-2xl border border-emerald-400/30">
                           <Coins className="w-5 h-5" />
                         </div>
                         <div>
-                          <h4 className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100">ডিম প্রতি গড় নিট লাভ</h4>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400">প্রতিটি ডিম বিক্রিতে খরচ বাদে প্রকৃত লাভ</p>
+                          <h4 className="text-xs sm:text-sm font-black text-slate-100">ডিম প্রতি গড় নিট লাভ</h4>
+                          <p className="text-[11px] text-emerald-200/80">প্রতিটি ডিম বিক্রিতে খরচ বাদে প্রকৃত লাভ</p>
                         </div>
                       </div>
-                      <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-300 dark:bg-amber-950/80 dark:text-amber-300 dark:border-amber-700">
+                      <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40">
                         মার্জিন {netMarginPercentage.toFixed(1)}%
                       </span>
                     </div>
 
-                    <div className="bg-amber-50/40 dark:bg-amber-950/30 p-3 rounded-xl border border-amber-100 dark:border-amber-900/40 flex justify-between items-center">
+                    <div className="bg-slate-950/50 p-3.5 rounded-2xl border border-white/10 flex justify-between items-center">
                       <div>
-                        <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">প্রতি ডিমে নিট মার্জিন:</span>
-                        <p className="text-xl sm:text-2xl font-black text-amber-700 dark:text-amber-400">
+                        <span className="text-[11px] font-bold text-slate-400">প্রতি ডিমে নিট মার্জিন:</span>
+                        <p className="text-xl sm:text-2xl font-black text-emerald-400">
                           ৳ {marginPerEgg.toFixed(2)}
-                          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 ml-1">
+                          <span className="text-xs font-semibold text-slate-400 ml-1">
                             / ডিম
                           </span>
                         </p>
                       </div>
                       <div className="text-right">
-                        <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">মোট ডিম বিক্রি:</span>
-                        <p className="text-lg font-black text-slate-900 dark:text-slate-100">
+                        <span className="text-[11px] font-bold text-slate-400">মোট ডিম বিক্রি:</span>
+                        <p className="text-lg font-black text-slate-100">
                           {viewTotalSoldQty.toLocaleString()} টি
                         </p>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100 dark:border-slate-800 text-xs">
-                      <div className="flex justify-between py-1 px-2 rounded-lg bg-slate-50 dark:bg-slate-800/60">
-                        <span className="text-slate-600 dark:text-slate-400">প্রতি ডিমে খরচ:</span>
-                        <span className="font-bold text-rose-700 dark:text-rose-400">৳ {operatingExpensePerEgg.toFixed(2)}</span>
+                    <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/10 text-xs">
+                      <div className="flex justify-between py-1.5 px-2.5 rounded-xl bg-slate-950/40 border border-white/5">
+                        <span className="text-slate-400">প্রতি ডিমে খরচ:</span>
+                        <span className="font-bold text-rose-400">৳ {operatingExpensePerEgg.toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between py-1 px-2 rounded-lg bg-slate-50 dark:bg-slate-800/60">
-                        <span className="text-slate-600 dark:text-slate-400">দিনের মোট লাভ:</span>
-                        <span className="font-bold text-emerald-700 dark:text-emerald-400">৳ {viewProfit.toLocaleString()}</span>
+                      <div className="flex justify-between py-1.5 px-2.5 rounded-xl bg-slate-950/40 border border-white/5">
+                        <span className="text-slate-400">দিনের মোট লাভ:</span>
+                        <span className="font-bold text-emerald-400">৳ {viewProfit.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
@@ -4195,11 +4215,11 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
           )}
 
           {/* 1. Date, Day, Page Number */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 transition-colors">
-            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2.5 border-b border-slate-200 dark:border-slate-800 pb-3 mb-4">
+          <div className="glass-panel rounded-3xl p-5 sm:p-6 space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2.5 border-b border-white/10 pb-3 mb-2">
               <div className="flex items-center space-x-2">
-                <Calendar className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100">
+                <Calendar className="w-4 h-4 text-cyan-400" />
+                <h3 className="text-sm sm:text-base font-black text-slate-100 tracking-tight">
                   ১. তারিখ ও খাতার পৃষ্ঠা (Date & Page Info)
                 </h3>
               </div>
@@ -4238,25 +4258,25 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">রোজ / বার (Day)</label>
+                <label className="block text-xs font-bold text-slate-300 mb-1">রোজ / বার (Day)</label>
                 <input
                   type="text"
                   value={formDay}
                   onChange={(e) => setFormDay(e.target.value)}
                   placeholder="যেমন: সোমবার, রবিবার, ইত্যাদি"
-                  className="w-full border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 bg-slate-50/50 dark:bg-slate-800/60 text-sm font-bold text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white dark:focus:bg-slate-800"
+                  className="w-full border border-slate-700/80 rounded-xl px-3 py-2 bg-slate-900/80 text-sm font-bold text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/40 transition-colors"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">পৃষ্ঠা নাম্বার (Page No)</label>
+                <label className="block text-xs font-bold text-slate-300 mb-1">পৃষ্ঠা নাম্বার (Page No)</label>
                 <input
                   type="text"
                   value={formPageNo}
                   onChange={(e) => setFormPageNo(e.target.value)}
                   placeholder="যেমন: 98 বা 89"
-                  className="w-full border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 bg-slate-50/50 dark:bg-slate-800/60 text-sm font-bold text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white dark:focus:bg-slate-800"
+                  className="w-full border border-slate-700/80 rounded-xl px-3 py-2 bg-slate-900/80 text-sm font-bold text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/40 transition-colors"
                   required
                 />
               </div>
@@ -4264,89 +4284,89 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
           </div>
 
           {/* 2. Stock Valuation Section (মজুদ ডিমের হিসাব) */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 space-y-4 transition-colors">
-            <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
+          <div className="glass-panel rounded-3xl p-5 sm:p-6 space-y-4">
+            <div className="flex justify-between items-center border-b border-white/10 pb-3">
               <div>
-                <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 flex items-center space-x-2">
-                  <Package className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                <h3 className="text-sm sm:text-base font-black text-slate-100 flex items-center space-x-2">
+                  <Package className="w-4 h-4 text-amber-400" />
                   <span>২. মজুদ ডিমের মূল্য (Stock Valuation)</span>
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">ডিমের বর্তমান স্টক ও ক্রয় দর ইনপুট দিন</p>
+                <p className="text-xs text-slate-400 font-medium mt-0.5">ডিমের বর্তমান স্টক ও ক্রয় দর ইনপুট দিন</p>
               </div>
-              <span className="text-xs font-black text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/70 px-3 py-1 rounded-full border border-amber-200 dark:border-amber-800/60">
+              <span className="text-xs font-black text-amber-300 bg-amber-950/80 px-3.5 py-1 rounded-full border border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.2)]">
                 মোট মূল্য: ৳ {formLiveStockValuation.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
               </span>
             </div>
 
             {/* Desktop Table View */}
-            <div className="hidden md:block overflow-x-auto">
+            <div className="hidden md:block overflow-x-auto rounded-2xl border border-white/10">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="bg-slate-50 dark:bg-slate-800/70 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 uppercase font-bold text-[11px]">
-                    <th className="py-2.5 px-3">ডিমের ধরন</th>
-                    <th className="py-2.5 px-3">বর্তমান স্টক (Qty)</th>
-                    <th className="py-2.5 px-3">দর (Rate ৳)</th>
-                    <th className="py-2.5 px-3 text-right">মোট টাকা (Total ৳)</th>
-                    <th className="py-2.5 px-3 text-center">আজকের ক্রয়?</th>
-                    <th className="py-2.5 px-3">ক্রয় সংখ্যা (টি)</th>
+                  <tr className="bg-slate-900/90 text-cyan-300 border-b border-white/10 uppercase font-black text-[11px] tracking-wider">
+                    <th className="py-3 px-3.5">ডিমের ধরন</th>
+                    <th className="py-3 px-3">বর্তমান স্টক (Qty)</th>
+                    <th className="py-3 px-3">দর (Rate ৳)</th>
+                    <th className="py-3 px-3 text-right">মোট টাকা (Total ৳)</th>
+                    <th className="py-3 px-3 text-center">আজকের ক্রয়?</th>
+                    <th className="py-3 px-3">ক্রয় সংখ্যা (টি)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-semibold text-slate-800 dark:text-slate-200">
+                <tbody className="divide-y divide-white/5 font-semibold text-slate-200">
                   {stockEntries.map((entry, index) => {
                     const rowRate = entry.purchaseRate > 0 ? entry.purchaseRate : DEFAULT_RATES[entry.eggType] || 0;
                     const rowTotal = (entry.currentStock || 0) * rowRate;
 
                     return (
-                      <tr key={entry.eggType} className="hover:bg-amber-50/20 dark:hover:bg-slate-800/40">
-                        <td className="py-2.5 px-3 font-bold text-slate-900 dark:text-slate-100">{entry.eggType}</td>
-                        <td className="py-2.5 px-3">
+                      <tr key={entry.eggType} className="hover:bg-slate-800/50 transition-colors">
+                        <td className="py-3 px-3.5 font-bold text-slate-100">{entry.eggType}</td>
+                        <td className="py-3 px-3">
                           <input
                             type="number"
                             value={entry.currentStock || ""}
                             onChange={(e) => handleStockChange(index, "currentStock", Number(e.target.value))}
                             placeholder="0"
-                            className="w-28 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                            className="w-28 border border-slate-700/80 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-100 bg-slate-950/70 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/40"
                             min="0"
                           />
                         </td>
-                        <td className="py-2.5 px-3">
+                        <td className="py-3 px-3">
                           <input
                             type="number"
                             step="0.01"
                             value={entry.purchaseRate || ""}
                             onChange={(e) => handleStockChange(index, "purchaseRate", Number(e.target.value))}
-                            className="w-24 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                            className="w-24 border border-slate-700/80 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-100 bg-slate-950/70 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/40"
                             min="0"
                           />
                         </td>
-                        <td className="py-2.5 px-3 text-right font-black text-amber-900 dark:text-amber-300 text-sm">
+                        <td className="py-3 px-3 text-right font-black text-amber-300 text-sm">
                           ৳ {rowTotal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
                         </td>
-                        <td className="py-2.5 px-3 text-center">
+                        <td className="py-3 px-3 text-center">
                           <label className="inline-flex items-center cursor-pointer select-none">
                             <input
                               type="checkbox"
                               checked={entry.hasPurchase}
                               onChange={(e) => handleStockChange(index, "hasPurchase", e.target.checked)}
-                              className="w-4 h-4 text-amber-600 rounded border-slate-300 dark:border-slate-600 focus:ring-amber-500 cursor-pointer"
+                              className="w-4 h-4 text-cyan-400 bg-slate-900 rounded border-slate-600 focus:ring-cyan-400 cursor-pointer"
                             />
-                            <span className="ml-1.5 text-[11px] font-bold text-slate-600 dark:text-slate-400">
+                            <span className="ml-1.5 text-[11px] font-bold text-slate-300">
                               {entry.hasPurchase ? "হ্যাঁ" : "না"}
                             </span>
                           </label>
                         </td>
-                        <td className="py-2.5 px-3">
+                        <td className="py-3 px-3">
                           {entry.hasPurchase ? (
                             <input
                               type="number"
                               value={entry.purchaseQty || ""}
                               onChange={(e) => handleStockChange(index, "purchaseQty", Number(e.target.value))}
                               placeholder="সংখ্যা"
-                              className="w-24 border border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-950/60 rounded-lg px-2 py-1 text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none"
+                              className="w-24 border border-amber-500/60 bg-amber-950/50 rounded-xl px-2.5 py-1.5 text-xs font-bold text-amber-200 focus:outline-none focus:border-amber-400"
                               min="0"
                             />
                           ) : (
-                            <span className="text-slate-400 dark:text-slate-500 italic">—</span>
+                            <span className="text-slate-500 italic">—</span>
                           )}
                         </td>
                       </tr>
@@ -4363,57 +4383,57 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                 const rowTotal = (entry.currentStock || 0) * rowRate;
 
                 return (
-                  <div key={entry.eggType} className="bg-slate-50/80 dark:bg-slate-800/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2.5 shadow-sm">
+                  <div key={entry.eggType} className="bg-slate-900/70 p-3.5 rounded-2xl border border-white/10 space-y-2.5 shadow-sm">
                     <div className="flex justify-between items-center">
-                      <span className="font-bold text-xs text-slate-900 dark:text-slate-100">{entry.eggType}</span>
-                      <span className="text-xs font-black text-amber-800 dark:text-amber-300 bg-amber-100/80 dark:bg-amber-950/80 px-2 py-0.5 rounded-md">
+                      <span className="font-bold text-xs text-slate-100">{entry.eggType}</span>
+                      <span className="text-xs font-black text-amber-300 bg-amber-950/80 px-2.5 py-0.5 rounded-full border border-amber-500/40">
                         ৳ {rowTotal.toLocaleString()}
                       </span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-0.5">বর্তমান স্টক (Qty)</label>
+                        <label className="block text-[10px] font-bold text-slate-400 mb-0.5">বর্তমান স্টক (Qty)</label>
                         <input
                           type="number"
                           value={entry.currentStock || ""}
                           onChange={(e) => handleStockChange(index, "currentStock", Number(e.target.value))}
                           placeholder="0"
-                          className="w-full border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-bold bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                          className="w-full border border-slate-700/80 rounded-xl px-2.5 py-1.5 text-xs font-bold bg-slate-950/70 text-slate-100 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/40"
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-0.5">দর (Rate ৳)</label>
+                        <label className="block text-[10px] font-bold text-slate-400 mb-0.5">দর (Rate ৳)</label>
                         <input
                           type="number"
                           step="0.01"
                           value={entry.purchaseRate || ""}
                           onChange={(e) => handleStockChange(index, "purchaseRate", Number(e.target.value))}
-                          className="w-full border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-bold bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                          className="w-full border border-slate-700/80 rounded-xl px-2.5 py-1.5 text-xs font-bold bg-slate-950/70 text-slate-100 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/40"
                         />
                       </div>
                     </div>
 
                     {/* Purchase info toggle */}
-                    <div className="pt-2 border-t border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between">
+                    <div className="pt-2 border-t border-white/10 flex items-center justify-between">
                       <label className="inline-flex items-center cursor-pointer select-none">
                         <input
                           type="checkbox"
                           checked={entry.hasPurchase}
                           onChange={(e) => handleStockChange(index, "hasPurchase", e.target.checked)}
-                          className="w-4 h-4 text-amber-600 rounded border-slate-300 dark:border-slate-600 cursor-pointer"
+                          className="w-4 h-4 text-cyan-400 rounded border-slate-600 cursor-pointer"
                         />
-                        <span className="ml-1.5 text-[11px] font-semibold text-slate-600 dark:text-slate-400">আজকের ক্রয়</span>
+                        <span className="ml-1.5 text-[11px] font-semibold text-slate-300">আজকের ক্রয়</span>
                       </label>
                       {entry.hasPurchase && (
                         <div className="flex items-center space-x-1.5">
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400">সংখ্যা:</span>
+                          <span className="text-[10px] text-slate-400">সংখ্যা:</span>
                           <input
                             type="number"
                             value={entry.purchaseQty || ""}
                             onChange={(e) => handleStockChange(index, "purchaseQty", Number(e.target.value))}
                             placeholder="0"
-                            className="w-20 border border-amber-300 dark:border-amber-700 bg-amber-50/60 dark:bg-amber-950/60 rounded-lg px-2 py-1 text-xs font-bold text-slate-900 dark:text-slate-100"
+                            className="w-20 border border-amber-500/60 bg-amber-950/60 rounded-xl px-2 py-1 text-xs font-bold text-amber-200"
                           />
                         </div>
                       )}
@@ -4424,40 +4444,40 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
             </div>
 
             {/* Stock Summary Footer Bar */}
-            <div className="bg-amber-50/60 dark:bg-amber-950/40 p-3 sm:p-4 rounded-xl border border-amber-200 dark:border-amber-800/60 flex justify-between items-center text-xs font-bold text-slate-800 dark:text-slate-200">
-              <span>মোট ডিমের সংখ্যা: <strong className="text-slate-900 dark:text-slate-100">{formLiveTotalStockQty.toLocaleString()} টি</strong></span>
-              <span>মোট মজুদ মূল্য: <strong className="text-amber-900 dark:text-amber-300 text-sm">৳ {formLiveStockValuation.toLocaleString()}</strong></span>
+            <div className="bg-slate-900/80 p-3.5 sm:p-4 rounded-2xl border border-amber-400/30 flex justify-between items-center text-xs font-bold text-slate-200">
+              <span>মোট ডিমের সংখ্যা: <strong className="text-cyan-300">{formLiveTotalStockQty.toLocaleString()} টি</strong></span>
+              <span>মোট মজুদ মূল্য: <strong className="text-amber-300 text-sm font-black">৳ {formLiveStockValuation.toLocaleString()}</strong></span>
             </div>
           </div>
 
           {/* 3. Dues & Collection Section (দায় ও পাওনা হিসাব) */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 transition-colors">
-            <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 border-b border-slate-200 dark:border-slate-800 pb-3 mb-4 flex justify-between items-center">
+          <div className="glass-panel rounded-3xl p-5 sm:p-6 transition-colors">
+            <h3 className="text-sm sm:text-base font-black text-slate-100 border-b border-white/10 pb-3 mb-4 flex justify-between items-center">
               <div className="flex items-center space-x-2">
-                <DollarSign className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                <DollarSign className="w-4 h-4 text-cyan-400" />
                 <span>৩. দেনা, দায় ও পাওনা হিসাব (Due & Collection)</span>
               </div>
-              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full hidden sm:inline border border-slate-200 dark:border-slate-700">
+              <span className="text-[11px] font-semibold text-slate-400 bg-slate-800/80 px-2.5 py-0.5 rounded-full hidden sm:inline border border-white/10">
                 বাম: দেনা ও সাবেক | ডান: পাওনা ও নগদ
               </span>
             </h3>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               {/* LEFT BOX: খাত / দায় ও সাবেক হিসাব (Due & Balance) */}
-              <div className="bg-slate-50/90 dark:bg-slate-800/60 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-700/80 space-y-4 flex flex-col justify-between">
+              <div className="bg-slate-900/70 p-4 sm:p-5 rounded-2xl border border-white/10 space-y-4 flex flex-col justify-between">
                 <div className="space-y-3.5">
-                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-2">
-                    <span className="text-xs font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider">
+                  <div className="flex justify-between items-center border-b border-white/10 pb-2">
+                    <span className="text-xs font-black text-slate-100 uppercase tracking-wider">
                       খাত / দায় ও সাবেক হিসাব (Due & Balance)
                     </span>
-                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 bg-slate-200/80 dark:bg-slate-700 px-2.5 py-0.5 rounded-full">
+                    <span className="text-[11px] font-bold text-amber-300 bg-amber-950/80 px-2.5 py-0.5 rounded-full border border-amber-500/40">
                       মোট জমা: ৳ {formLiveBusinessWithDue.toLocaleString()}
                     </span>
                   </div>
 
                   {/* Previous Balance */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-xs font-bold text-slate-300 mb-1">
                       সাবেক ব্যালেন্স (Previous Day Balance / সাবেক)
                     </label>
                     <div className="relative">
@@ -4467,32 +4487,32 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                         value={prevDayBalance || ""}
                         onChange={(e) => setPrevDayBalance(Number(e.target.value))}
                         placeholder="0"
-                        className="w-full border border-slate-300 dark:border-slate-700 rounded-xl pl-8 pr-3 py-2 bg-white dark:bg-slate-800 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        className="w-full border border-slate-700/80 rounded-xl pl-8 pr-3 py-2 bg-slate-950/80 text-sm font-bold text-slate-100 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/40"
                       />
                     </div>
                   </div>
 
                   {/* Dynamic Due Items */}
                   {extraDueItems.length > 0 && (
-                    <div className="space-y-3 pt-2 border-t border-dashed border-slate-300 dark:border-slate-700">
+                    <div className="space-y-3 pt-2 border-t border-dashed border-white/10">
                       <div className="flex justify-between items-center">
-                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                        <label className="block text-[11px] font-bold text-slate-300">
                           অন্যান্য দেনা / দায় খাতসমূহ ({extraDueItems.length} টি)
                         </label>
-                        <span className="text-[10px] text-amber-700 dark:text-amber-300 font-semibold bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800/60">
+                        <span className="text-[10px] text-amber-300 font-semibold bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-500/40">
                           পরিমাণ × দর = মোট
                         </span>
                       </div>
 
                       {extraDueItems.map((item, idx) => (
-                        <div key={idx} className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-2">
+                        <div key={idx} className="bg-slate-950/70 p-3.5 rounded-2xl border border-white/10 shadow-sm space-y-2.5">
                           <div className="flex items-center justify-between">
                             <input
                               type="text"
                               value={item.label}
                               onChange={(e) => handleDueItemChange(idx, "label", e.target.value)}
                               placeholder="মহাজন / দেনা খাতের নাম (যেমন: MD ALI)"
-                              className="flex-1 border border-slate-300 dark:border-slate-600 rounded-lg px-2.5 py-1.5 bg-slate-50/50 dark:bg-slate-900/60 text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500 mr-2"
+                              className="flex-1 border border-slate-700/80 rounded-xl px-2.5 py-1.5 bg-slate-900/80 text-xs font-bold text-slate-100 focus:outline-none focus:border-cyan-400 mr-2"
                             />
                             <button
                               type="button"
@@ -4506,36 +4526,36 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
 
                           <div className="grid grid-cols-3 gap-2">
                             <div>
-                              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-0.5">পরিমাণ (Qty)</label>
+                              <label className="block text-[10px] font-bold text-slate-400 mb-0.5">পরিমাণ (Qty)</label>
                               <input
                                 type="number"
                                 value={item.qty || ""}
                                 onChange={(e) => handleDueItemChange(idx, "qty", e.target.value)}
                                 placeholder="0"
-                                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-2 py-1.5 bg-white dark:bg-slate-900 text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                className="w-full border border-slate-700/80 rounded-xl px-2 py-1.5 bg-slate-900/80 text-xs font-bold text-slate-100 focus:outline-none focus:border-cyan-400"
                                 min="0"
                               />
                             </div>
                             <div>
-                              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-0.5">দর (Rate ৳)</label>
+                              <label className="block text-[10px] font-bold text-slate-400 mb-0.5">দর (Rate ৳)</label>
                               <input
                                 type="number"
                                 step="0.01"
                                 value={item.unitPrice || ""}
                                 onChange={(e) => handleDueItemChange(idx, "unitPrice", e.target.value)}
                                 placeholder="0.00"
-                                className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-2 py-1.5 bg-white dark:bg-slate-900 text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                className="w-full border border-slate-700/80 rounded-xl px-2 py-1.5 bg-slate-900/80 text-xs font-bold text-slate-100 focus:outline-none focus:border-cyan-400"
                                 min="0"
                               />
                             </div>
                             <div>
-                              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-0.5">মোট দেনা (৳)</label>
+                              <label className="block text-[10px] font-bold text-slate-400 mb-0.5">মোট দেনা (৳)</label>
                               <input
                                 type="number"
                                 value={item.amount || ""}
                                 onChange={(e) => handleDueItemChange(idx, "amount", e.target.value)}
                                 placeholder="0"
-                                className="w-full border border-amber-300 dark:border-amber-700 bg-amber-50/60 dark:bg-amber-950/60 rounded-lg px-2 py-1.5 text-xs font-black text-amber-900 dark:text-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                className="w-full border border-amber-500/60 bg-amber-950/60 rounded-xl px-2 py-1.5 text-xs font-black text-amber-300 focus:outline-none focus:border-amber-400"
                               />
                             </div>
                           </div>
@@ -4556,37 +4576,37 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                 </div>
 
                 {/* Left Subtotal Box */}
-                <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 space-y-1 text-xs">
-                  <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                <div className="mt-3 pt-3 border-t border-white/10 space-y-1 text-xs">
+                  <div className="flex justify-between text-slate-400">
                     <span>সাবেক ব্যালেন্স (Opening):</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200">৳ {Number(prevDayBalance || 0).toLocaleString()}</span>
+                    <span className="font-bold text-slate-200">৳ {Number(prevDayBalance || 0).toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                  <div className="flex justify-between text-slate-400">
                     <span>মহাজন ও অন্যান্য দেনা:</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200">+ ৳ {formLiveExtraDueSum.toLocaleString()}</span>
+                    <span className="font-bold text-slate-200">+ ৳ {formLiveExtraDueSum.toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 pt-1 border-t border-slate-300 dark:border-slate-700">
+                  <div className="flex justify-between text-xs sm:text-sm font-black text-slate-100 pt-1 border-t border-white/10">
                     <span>মোট জমা / Business with Due:</span>
-                    <span className="text-amber-800 dark:text-amber-300">৳ {formLiveBusinessWithDue.toLocaleString()}</span>
+                    <span className="text-amber-300">৳ {formLiveBusinessWithDue.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
 
               {/* RIGHT BOX: খাত / পাওনা আদায় (Collection) */}
-              <div className="bg-slate-50/90 dark:bg-slate-800/60 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-700/80 space-y-4 flex flex-col justify-between">
+              <div className="bg-slate-900/70 p-4 sm:p-5 rounded-2xl border border-white/10 space-y-4 flex flex-col justify-between">
                 <div className="space-y-3.5">
-                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-2">
-                    <span className="text-xs font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider">
+                  <div className="flex justify-between items-center border-b border-white/10 pb-2">
+                    <span className="text-xs font-black text-slate-100 uppercase tracking-wider">
                       খাত / পাওনা আদায় (Collection)
                     </span>
-                    <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/60">
+                    <span className="text-[11px] font-bold text-emerald-300 bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-500/40">
                       আদায় সাব-টোটাল: ৳ {formLiveCollectionSubtotal.toLocaleString()}
                     </span>
                   </div>
 
                   {/* Customer Due */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-xs font-bold text-slate-300 mb-1">
                       বাকি খাতা (Customer Due / বাকি)
                     </label>
                     <div className="relative">
@@ -4596,14 +4616,14 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                         value={totalDue || ""}
                         onChange={(e) => setTotalDue(Number(e.target.value))}
                         placeholder="0"
-                        className="w-full border border-slate-300 dark:border-slate-700 rounded-xl pl-8 pr-3 py-2 bg-white dark:bg-slate-800 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        className="w-full border border-slate-700/80 rounded-xl pl-8 pr-3 py-2 bg-slate-950/80 text-sm font-bold text-slate-100 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/40"
                       />
                     </div>
                   </div>
 
                   {/* Cash in Hand */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-xs font-bold text-slate-300 mb-1">
                       নগদ ক্যাশ (Cash in Hand / নগদ)
                     </label>
                     <div className="relative">
@@ -4613,15 +4633,15 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                         value={totalCash || ""}
                         onChange={(e) => setTotalCash(Number(e.target.value))}
                         placeholder="0"
-                        className="w-full border border-slate-300 dark:border-slate-700 rounded-xl pl-8 pr-3 py-2 bg-white dark:bg-slate-800 text-sm font-bold text-emerald-700 dark:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        className="w-full border border-emerald-500/60 rounded-xl pl-8 pr-3 py-2 bg-slate-950/80 text-sm font-bold text-emerald-400 focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/40"
                       />
                     </div>
                   </div>
 
                   {/* Dynamic Collection Items */}
                   {extraCollectionItems.length > 0 && (
-                    <div className="space-y-2 pt-2 border-t border-dashed border-slate-300 dark:border-slate-700">
-                      <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400">
+                    <div className="space-y-2 pt-2 border-t border-dashed border-white/10">
+                      <label className="block text-[11px] font-bold text-slate-300">
                         অন্যান্য পাওনা / আদায় খাতসমূহ ({extraCollectionItems.length} টি)
                       </label>
                       {extraCollectionItems.map((item, idx) => (
@@ -4631,7 +4651,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                             value={item.label}
                             onChange={(e) => handleCollectionItemChange(idx, "label", e.target.value)}
                             placeholder="খাতের নাম (যেমন: বাটা, শিপন)"
-                            className="flex-1 border border-slate-300 dark:border-slate-600 rounded-lg px-2.5 py-1.5 bg-white dark:bg-slate-800 text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                            className="flex-1 border border-slate-700/80 rounded-xl px-2.5 py-1.5 bg-slate-950/80 text-xs font-bold text-slate-100 focus:outline-none focus:border-cyan-400"
                           />
                           <div className="relative w-32">
                             <span className="absolute inset-y-0 left-0 pl-2 flex items-center text-slate-400 text-xs font-bold">৳</span>
@@ -4640,7 +4660,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                               value={item.amount || ""}
                               onChange={(e) => handleCollectionItemChange(idx, "amount", e.target.value)}
                               placeholder="0"
-                              className="w-full border border-slate-300 dark:border-slate-600 rounded-lg pl-6 pr-2 py-1.5 bg-white dark:bg-slate-800 text-xs font-black text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                              className="w-full border border-slate-700/80 rounded-xl pl-6 pr-2 py-1.5 bg-slate-950/80 text-xs font-black text-slate-100 focus:outline-none focus:border-cyan-400"
                             />
                           </div>
                           <button
@@ -4668,18 +4688,18 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                 </div>
 
                 {/* Right Subtotal Box */}
-                <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 space-y-1 text-xs">
-                  <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                <div className="mt-3 pt-3 border-t border-white/10 space-y-1 text-xs">
+                  <div className="flex justify-between text-slate-400">
                     <span>আদায় সাব-টোটাল (বাকি + ক্যাশ + অন্যান্য):</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200">৳ {formLiveCollectionSubtotal.toLocaleString()}</span>
+                    <span className="font-bold text-slate-200">৳ {formLiveCollectionSubtotal.toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                  <div className="flex justify-between text-slate-400">
                     <span>মজুদ ডিমের মূল্য (Stock Valuation):</span>
-                    <span className="font-bold text-amber-700 dark:text-amber-300">+ ৳ {formLiveStockValuation.toLocaleString()}</span>
+                    <span className="font-bold text-amber-300">+ ৳ {formLiveStockValuation.toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 pt-1 border-t border-slate-300 dark:border-slate-700">
+                  <div className="flex justify-between text-xs sm:text-sm font-black text-slate-100 pt-1 border-t border-white/10">
                     <span>সর্বমোট পাওনা / হিসাব:</span>
-                    <span className="text-amber-800 dark:text-amber-300">৳ {formLiveTotalCollection.toLocaleString()}</span>
+                    <span className="text-amber-300">৳ {formLiveTotalCollection.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
@@ -4687,14 +4707,14 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
           </div>
 
           {/* 4. Daily Expenses Section (দৈনিক খরচের খাত) */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 transition-colors">
-            <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3 mb-4 gap-2 flex-wrap">
+          <div className="glass-panel rounded-3xl p-5 sm:p-6 transition-colors space-y-4">
+            <div className="flex justify-between items-center border-b border-white/10 pb-3 mb-1 gap-2 flex-wrap">
               <div>
-                <h3 className="text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 flex items-center space-x-2">
-                  <Trash2 className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                <h3 className="text-sm sm:text-base font-black text-slate-100 flex items-center space-x-2">
+                  <Trash2 className="w-4 h-4 text-rose-400" />
                   <span>৪. দৈনিক খরচের খাত (Daily Expenses)</span>
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">নাস্তা, ট্রে-ফের, ভাঙ্গা ইত্যাদি খরচ যোগ করুন</p>
+                <p className="text-xs text-slate-400 font-medium mt-0.5">নাস্তা, ট্রে-ফের, ভাঙ্গা ইত্যাদি খরচ যোগ করুন</p>
               </div>
               <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
                 <div className="flex items-center space-x-1.5 sm:space-x-2">
@@ -4724,7 +4744,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
             </div>
  
             {/* Header row for columns on tablet/desktop */}
-            <div className="hidden sm:flex items-center gap-2.5 px-3 py-1.5 text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            <div className="hidden sm:flex items-center gap-2.5 px-3 py-1.5 text-[11px] font-black text-slate-400 uppercase tracking-wider">
               <div className="w-44 shrink-0">খরচের খাত (Category)</div>
               <div className="flex-1 min-w-0">বিবরণ / নোট / ভাঙ্গা ডিম (Details)</div>
               <div className="w-36 shrink-0">টাকার পরিমাণ (Amount)</div>
@@ -4735,10 +4755,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
               {expenses.map((exp, index) => (
                 <div
                   key={index}
-                  className={`p-3 border rounded-xl transition-all ${
+                  className={`p-3.5 border rounded-2xl transition-all ${
                     exp.isOverheadLinked
-                      ? "bg-amber-50/70 dark:bg-amber-950/40 border-amber-300 dark:border-amber-700/80 shadow-xs"
-                      : "bg-slate-50/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/80"
+                      ? "bg-amber-950/40 border-amber-500/40 shadow-sm"
+                      : "bg-slate-900/70 border-white/10 hover:border-white/20"
                   }`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center gap-2.5">
@@ -4747,7 +4767,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                       <select
                         value={exp.expenseType}
                         onChange={(e) => handleExpenseChange(index, "expenseType", e.target.value)}
-                        className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-2.5 py-1.5 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer"
+                        className="w-full border border-slate-700/80 rounded-xl px-2.5 py-1.5 bg-slate-950/80 text-xs font-bold text-slate-200 focus:outline-none focus:border-cyan-400 cursor-pointer"
                       >
                         {EXPENSE_PRESETS.map((preset) => (
                           <option key={preset} value={preset}>
@@ -4763,8 +4783,8 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                     {/* 2. Middle Column: Waste Egg Calculator if ভাঙ্গা, or Custom Name if Other, or optional Note */}
                     <div className="w-full sm:flex-1 min-w-0">
                       {exp.expenseType === "ভাঙ্গা" ? (
-                        <div className="flex items-center space-x-2 bg-rose-50/70 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 rounded-lg px-2.5 py-1">
-                          <span className="text-[11px] font-bold text-rose-700 dark:text-rose-300 shrink-0">
+                        <div className="flex items-center space-x-2 bg-rose-950/40 border border-rose-500/40 rounded-xl px-2.5 py-1">
+                          <span className="text-[11px] font-bold text-rose-300 shrink-0">
                             ভাঙ্গা ডিম:
                           </span>
                           <input
@@ -4772,11 +4792,11 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                             value={exp.wastedEggQty || ""}
                             onChange={(e) => handleExpenseChange(index, "wastedEggQty", Number(e.target.value))}
                             placeholder="সংখ্যা"
-                            className="w-20 border border-rose-300 dark:border-rose-700 rounded-md px-2 py-0.5 bg-white dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-rose-400"
+                            className="w-20 border border-rose-500/60 rounded-lg px-2 py-0.5 bg-slate-950/80 text-xs font-bold text-rose-200 focus:outline-none focus:border-rose-400"
                           />
                           <span className="text-[10px] text-slate-400 font-medium">টি</span>
                           {exp.wastedEggCost > 0 && (
-                            <span className="text-[10px] text-rose-600 dark:text-rose-400 font-bold ml-auto hidden md:inline">
+                            <span className="text-[10px] text-rose-400 font-bold ml-auto hidden md:inline">
                               (ক্ষতি: ৳{exp.wastedEggCost.toLocaleString()})
                             </span>
                           )}
@@ -4787,7 +4807,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                           value={exp.customName || ""}
                           onChange={(e) => handleExpenseChange(index, "customName", e.target.value)}
                           placeholder="খরচের নাম / বিবরণ (যেমন: bishu, hair cut, dawat...)"
-                          className="w-full border border-amber-300 dark:border-amber-700/80 rounded-lg px-2.5 py-1.5 bg-amber-50/40 dark:bg-amber-950/20 text-xs font-bold text-amber-900 dark:text-amber-200 placeholder:text-amber-600/50 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                          className="w-full border border-amber-500/50 rounded-xl px-2.5 py-1.5 bg-amber-950/30 text-xs font-bold text-amber-200 placeholder:text-amber-500/60 focus:outline-none focus:border-amber-400"
                         />
                       ) : (
                         <input
@@ -4795,7 +4815,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                           value={exp.customName || ""}
                           onChange={(e) => handleExpenseChange(index, "customName", e.target.value)}
                           placeholder="মন্তব্য / বিবরণ (ঐচ্ছিক)"
-                          className="w-full border border-slate-200 dark:border-slate-700/60 rounded-lg px-2.5 py-1.5 bg-white/70 dark:bg-slate-800/60 text-xs text-slate-700 dark:text-slate-300 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-amber-400"
+                          className="w-full border border-slate-700/80 rounded-xl px-2.5 py-1.5 bg-slate-950/80 text-xs font-bold text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-cyan-400"
                         />
                       )}
                     </div>
@@ -4808,7 +4828,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                         value={exp.amount || ""}
                         onChange={(e) => handleExpenseChange(index, "amount", Number(e.target.value))}
                         placeholder="টাকা"
-                        className="w-full border border-slate-300 dark:border-slate-600 rounded-lg pl-6 pr-2.5 py-1.5 bg-white dark:bg-slate-800 text-xs font-black text-rose-700 dark:text-rose-400 focus:outline-none focus:ring-1 focus:ring-rose-500"
+                        className="w-full border border-rose-500/50 rounded-xl pl-6 pr-2.5 py-1.5 bg-slate-950/80 text-xs font-black text-rose-400 focus:outline-none focus:border-rose-400"
                       />
                     </div>
 
@@ -4865,15 +4885,15 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
 
                   {/* Dropdown for Overhead / Savings classification */}
                   {exp.isOverheadLinked && (
-                    <div className="mt-2.5 pt-2.5 border-t border-amber-200/80 dark:border-amber-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white/70 dark:bg-slate-900/70 p-2.5 rounded-xl border border-amber-200 dark:border-amber-800/40">
-                      <div className="flex items-center space-x-1.5 text-xs font-bold text-amber-900 dark:text-amber-200">
-                        <Link2 className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                    <div className="mt-2.5 pt-2.5 border-t border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-950/70 p-2.5 rounded-xl border border-amber-500/30">
+                      <div className="flex items-center space-x-1.5 text-xs font-bold text-amber-300">
+                        <Link2 className="w-4 h-4 text-amber-400 shrink-0" />
                         <span>ওভারহেড ও সঞ্চয় খতিয়ান (ফান্ড নির্বাচন):</span>
                       </div>
                       <select
                         value={exp.overheadCategory || (exp.expenseType === "সমিতি" ? "savings_shop" : "extra")}
                         onChange={(e) => handleExpenseChange(index, "overheadCategory", e.target.value)}
-                        className="text-xs font-bold border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-800 rounded-lg px-3 py-1.5 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
+                        className="text-xs font-bold border border-amber-500/50 bg-slate-900 rounded-xl px-3 py-1.5 text-slate-100 focus:outline-none focus:border-amber-400 cursor-pointer"
                       >
                         <optgroup label="ব্যবসায়িক সঞ্চয় ও তহবিল (২টি সংরক্ষিত ফান্ড)">
                           <option value="savings_shop">🏪 সমিতি === দোকানে সঞ্চয় (In-Shop Savings)</option>
@@ -4901,59 +4921,59 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
 
             {/* Live Overhead & Savings Breakdown Badge if any linked */}
             {formLiveOverheadBreakdown.totalLinked > 0 && (
-              <div className="mt-3 p-3.5 bg-emerald-50/90 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800/70 rounded-xl space-y-2">
-                <div className="flex justify-between items-center text-xs font-black text-emerald-900 dark:text-emerald-200">
+              <div className="glass-panel-emerald rounded-2xl p-4 space-y-2">
+                <div className="flex justify-between items-center text-xs font-black text-emerald-300">
                   <span className="flex items-center space-x-1.5">
-                    <Link2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <Link2 className="w-4 h-4 text-emerald-400" />
                     <span>কর্মচারী, ভাড়া ও সঞ্চয় ফান্ডে স্বয়ংক্রিয় যুক্ত হবে ({formLiveOverheadBreakdown.totalLinkedCount} টি এন্ট্রি):</span>
                   </span>
-                  <span className="text-sm font-black text-emerald-700 dark:text-emerald-300">
+                  <span className="text-sm font-black text-emerald-300">
                     ৳ {formLiveOverheadBreakdown.totalLinked.toLocaleString()}
                   </span>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[11px] font-semibold border-t border-emerald-200/60 dark:border-emerald-800/40">
-                  <div className="bg-white/70 dark:bg-slate-900/60 p-1.5 rounded-lg">
-                    <span className="text-slate-500 dark:text-slate-400 block text-[10px]">কর্মচারী ও ভাড়া:</span>
-                    <strong className="text-slate-900 dark:text-slate-100">৳ {formLiveOverheadBreakdown.overheadSum.toLocaleString()}</strong>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[11px] font-semibold border-t border-emerald-500/30">
+                  <div className="bg-slate-900/70 p-2 rounded-xl border border-white/10">
+                    <span className="text-slate-400 block text-[10px]">কর্মচারী ও ভাড়া:</span>
+                    <strong className="text-slate-100">৳ {formLiveOverheadBreakdown.overheadSum.toLocaleString()}</strong>
                   </div>
-                  <div className="bg-white/70 dark:bg-slate-900/60 p-1.5 rounded-lg">
-                    <span className="text-emerald-600 dark:text-emerald-400 block text-[10px]">সমিতি / দোকানে সঞ্চয়:</span>
-                    <strong className="text-emerald-700 dark:text-emerald-300">৳ {formLiveOverheadBreakdown.savingsShopSum.toLocaleString()}</strong>
+                  <div className="bg-slate-900/70 p-2 rounded-xl border border-white/10">
+                    <span className="text-emerald-400 block text-[10px]">সমিতি / দোকানে সঞ্চয়:</span>
+                    <strong className="text-emerald-300">৳ {formLiveOverheadBreakdown.savingsShopSum.toLocaleString()}</strong>
                   </div>
-                  <div className="bg-white/70 dark:bg-slate-900/60 p-1.5 rounded-lg">
-                    <span className="text-blue-600 dark:text-blue-400 block text-[10px]">ব্যাংকে সঞ্চয়:</span>
-                    <strong className="text-blue-700 dark:text-blue-300">৳ {formLiveOverheadBreakdown.savingsBankSum.toLocaleString()}</strong>
+                  <div className="bg-slate-900/70 p-2 rounded-xl border border-white/10">
+                    <span className="text-cyan-400 block text-[10px]">ব্যাংকে সঞ্চয়:</span>
+                    <strong className="text-cyan-300">৳ {formLiveOverheadBreakdown.savingsBankSum.toLocaleString()}</strong>
                   </div>
-                  <div className="bg-white/70 dark:bg-slate-900/60 p-1.5 rounded-lg">
-                    <span className="text-amber-600 dark:text-amber-400 block text-[10px]">সঞ্চয় হতে বিল পরিশোধ:</span>
-                    <strong className="text-amber-700 dark:text-amber-300">৳ {(formLiveOverheadBreakdown.billsFromShopSavingsSum + formLiveOverheadBreakdown.billsFromBankSavingsSum).toLocaleString()}</strong>
+                  <div className="bg-slate-900/70 p-2 rounded-xl border border-white/10">
+                    <span className="text-amber-400 block text-[10px]">সঞ্চয় হতে বিল পরিশোধ:</span>
+                    <strong className="text-amber-300">৳ {(formLiveOverheadBreakdown.billsFromShopSavingsSum + formLiveOverheadBreakdown.billsFromBankSavingsSum).toLocaleString()}</strong>
                   </div>
                 </div>
               </div>
             )}
 
             {/* Section 4 Footer: মোট খরচ (B43) & Total (B44 = B25 + B43) matching spreadsheet format */}
-            <div className="mt-4 pt-3.5 border-t border-slate-200 dark:border-slate-700/80 space-y-2">
-              <div className="bg-slate-50/90 dark:bg-slate-800/60 p-3.5 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-700/80 space-y-2">
-                <div className="flex justify-between items-center text-xs text-slate-600 dark:text-slate-400 font-medium">
+            <div className="mt-4 pt-3.5 border-t border-white/10 space-y-2">
+              <div className="bg-slate-900/80 p-3.5 sm:p-4 rounded-2xl border border-white/10 space-y-2">
+                <div className="flex justify-between items-center text-xs text-slate-400 font-medium">
                   <span>সর্বমোট পাওনা (B25):</span>
-                  <span className="font-bold text-slate-800 dark:text-slate-200">৳ {formLiveTotalCollection.toLocaleString()}</span>
+                  <span className="font-bold text-slate-200">৳ {formLiveTotalCollection.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between items-center text-xs text-slate-600 dark:text-slate-400 font-medium">
+                <div className="flex justify-between items-center text-xs text-slate-400 font-medium">
                   <span className="flex items-center space-x-1.5">
-                    <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                    <Trash2 className="w-3.5 h-3.5 text-rose-400" />
                     <span>মোট খরচ (Total Expense - B43):</span>
                   </span>
-                  <span className="font-bold text-rose-700 dark:text-rose-400">+ ৳ {formLiveTotalExpenses.toLocaleString()}</span>
+                  <span className="font-bold text-rose-400">+ ৳ {formLiveTotalExpenses.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between items-center pt-2 border-t-2 border-slate-300 dark:border-slate-700 text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">
+                <div className="flex justify-between items-center pt-2 border-t border-white/10 text-sm sm:text-base font-black text-slate-100">
                   <div className="flex items-center space-x-2">
-                    <span className="text-amber-900 dark:text-amber-300">Total (খরচসহ সর্বমোট - B44):</span>
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold bg-slate-200/80 dark:bg-slate-700 px-2 py-0.5 rounded-full hidden sm:inline">
+                    <span className="text-amber-300">Total (খরচসহ সর্বমোট - B44):</span>
+                    <span className="text-[10px] text-slate-400 font-semibold bg-slate-800 px-2 py-0.5 rounded-full hidden sm:inline border border-white/10">
                       B25 + B43
                     </span>
                   </div>
-                  <span className="text-amber-900 dark:text-amber-300 text-base sm:text-lg font-black tracking-tight">
+                  <span className="text-amber-300 text-base sm:text-lg font-black tracking-tight">
                     ৳ {formLiveTotalWithExpenses.toLocaleString()}
                   </span>
                 </div>
@@ -4962,38 +4982,38 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
           </div>
 
           {/* 5. Live Real-time Summary Card & Submit */}
-          <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white rounded-2xl p-4 sm:p-6 shadow-xl border border-slate-700/80 space-y-4 sm:space-y-6">
+          <div className="glass-panel rounded-3xl p-5 sm:p-7 shadow-2xl space-y-5 sm:space-y-6">
             <div>
               <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-amber-300 uppercase tracking-widest flex items-center space-x-1.5">
+                <span className="text-xs font-black text-amber-300 uppercase tracking-widest flex items-center space-x-2">
                   <Sparkles className="w-4 h-4 text-amber-400" />
                   <span>লাইভ হালখাতা সামারি (Live Daily Balance)</span>
                 </span>
-                <span className="text-[11px] font-bold text-slate-300 bg-white/10 px-2.5 py-0.5 rounded-full">
+                <span className="text-[11px] font-bold text-cyan-300 bg-slate-900/90 border border-cyan-500/50 px-3 py-0.5 rounded-full">
                   শিট ফর্মুলা সিঙ্ক
                 </span>
               </div>
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              <div className="bg-white/5 border border-white/10 p-3 sm:p-3.5 rounded-xl">
-                <span className="text-[10px] sm:text-xs text-slate-400 block font-medium">সর্বমোট পাওনা (B25)</span>
-                <span className="text-base sm:text-lg font-black text-amber-400 mt-0.5 block">৳ {formLiveTotalCollection.toLocaleString()}</span>
+              <div className="bg-slate-900/80 border border-amber-400/30 p-3.5 sm:p-4 rounded-2xl shadow-sm">
+                <span className="text-[10px] sm:text-xs text-slate-400 block font-bold">সর্বমোট পাওনা (B25)</span>
+                <span className="text-base sm:text-xl font-black text-amber-300 mt-1 block tracking-tight">৳ {formLiveTotalCollection.toLocaleString()}</span>
               </div>
 
-              <div className="bg-white/5 border border-white/10 p-3 sm:p-3.5 rounded-xl">
-                <span className="text-[10px] sm:text-xs text-slate-400 block font-medium">মোট খরচ (B43)</span>
-                <span className="text-base sm:text-lg font-black text-rose-400 mt-0.5 block">৳ {formLiveTotalExpenses.toLocaleString()}</span>
+              <div className="bg-slate-900/80 border border-rose-500/30 p-3.5 sm:p-4 rounded-2xl shadow-sm">
+                <span className="text-[10px] sm:text-xs text-slate-400 block font-bold">মোট খরচ (B43)</span>
+                <span className="text-base sm:text-xl font-black text-rose-400 mt-1 block tracking-tight">৳ {formLiveTotalExpenses.toLocaleString()}</span>
               </div>
 
-              <div className="bg-white/5 border border-white/10 p-3 sm:p-3.5 rounded-xl">
-                <span className="text-[10px] sm:text-xs text-slate-400 block font-medium">মোট জমা / দায় (E24)</span>
-                <span className="text-base sm:text-lg font-black text-slate-200 mt-0.5 block">৳ {formLiveBusinessWithDue.toLocaleString()}</span>
+              <div className="bg-slate-900/80 border border-cyan-400/30 p-3.5 sm:p-4 rounded-2xl shadow-sm">
+                <span className="text-[10px] sm:text-xs text-slate-400 block font-bold">মোট জমা / দায় (E24)</span>
+                <span className="text-base sm:text-xl font-black text-cyan-300 mt-1 block tracking-tight">৳ {formLiveBusinessWithDue.toLocaleString()}</span>
               </div>
 
-              <div className="bg-gradient-to-br from-amber-500/20 to-emerald-500/20 border border-emerald-500/40 p-3 sm:p-3.5 rounded-xl">
+              <div className="bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-400/50 p-3.5 sm:p-4 rounded-2xl shadow-sm">
                 <span className="text-[10px] sm:text-xs text-emerald-300 block font-bold">মার্জিন / নিট লাভ (G5)</span>
-                <span className="text-base sm:text-xl font-black text-emerald-400 mt-0.5 block">
+                <span className="text-base sm:text-xl font-black text-emerald-300 mt-1 block tracking-tight">
                   ৳ {formLiveMargin.toLocaleString()}
                 </span>
               </div>
@@ -5003,7 +5023,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-gradient-to-r from-cyan-400 via-cyan-400 to-sky-400 hover:from-cyan-300 hover:to-sky-300 text-slate-950 font-black text-sm sm:text-base py-3.5 px-6 rounded-full shadow-[0_0_24px_rgba(0,200,255,0.45)] border border-cyan-300/60 transition-all flex items-center justify-center space-x-2.5 active:scale-[0.99] disabled:opacity-50 cursor-pointer"
+              className="w-full bg-gradient-to-r from-cyan-400 via-cyan-400 to-sky-400 hover:from-cyan-300 hover:to-sky-300 text-slate-950 font-black text-sm sm:text-base py-3.5 px-6 rounded-full shadow-[0_0_25px_rgba(0,200,255,0.45)] border border-cyan-300/60 transition-all flex items-center justify-center space-x-2.5 active:scale-[0.99] disabled:opacity-50 cursor-pointer"
             >
               {isSubmitting ? (
                 <>

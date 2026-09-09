@@ -336,25 +336,25 @@ Return ONLY the raw valid JSON without markdown wrapping or comments.`;
 
       {/* Modal Dialog */}
       {isOpen && mounted && createPortal(
-        <div className="fixed inset-0 z-[99999] overflow-y-auto bg-black/80 backdrop-blur-sm p-3 sm:p-6 flex items-center justify-center animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[99999] overflow-y-auto bg-slate-950/80 backdrop-blur-xl p-3 sm:p-6 flex items-center justify-center animate-in fade-in duration-200">
           <div
-            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-4xl w-full my-auto flex flex-col shadow-2xl overflow-hidden max-h-[90vh]"
+            className="glass-panel rounded-3xl max-w-4xl w-full my-auto flex flex-col shadow-2xl overflow-hidden max-h-[90vh] border border-white/15"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="px-4 sm:px-5 py-3 sm:py-3.5 bg-gradient-to-r from-amber-600 via-amber-600 to-amber-700 dark:from-slate-900 dark:via-slate-850 dark:to-slate-900 border-b border-amber-500/30 dark:border-slate-800 text-white flex justify-between items-center shrink-0">
+            <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-slate-900/90 border-b border-white/10 text-white flex justify-between items-center shrink-0">
               <div className="flex items-center space-x-2.5">
-                <div className="p-2 bg-white/15 dark:bg-amber-500/20 rounded-xl border border-white/20 text-white">
-                  <Camera className="w-5 h-5" />
+                <div className="p-2 bg-cyan-500/15 rounded-2xl border border-cyan-400/30 text-cyan-300 shadow-[0_0_12px_rgba(0,200,255,0.25)]">
+                  <Camera className="w-5 h-5 text-cyan-300" />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-black tracking-tight flex items-center gap-2">
+                  <h3 className="text-base sm:text-lg font-black tracking-tight text-slate-100 flex items-center gap-2">
                     খাতার ছবি থেকে JSON মেকার & OCR
-                    <span className="bg-amber-400/30 text-amber-100 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    <span className="bg-cyan-950/80 text-cyan-300 border border-cyan-500/50 text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-[0_0_8px_rgba(0,200,255,0.2)]">
                       Gemini Vision
                     </span>
                   </h3>
-                  <p className="text-xs text-amber-100/90 dark:text-slate-400">
+                  <p className="text-xs text-slate-400 mt-0.5">
                     হাতে লেখা হালখাতা খাতার ছবি আপলোড করে চোখের পলকে নিখুঁত JSON বানান বা শিটে সেভ করুন
                   </p>
                 </div>
@@ -363,21 +363,21 @@ Return ONLY the raw valid JSON without markdown wrapping or comments.`;
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="p-1.5 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-white/10 transition-colors cursor-pointer active:scale-95"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/80 px-4 py-2 gap-2 text-xs font-bold">
+            <div className="flex border-b border-white/10 bg-slate-900/70 px-4 py-2.5 gap-2 text-xs font-bold overflow-x-auto">
               <button
                 type="button"
                 onClick={() => setActiveTab("scan")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
                   activeTab === "scan"
-                    ? "bg-amber-500 text-white shadow-sm"
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800"
+                    ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 font-black shadow-[0_0_12px_rgba(0,200,255,0.4)]"
+                    : "text-slate-300 hover:text-cyan-300 hover:bg-slate-800/60"
                 }`}
               >
                 <Sparkles className="w-3.5 h-3.5" />
@@ -387,10 +387,10 @@ Return ONLY the raw valid JSON without markdown wrapping or comments.`;
               <button
                 type="button"
                 onClick={() => setActiveTab("edit")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
                   activeTab === "edit"
-                    ? "bg-amber-500 text-white shadow-sm"
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800"
+                    ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 font-black shadow-[0_0_12px_rgba(0,200,255,0.4)]"
+                    : "text-slate-300 hover:text-cyan-300 hover:bg-slate-800/60"
                 }`}
               >
                 <Edit3 className="w-3.5 h-3.5" />
@@ -400,10 +400,10 @@ Return ONLY the raw valid JSON without markdown wrapping or comments.`;
               <button
                 type="button"
                 onClick={() => setActiveTab("json")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
                   activeTab === "json"
-                    ? "bg-amber-500 text-white shadow-sm"
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800"
+                    ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 font-black shadow-[0_0_12px_rgba(0,200,255,0.4)]"
+                    : "text-slate-300 hover:text-cyan-300 hover:bg-slate-800/60"
                 }`}
               >
                 <FileCode className="w-3.5 h-3.5" />

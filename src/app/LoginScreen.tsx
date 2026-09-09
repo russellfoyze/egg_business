@@ -95,19 +95,19 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
         </div>
 
         {/* Login Box */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 shadow-xl border border-slate-200/80 dark:border-slate-800 space-y-5">
-          <div className="border-b border-slate-100 dark:border-slate-800 pb-3 text-center">
-            <h2 className="text-base font-black text-slate-800 dark:text-slate-200">
+        <div className="glass-panel rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5">
+          <div className="border-b border-white/10 pb-3 text-center">
+            <h2 className="text-base sm:text-lg font-black text-slate-100">
               অ্যাকাউন্টে লগইন করুন
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-slate-400 mt-0.5 font-medium">
               আপনার ইউজারনেম ও পাসওয়ার্ড দিয়ে প্রবেশ করুন
             </p>
           </div>
 
           {error && (
-            <div className="p-3 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 rounded-2xl flex items-center space-x-2 text-rose-800 dark:text-rose-300 text-xs font-bold animate-shake">
-              <AlertCircle className="w-4 h-4 shrink-0" />
+            <div className="p-3 bg-rose-950/70 border border-rose-500/50 rounded-2xl flex items-center space-x-2 text-rose-300 text-xs font-bold animate-shake">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
               <span>{error}</span>
             </div>
           )}
@@ -115,17 +115,17 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
           <form onSubmit={(e) => handleLogin(e)} className="space-y-4">
             {/* Username Input */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+              <label className="block text-xs font-bold text-slate-300 mb-1.5">
                 ইউজারনেম (Username)
               </label>
               <div className="relative">
-                <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <User className="w-4 h-4 text-cyan-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="যেমন: russellfoyze, billal, kayes, juel"
-                  className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50/70 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500 placeholder-slate-400 dark:placeholder-slate-500"
+                  className="w-full pl-10 pr-3.5 py-2.5 bg-slate-950/80 border border-slate-700/80 rounded-xl text-sm font-bold text-slate-100 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/40 placeholder-slate-500"
                   required
                 />
               </div>
@@ -133,23 +133,23 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
 
             {/* Password Input */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+              <label className="block text-xs font-bold text-slate-300 mb-1.5">
                 পাসওয়ার্ড (Password)
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Lock className="w-4 h-4 text-cyan-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="পাসওয়ার্ড লিখুন"
-                  className="w-full pl-10 pr-10 py-2.5 bg-slate-50/70 dark:bg-slate-800/70 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500 placeholder-slate-400 dark:placeholder-slate-500"
+                  className="w-full pl-10 pr-10 py-2.5 bg-slate-950/80 border border-slate-700/80 rounded-xl text-sm font-bold text-slate-100 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/40 placeholder-slate-500"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-300 p-1"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -168,8 +168,8 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
           </form>
 
           {/* 1-Click Fast Login Shortcuts */}
-          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
-            <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 text-center flex items-center justify-center gap-1">
+          <div className="pt-3 border-t border-white/10 space-y-2">
+            <p className="text-[11px] font-bold text-slate-400 text-center flex items-center justify-center gap-1">
               <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
               <span>১-ক্লিকে দ্রুত লগইন করুন (ডেমো একাউন্টস)</span>
             </p>
@@ -179,15 +179,15 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
               <button
                 type="button"
                 onClick={() => handleQuickLogin("russellfoyze")}
-                className="flex items-center justify-between p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/60 hover:border-cyan-500/50 transition-all text-left cursor-pointer group"
+                className="flex items-center justify-between p-3 rounded-2xl border border-white/10 bg-slate-950/60 hover:border-cyan-500/50 hover:bg-slate-900/60 transition-all text-left cursor-pointer group"
               >
                 <div className="flex items-center space-x-2.5">
                   <span className="text-lg">👑</span>
                   <div>
-                    <p className="text-xs font-black text-slate-900 dark:text-slate-100 group-hover:text-cyan-400">
-                      russellfoyze <span className="font-semibold text-slate-500">(অ্যাডমিন)</span>
+                    <p className="text-xs font-black text-slate-100 group-hover:text-cyan-400">
+                      russellfoyze <span className="font-semibold text-slate-400">(অ্যাডমিন)</span>
                     </p>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400">ড্যাশবোর্ড, হালখাতা ও মাসিক খরচ সব অ্যাক্সেস</p>
+                    <p className="text-[10px] text-slate-400">ড্যাশবোর্ড, হালখাতা ও মাসিক খরচ সব অ্যাক্সেস</p>
                   </div>
                 </div>
                 <span className="text-[10px] font-black text-cyan-300 bg-slate-900 border border-cyan-500/60 px-3 py-1 rounded-full shadow-[0_0_8px_rgba(0,200,255,0.2)] group-hover:bg-gradient-to-r group-hover:from-cyan-400 group-hover:to-sky-400 group-hover:text-slate-950 transition-all">
@@ -199,15 +199,15 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
               <button
                 type="button"
                 onClick={() => handleQuickLogin("billal")}
-                className="flex items-center justify-between p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/60 hover:border-cyan-500/50 transition-all text-left cursor-pointer group"
+                className="flex items-center justify-between p-3 rounded-2xl border border-white/10 bg-slate-950/60 hover:border-cyan-500/50 hover:bg-slate-900/60 transition-all text-left cursor-pointer group"
               >
                 <div className="flex items-center space-x-2.5">
                   <span className="text-lg">👔</span>
                   <div>
-                    <p className="text-xs font-black text-slate-900 dark:text-slate-100 group-hover:text-cyan-400">
-                      billal <span className="font-semibold text-slate-500">(ম্যানেজার)</span>
+                    <p className="text-xs font-black text-slate-100 group-hover:text-cyan-400">
+                      billal <span className="font-semibold text-slate-400">(ম্যানেজার)</span>
                     </p>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400">হালখাতা এন্ট্রি ও কর্মচারী ও মাসিক খরচ অ্যাক্সেস</p>
+                    <p className="text-[10px] text-slate-400">হালখাতা এন্ট্রি ও কর্মচারী ও মাসিক খরচ অ্যাক্সেস</p>
                   </div>
                 </div>
                 <span className="text-[10px] font-black text-cyan-300 bg-slate-900 border border-cyan-500/60 px-3 py-1 rounded-full shadow-[0_0_8px_rgba(0,200,255,0.2)] group-hover:bg-gradient-to-r group-hover:from-cyan-400 group-hover:to-sky-400 group-hover:text-slate-950 transition-all">
@@ -219,15 +219,15 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
               <button
                 type="button"
                 onClick={() => handleQuickLogin("kayes")}
-                className="flex items-center justify-between p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/60 hover:border-cyan-500/50 transition-all text-left cursor-pointer group"
+                className="flex items-center justify-between p-3 rounded-2xl border border-white/10 bg-slate-950/60 hover:border-cyan-500/50 hover:bg-slate-900/60 transition-all text-left cursor-pointer group"
               >
                 <div className="flex items-center space-x-2.5">
                   <span className="text-lg">💼</span>
                   <div>
-                    <p className="text-xs font-black text-slate-900 dark:text-slate-100 group-hover:text-cyan-400">
-                      kayes <span className="font-semibold text-slate-500">(ম্যানেজার)</span>
+                    <p className="text-xs font-black text-slate-100 group-hover:text-cyan-400">
+                      kayes <span className="font-semibold text-slate-400">(ম্যানেজার)</span>
                     </p>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400">ড্যাশবোর্ড, হালখাতা ও মাসিক খরচ অ্যাক্সেস</p>
+                    <p className="text-[10px] text-slate-400">ড্যাশবোর্ড, হালখাতা ও মাসিক খরচ অ্যাক্সেস</p>
                   </div>
                 </div>
                 <span className="text-[10px] font-black text-cyan-300 bg-slate-900 border border-cyan-500/60 px-3 py-1 rounded-full shadow-[0_0_8px_rgba(0,200,255,0.2)] group-hover:bg-gradient-to-r group-hover:from-cyan-400 group-hover:to-sky-400 group-hover:text-slate-950 transition-all">
@@ -239,15 +239,15 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
               <button
                 type="button"
                 onClick={() => handleQuickLogin("juel")}
-                className="flex items-center justify-between p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/60 hover:border-cyan-500/50 transition-all text-left cursor-pointer group"
+                className="flex items-center justify-between p-3 rounded-2xl border border-white/10 bg-slate-950/60 hover:border-cyan-500/50 hover:bg-slate-900/60 transition-all text-left cursor-pointer group"
               >
                 <div className="flex items-center space-x-2.5">
                   <span className="text-lg">👁️</span>
                   <div>
-                    <p className="text-xs font-black text-slate-900 dark:text-slate-100 group-hover:text-cyan-400">
-                      juel <span className="font-semibold text-slate-500">(ভিউয়ার)</span>
+                    <p className="text-xs font-black text-slate-100 group-hover:text-cyan-400">
+                      juel <span className="font-semibold text-slate-400">(ভিউয়ার)</span>
                     </p>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400">শুধুমাত্র ড্যাশবোর্ড ও রিপোর্ট দেখার সুবিধা</p>
+                    <p className="text-[10px] text-slate-400">শুধুমাত্র ড্যাশবোর্ড ও রিপোর্ট দেখার সুবিধা</p>
                   </div>
                 </div>
                 <span className="text-[10px] font-black text-cyan-300 bg-slate-900 border border-cyan-500/60 px-3 py-1 rounded-full shadow-[0_0_8px_rgba(0,200,255,0.2)] group-hover:bg-gradient-to-r group-hover:from-cyan-400 group-hover:to-sky-400 group-hover:text-slate-950 transition-all">
