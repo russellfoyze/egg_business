@@ -1662,14 +1662,17 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
     return (
       <div className="min-h-screen flex flex-col">
         {/* 🌟 Top Navigation Bar */}
-        <header className="bg-gradient-to-r from-amber-600 via-amber-600 to-amber-700 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 text-white shadow-md sticky top-0 z-50 backdrop-blur-md border-b border-amber-700/50 dark:border-slate-800 transition-colors duration-200">
-          <div className="w-full max-w-none mx-auto px-2 sm:px-6 lg:px-[100px] py-2 sm:py-3 flex justify-between items-center gap-2">
-            <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+        <header className="glass-panel sticky top-0 z-50 text-slate-900 dark:text-white shadow-lg border-b border-slate-200/80 dark:border-white/10 transition-colors duration-200">
+          <div className="w-full max-w-none mx-auto px-2 sm:px-6 lg:px-[100px] py-2.5 sm:py-3 flex justify-between items-center gap-2">
+            <div className="flex items-center space-x-2 shrink-0 min-w-0">
+              <div className="w-9 h-9 rounded-2xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center text-cyan-600 dark:text-cyan-300 shadow-[0_0_12px_rgba(0,200,255,0.25)] shrink-0">
+                <Egg className="w-5 h-5" />
+              </div>
               <div>
-                <span className="text-sm sm:text-lg font-black tracking-tight leading-none whitespace-nowrap block">
+                <span className="text-sm sm:text-lg font-black tracking-tight leading-none whitespace-nowrap block text-slate-900 dark:text-slate-100">
                   M.A Khalek Sarker
                 </span>
-                <p className="text-[10px] text-amber-200/90 dark:text-slate-400 font-medium hidden md:block mt-0.5">
+                <p className="text-[10px] text-cyan-700 dark:text-cyan-300/80 font-medium hidden md:block mt-0.5">
                   এম. এ. খালেক সরকার — ডিমের পাইকারি আড়ত ও ডিজিটাল খতিয়ান
                 </p>
               </div>
@@ -1677,8 +1680,8 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
 
             <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
               <ThemeToggle />
-              <span className="inline-flex items-center gap-1.5 bg-amber-500/20 dark:bg-slate-800 text-amber-100 dark:text-amber-300 text-xs font-bold px-2.5 py-1.5 rounded-xl border border-white/20">
-                <UserCheck className="w-3.5 h-3.5 text-amber-300" />
+              <span className="inline-flex items-center gap-1.5 bg-cyan-500/15 dark:bg-slate-900/80 text-cyan-700 dark:text-cyan-300 text-xs font-bold px-3 py-1.5 rounded-full border border-cyan-400/30 shadow-xs">
+                <UserCheck className="w-3.5 h-3.5" />
                 <span>লগইন পেজ</span>
               </span>
             </div>
@@ -1707,18 +1710,18 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
   return (
     <div className="min-h-screen flex flex-col">
       {/* 🌟 Top Navigation Bar with Refresh & Login/Profile */}
-      <header className="glass-panel sticky top-0 z-50 text-white shadow-lg border-b border-white/10 transition-colors duration-200">
+      <header className="glass-panel sticky top-0 z-50 text-slate-900 dark:text-white shadow-lg border-b border-slate-200/80 dark:border-white/10 transition-colors duration-200">
         <div className="w-full max-w-none mx-auto px-2 sm:px-6 lg:px-[100px] py-2.5 sm:py-3 flex justify-between items-center gap-2">
           {/* Branding */}
           <div className="flex items-center space-x-2 shrink-0 min-w-0">
-            <div className="w-9 h-9 rounded-2xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center text-cyan-300 shadow-[0_0_12px_rgba(0,200,255,0.25)] shrink-0">
-              <Egg className="w-5 h-5 text-cyan-300" />
+            <div className="w-9 h-9 rounded-2xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center text-cyan-600 dark:text-cyan-300 shadow-[0_0_12px_rgba(0,200,255,0.25)] shrink-0">
+              <Egg className="w-5 h-5 text-cyan-600 dark:text-cyan-300" />
             </div>
             <div>
-              <span className="text-sm sm:text-lg font-black tracking-tight leading-none whitespace-nowrap block text-slate-100">
+              <span className="text-sm sm:text-lg font-black tracking-tight leading-none whitespace-nowrap block text-slate-900 dark:text-slate-100">
                 M.A Khalek Sarker
               </span>
-              <p className="text-[10px] text-cyan-300/80 font-medium hidden md:block mt-0.5">
+              <p className="text-[10px] text-cyan-700 dark:text-cyan-300/80 font-medium hidden md:block mt-0.5">
                 এম. এ. খালেক সরকার — ডিমের পাইকারি আড়ত ও ডিজিটাল খতিয়ান
               </p>
             </div>

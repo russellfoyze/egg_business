@@ -48,19 +48,19 @@ export default function ThemeToggle() {
       className={`relative flex items-center h-8 w-16 p-1 rounded-full border transition-all duration-300 cursor-pointer shadow-inner select-none ${
         isDark
           ? "bg-slate-900/90 border-slate-700/80 hover:border-amber-400/40 shadow-slate-950/60"
-          : "bg-amber-950/30 border-amber-300/30 hover:border-amber-200/60 shadow-amber-950/30"
+          : "bg-amber-100/90 border-amber-300/80 hover:border-amber-400 shadow-amber-200/50"
       }`}
     >
       {/* Background Icons */}
       <div className="w-full flex justify-between items-center px-1 text-[11px] pointer-events-none">
         <Sun
           className={`w-3.5 h-3.5 transition-all duration-300 ${
-            !isDark ? "text-amber-300 scale-100 opacity-100" : "text-slate-500 scale-75 opacity-40"
+            !isDark ? "text-amber-500 scale-100 opacity-100" : "text-slate-500 scale-75 opacity-40"
           }`}
         />
         <Moon
           className={`w-3.5 h-3.5 transition-all duration-300 ${
-            isDark ? "text-indigo-300 scale-100 opacity-100" : "text-amber-200/50 scale-75 opacity-40"
+            isDark ? "text-indigo-300 scale-100 opacity-100" : "text-amber-400/60 scale-75 opacity-40"
           }`}
         />
       </div>
