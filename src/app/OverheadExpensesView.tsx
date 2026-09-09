@@ -448,8 +448,8 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
         </div>
       </div>
 
-      {/* 2. Top Summary Metric Cards (সর্বমোট সঞ্চয় জমা, কর্মচারী বেতন, মাসিক খরচ, দোকানের ক্যাশ ও ব্যক্তিগত খরচ) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3.5 sm:gap-4">
+      {/* 2. Top Summary Fund & Cash Cards (সর্বমোট নিট তহবিল ও দোকানের নগদ ক্যাশ) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
         {/* Card 1: সর্বমোট নিট তহবিল (দোকান + ব্যাংক) */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-emerald-200/80 dark:border-emerald-800/60 flex flex-col justify-between space-y-2 transition-colors">
           <div className="flex justify-between items-center">
@@ -478,49 +478,7 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
           </div>
         </div>
 
-        {/* Card 2: কর্মচারী মোট বেতন (Employee Salary) */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 flex flex-col justify-between space-y-2">
-          <div className="flex justify-between items-center">
-            <div className="p-2 bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 rounded-xl border border-blue-200 dark:border-blue-800">
-              <Users className="w-5 h-5" />
-            </div>
-            <span className="text-[11px] font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/80 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
-              বেতন ও মজুরি
-            </span>
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-500 dark:text-slate-400">কর্মচারী মোট বেতন (Salary)</p>
-            <p className="text-xl sm:text-2xl font-black text-blue-900 dark:text-blue-300 mt-0.5">
-              ৳ {totals.employeeTotal.toLocaleString()}
-            </p>
-            <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-1">
-              হাজিরা ও নিয়মিত কর্মচারী খরচ
-            </p>
-          </div>
-        </div>
-
-        {/* Card 3: সর্বমোট মাসিক খরচ (Total Monthly Cost) */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 flex flex-col justify-between space-y-2">
-          <div className="flex justify-between items-center">
-            <div className="p-2 bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 rounded-xl border border-amber-200 dark:border-amber-800">
-              <Receipt className="w-5 h-5" />
-            </div>
-            <span className="text-[11px] font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/80 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
-              {totals.count} টি এন্ট্রি
-            </span>
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-500 dark:text-slate-400">সর্বমোট মাসিক খরচ (Monthly Cost)</p>
-            <p className="text-xl sm:text-2xl font-black text-amber-800 dark:text-amber-300 mt-0.5">
-              ৳ {totals.pureExpenseTotal.toLocaleString()}
-            </p>
-            <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-1">
-              বেতন, ভাড়া, বিল ও অতিরিক্ত খরচ সহ
-            </p>
-          </div>
-        </div>
-
-        {/* Card 4: দোকানের নগদ ক্যাশ (Cash in the Shop) */}
+        {/* Card 2: দোকানের নগদ ক্যাশ (Cash in the Shop) */}
         <div className="bg-gradient-to-br from-amber-600 to-amber-700 text-white rounded-2xl p-4 sm:p-5 shadow-md flex flex-col justify-between space-y-2.5">
           <div>
             <div className="flex justify-between items-center">
@@ -555,50 +513,110 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Card 5: ব্যক্তিগত মোট খরচ (Personal Cost from 4. Daily Expenses) */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-purple-200/80 dark:border-purple-800/60 flex flex-col justify-between space-y-2.5 transition-colors">
-          <div>
+      {/* 🌟 3. Unified Expense Section (কর্মচারী মোট বেতন, সর্বমোট মাসিক খরচ ও ব্যক্তিগত মোট খরচ) */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-3.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+          <div className="flex items-center space-x-2.5">
+            <div className="p-2 bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 rounded-xl border border-amber-200 dark:border-amber-800">
+              <Receipt className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">
+                  ব্যবসায়িক ও ব্যক্তিগত খরচের সার্বিক হিসাব (Expenses & Payroll)
+                </h3>
+                <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
+                  ৩টি খাত
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                কর্মচারী বেতন, মাসিক পরিচালন খরচ এবং খাতার ব্যক্তিগত খরচ এক নজরে
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-800/60 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 self-start sm:self-auto">
+            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+              মোট ব্যয়:
+            </span>
+            <span className="text-sm sm:text-base font-black text-rose-600 dark:text-rose-400">
+              ৳ {(totals.pureExpenseTotal + personalExpenseTotals.displayTotal).toLocaleString()}
+            </span>
+          </div>
+        </div>
+
+        {/* 3 Columns for the 3 Expense Categories inside this 1 Component */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+          {/* Sub-card 1: কর্মচারী মোট বেতন (Salary) */}
+          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-blue-200/80 dark:border-blue-900/40 flex flex-col justify-between space-y-2">
+            <div className="flex justify-between items-center">
+              <div className="p-2 bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 rounded-xl border border-blue-200 dark:border-blue-800">
+                <Users className="w-4 h-4" />
+              </div>
+              <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/80 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
+                বেতন ও মজুরি
+              </span>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400">কর্মচারী মোট বেতন (Salary)</p>
+              <p className="text-xl sm:text-2xl font-black text-blue-900 dark:text-blue-300 mt-0.5">
+                ৳ {totals.employeeTotal.toLocaleString()}
+              </p>
+              <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mt-1">
+                হাজিরা ও নিয়মিত কর্মচারী খরচ
+              </p>
+            </div>
+          </div>
+
+          {/* Sub-card 2: সর্বমোট মাসিক খরচ (Monthly Cost) */}
+          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-amber-200/80 dark:border-amber-900/40 flex flex-col justify-between space-y-2">
+            <div className="flex justify-between items-center">
+              <div className="p-2 bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 rounded-xl border border-amber-200 dark:border-amber-800">
+                <Receipt className="w-4 h-4" />
+              </div>
+              <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/80 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
+                {totals.count} টি এন্ট্রি
+              </span>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400">সর্বমোট মাসিক খরচ (Monthly Cost)</p>
+              <p className="text-xl sm:text-2xl font-black text-amber-800 dark:text-amber-300 mt-0.5">
+                ৳ {totals.pureExpenseTotal.toLocaleString()}
+              </p>
+              <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mt-1">
+                বেতন, ভাড়া, বিল ও অতিরিক্ত খরচ সহ
+              </p>
+            </div>
+          </div>
+
+          {/* Sub-card 3: ব্যক্তিগত মোট খরচ (Personal Cost) */}
+          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-purple-200/80 dark:border-purple-900/40 flex flex-col justify-between space-y-2">
             <div className="flex justify-between items-center">
               <div className="p-2 bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 rounded-xl border border-purple-200 dark:border-purple-800">
-                <UserCheck className="w-5 h-5" />
+                <UserCheck className="w-4 h-4" />
               </div>
               <button
                 type="button"
                 onClick={() => setIsPersonalListOpen(true)}
-                className="text-[10px] font-black text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/80 hover:bg-purple-100 dark:hover:bg-purple-900/60 px-2 py-0.5 rounded-full border border-purple-200 dark:border-purple-800 flex items-center space-x-1 cursor-pointer transition-colors"
+                className="text-[10px] font-black text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/80 hover:bg-purple-100 dark:hover:bg-purple-900/60 px-2.5 py-0.5 rounded-full border border-purple-200 dark:border-purple-800 flex items-center space-x-1 cursor-pointer transition-colors"
                 title="সকল ব্যক্তিগত খরচের তালিকা দেখুন"
               >
                 <span>তালিকা</span>
                 <Eye className="w-3 h-3" />
               </button>
             </div>
-            <div className="mt-2">
+            <div>
               <p className="text-xs font-bold text-slate-500 dark:text-slate-400">ব্যক্তিগত মোট খরচ (Personal Cost)</p>
-              <p className="text-2xl sm:text-3xl font-black text-purple-800 dark:text-purple-300 mt-0.5 tracking-tight">
+              <p className="text-xl sm:text-2xl font-black text-purple-800 dark:text-purple-300 mt-0.5">
                 ৳ {personalExpenseTotals.displayTotal.toLocaleString()}
               </p>
-            </div>
-          </div>
-
-          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-1 text-[11px] text-slate-500 dark:text-slate-400">
-            <div className="flex justify-between items-center">
-              <span>{selectedMonth === "all" ? "মোট এন্ট্রি:" : "চলতি সময়ে:"}</span>
-              <span className="font-bold text-slate-700 dark:text-slate-300">
-                {personalExpenseTotals.count} দিনে এন্ট্রি
-              </span>
-            </div>
-            {selectedMonth !== "all" && (
-              <div className="flex justify-between items-center">
-                <span>সর্বমোট (সব দিন):</span>
-                <span className="font-bold text-purple-600 dark:text-purple-400">
-                  ৳ {personalExpenseTotals.allTimeTotal.toLocaleString()}
-                </span>
+              <div className="mt-1 flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500">
+                <span>৪. দৈনিক খরচের খাত (নিজ)</span>
+                <span className="font-semibold text-purple-600 dark:text-purple-400">({personalExpenseTotals.count} দিনে এন্ট্রি)</span>
               </div>
-            )}
-            <p className="text-[9.5px] font-semibold text-purple-600 dark:text-purple-400">
-              ৪. দৈনিক খরচের খাত (নিজ) হতে
-            </p>
+            </div>
           </div>
         </div>
       </div>
