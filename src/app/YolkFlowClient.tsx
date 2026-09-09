@@ -43,6 +43,8 @@ import {
   BarChart3,
   ArrowUpDown,
   Egg,
+  Check,
+  ChevronDown,
 } from "lucide-react";
 import { ComputedDayData, saveLedgerEntryAction } from "./actions";
 import OverheadExpensesView from "./OverheadExpensesView";
@@ -153,6 +155,125 @@ function getSplinePath(points: { x: number; y: number }[]): string {
     path += ` C ${cp1x.toFixed(2)} ${cp1y.toFixed(2)}, ${cp2x.toFixed(2)} ${cp2y.toFixed(2)}, ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`;
   }
   return path;
+}
+
+const OVERHEAD_FUND_GROUPS = [
+  {
+    groupTitle: "সঞ্চয় ও তহবিল",
+    options: [
+      { value: "savings_shop", label: "দোকানে সঞ্চয়", icon: "🏪" },
+      { value: "savings_bank", label: "ব্যাংক সঞ্চয়", icon: "🏦" },
+    ],
+  },
+  {
+    groupTitle: "সঞ্চয় থেকে বিল",
+    options: [
+      { value: "bill_from_savings_shop", label: "দোকান ফান্ড বিল", icon: "💸" },
+      { value: "bill_from_savings_bank", label: "ব্যাংক ফান্ড বিল", icon: "💳" },
+    ],
+  },
+  {
+    groupTitle: "পরিচালন খরচ",
+    options: [
+      { value: "employee", label: "কর্মচারী বেতন", icon: "👨‍💼" },
+      { value: "rent", label: "দোকান ও গোডাউন ভাড়া", icon: "🏢" },
+      { value: "utilities", label: "বিদ্যুৎ ও গ্যাস বিল", icon: "⚡" },
+      { value: "security", label: "নাইটগার্ড ও সমিতি", icon: "🛡️" },
+      { value: "transport", label: "গাড়ি ও জ্বালানি", icon: "🚚" },
+      { value: "tax", label: "লাইসেন্স ও ট্যাক্স", icon: "📜" },
+      { value: "extra", label: "বিবিধ পরিচালন খরচ", icon: "🪙" },
+    ],
+  },
+];
+
+function ThemedFundDropdown({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
+  let activeItem: { value: string; label: string; icon: string } | null = null;
+  for (const g of OVERHEAD_FUND_GROUPS) {
+    for (const opt of g.options) {
+      if (opt.value === value) {
+        activeItem = opt;
+        break;
+      }
+    }
+    if (activeItem) break;
+  }
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center justify-between gap-2 px-3 py-1.5 bg-slate-900/90 dark:bg-slate-950/90 hover:bg-slate-800/90 border border-amber-500/50 hover:border-amber-400 rounded-xl text-xs font-bold text-slate-100 shadow-[0_0_10px_rgba(245,158,11,0.2)] transition-all cursor-pointer min-w-[170px] sm:min-w-[190px]"
+      >
+        <span className="flex items-center gap-1.5 truncate">
+          <span>{activeItem?.icon || "🏷️"}</span>
+          <span className="truncate">{activeItem?.label || "ফান্ড নির্বাচন"}</span>
+        </span>
+        <ChevronDown className={`w-3.5 h-3.5 text-amber-400 transition-transform duration-200 shrink-0 ${isOpen ? "rotate-180" : ""}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-50 mt-1.5 right-0 w-64 sm:w-72 glass-panel rounded-2xl p-2 shadow-2xl border border-cyan-500/40 backdrop-blur-2xl animate-fadeIn divide-y divide-white/10 max-h-[340px] overflow-y-auto scrollbar-thin">
+          {OVERHEAD_FUND_GROUPS.map((group, gIdx) => (
+            <div key={group.groupTitle} className={gIdx > 0 ? "pt-1.5 mt-1.5" : ""}>
+              <div className="text-[10px] font-black uppercase tracking-wider text-cyan-400/90 dark:text-cyan-300 px-2 py-0.5">
+                {group.groupTitle}
+              </div>
+              <div className="space-y-0.5 mt-1">
+                {group.options.map((item) => {
+                  const isSelected = value === item.value;
+                  return (
+                    <button
+                      key={item.value}
+                      type="button"
+                      onClick={() => {
+                        onChange(item.value);
+                        setIsOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs transition-all cursor-pointer ${
+                        isSelected
+                          ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 font-black shadow-[0_0_10px_rgba(0,200,255,0.4)]"
+                          : "text-slate-200 hover:text-cyan-300 hover:bg-white/10 font-semibold"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <span>{item.icon}</span>
+                        <span>{item.label}</span>
+                      </span>
+                      {isSelected && <Check className="w-3.5 h-3.5 text-slate-950 shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
@@ -4890,29 +5011,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                         <Link2 className="w-4 h-4 text-amber-400 shrink-0" />
                         <span>ওভারহেড ও সঞ্চয় খতিয়ান (ফান্ড নির্বাচন):</span>
                       </div>
-                      <select
+                      <ThemedFundDropdown
                         value={exp.overheadCategory || (exp.expenseType === "সমিতি" ? "savings_shop" : "extra")}
-                        onChange={(e) => handleExpenseChange(index, "overheadCategory", e.target.value)}
-                        className="text-xs font-bold border border-amber-500/50 bg-slate-900 rounded-xl px-3 py-1.5 text-slate-100 focus:outline-none focus:border-amber-400 cursor-pointer"
-                      >
-                        <optgroup label="ব্যবসায়িক সঞ্চয় ও তহবিল (২টি সংরক্ষিত ফান্ড)">
-                          <option value="savings_shop">🏪 সমিতি === দোকানে সঞ্চয় (In-Shop Savings)</option>
-                          <option value="savings_bank">🏦 ব্যাংকে সঞ্চয় / DPS (In-Bank Savings)</option>
-                        </optgroup>
-                        <optgroup label="সঞ্চয় হতে বিল পরিশোধ (Bill Paid from Savings)">
-                          <option value="bill_from_savings_shop">💸 দোকানে সঞ্চয় হতে বিল পরিশোধ</option>
-                          <option value="bill_from_savings_bank">💳 ব্যাংকে সঞ্চয় হতে বিল পরিশোধ</option>
-                        </optgroup>
-                        <optgroup label="কর্মচারী, দোকান ভাড়া ও অতিরিক্ত পরিচালন খরচ">
-                          <option value="employee">👨‍💼 কর্মচারী বেতন ও মজুরি (Employee Salary)</option>
-                          <option value="rent">🏢 দোকান ও গোডাউন ভাড়া (Shop Rent)</option>
-                          <option value="utilities">⚡ বিদ্যুৎ ও গ্যাস বিল (Utilities)</option>
-                          <option value="security">🛡️ মার্কেট সমিতি ও নাইটগার্ড (Security)</option>
-                          <option value="transport">🚚 গাড়ি/ভ্যান মেরামত ও জ্বালানি (Transport)</option>
-                          <option value="tax">📜 ট্রেড লাইসেন্স ও ট্যাক্স (Tax)</option>
-                          <option value="extra">🪙 অন্যান্য অতিরিক্ত পরিচালন খরচ (Extra Overhead)</option>
-                        </optgroup>
-                      </select>
+                        onChange={(newVal) => handleExpenseChange(index, "overheadCategory", newVal)}
+                      />
                     </div>
                   )}
                 </div>

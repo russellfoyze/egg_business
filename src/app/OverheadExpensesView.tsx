@@ -36,17 +36,17 @@ import { ComputedDayData } from "./actions";
 import DateTimePicker, { formatToDayMonthYear } from "./DateTimePicker";
 
 const CATEGORIES = [
-  { id: "savings_shop", label: "🏪 সমিতি / দোকানে সঞ্চয় (In-Shop)", icon: Store, color: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/60", border: "border-emerald-200 dark:border-emerald-800" },
-  { id: "savings_bank", label: "🏦 ব্যাংকে সঞ্চয় (In-Bank / DPS)", icon: Landmark, color: "text-blue-700 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-950/60", border: "border-blue-200 dark:border-blue-800" },
-  { id: "bill_from_savings_shop", label: "💸 দোকানে সঞ্চয় হতে বিল পরিশোধ", icon: Receipt, color: "text-amber-700 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/60", border: "border-amber-200 dark:border-amber-800" },
-  { id: "bill_from_savings_bank", label: "💳 ব্যাংকে সঞ্চয় হতে বিল পরিশোধ", icon: CreditCard, color: "text-purple-700 dark:text-purple-400", bg: "bg-purple-50 dark:bg-purple-950/60", border: "border-purple-200 dark:border-purple-800" },
-  { id: "employee", label: "কর্মচারী বেতন ও মজুরি", icon: Users, color: "text-sky-700 dark:text-sky-400", bg: "bg-sky-50 dark:bg-sky-950/60", border: "border-sky-200 dark:border-sky-800" },
-  { id: "rent", label: "দোকান ও গোডাউন ভাড়া", icon: Building2, color: "text-amber-700 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/60", border: "border-amber-200 dark:border-amber-800" },
-  { id: "utilities", label: "বিদ্যুৎ ও গ্যাস বিল", icon: Zap, color: "text-yellow-700 dark:text-yellow-400", bg: "bg-yellow-50 dark:bg-yellow-950/60", border: "border-yellow-200 dark:border-yellow-800" },
-  { id: "security", label: "মার্কেট সমিতি ও নাইটগার্ড", icon: Shield, color: "text-teal-700 dark:text-teal-400", bg: "bg-teal-50 dark:bg-teal-950/60", border: "border-teal-200 dark:border-teal-800" },
-  { id: "transport", label: "গাড়ি/ভ্যান মেরামত ও ফুয়েল", icon: Truck, color: "text-purple-700 dark:text-purple-400", bg: "bg-purple-50 dark:bg-purple-950/60", border: "border-purple-200 dark:border-purple-800" },
-  { id: "tax", label: "ট্রেড লাইসেন্স ও ট্যাক্স", icon: FileSpreadsheet, color: "text-indigo-700 dark:text-indigo-400", bg: "bg-indigo-50 dark:bg-indigo-950/60", border: "border-indigo-200 dark:border-indigo-800" },
-  { id: "extra", label: "অন্যান্য বিবিধ অতিরিক্ত খরচ", icon: Coins, color: "text-rose-700 dark:text-rose-400", bg: "bg-rose-50 dark:bg-rose-950/60", border: "border-rose-200 dark:border-rose-800" },
+  { id: "savings_shop", label: "🏪 দোকানে সঞ্চয়", icon: Store, color: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/60", border: "border-emerald-200 dark:border-emerald-800" },
+  { id: "savings_bank", label: "🏦 ব্যাংক সঞ্চয়", icon: Landmark, color: "text-blue-700 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-950/60", border: "border-blue-200 dark:border-blue-800" },
+  { id: "bill_from_savings_shop", label: "💸 দোকান ফান্ড বিল", icon: Receipt, color: "text-amber-700 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/60", border: "border-amber-200 dark:border-amber-800" },
+  { id: "bill_from_savings_bank", label: "💳 ব্যাংক ফান্ড বিল", icon: CreditCard, color: "text-purple-700 dark:text-purple-400", bg: "bg-purple-50 dark:bg-purple-950/60", border: "border-purple-200 dark:border-purple-800" },
+  { id: "employee", label: "👨‍💼 কর্মচারী বেতন", icon: Users, color: "text-sky-700 dark:text-sky-400", bg: "bg-sky-50 dark:bg-sky-950/60", border: "border-sky-200 dark:border-sky-800" },
+  { id: "rent", label: "🏢 দোকান ও গোডাউন ভাড়া", icon: Building2, color: "text-amber-700 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/60", border: "border-amber-200 dark:border-amber-800" },
+  { id: "utilities", label: "⚡ বিদ্যুৎ ও গ্যাস বিল", icon: Zap, color: "text-yellow-700 dark:text-yellow-400", bg: "bg-yellow-50 dark:bg-yellow-950/60", border: "border-yellow-200 dark:border-yellow-800" },
+  { id: "security", label: "🛡️ নাইটগার্ড ও সমিতি", icon: Shield, color: "text-teal-700 dark:text-teal-400", bg: "bg-teal-50 dark:bg-teal-950/60", border: "border-teal-200 dark:border-teal-800" },
+  { id: "transport", label: "🚚 গাড়ি ও জ্বালানি", icon: Truck, color: "text-purple-700 dark:text-purple-400", bg: "bg-purple-50 dark:bg-purple-950/60", border: "border-purple-200 dark:border-purple-800" },
+  { id: "tax", label: "📜 লাইসেন্স ও ট্যাক্স", icon: FileSpreadsheet, color: "text-indigo-700 dark:text-indigo-400", bg: "bg-indigo-50 dark:bg-indigo-950/60", border: "border-indigo-200 dark:border-indigo-800" },
+  { id: "extra", label: "🪙 বিবিধ পরিচালন খরচ", icon: Coins, color: "text-rose-700 dark:text-rose-400", bg: "bg-rose-50 dark:bg-rose-950/60", border: "border-rose-200 dark:border-rose-800" },
 ];
 
 interface OverheadExpensesViewProps {
