@@ -221,7 +221,11 @@ export default function DateTimePicker({
 
       {/* Popover Calendar */}
       {isOpen && (
-        <div className="absolute z-50 mt-1.5 left-0 sm:left-auto right-0 sm:right-auto min-w-[300px] sm:min-w-[330px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-750 rounded-2xl shadow-2xl p-4 text-slate-900 dark:text-slate-100 animate-fadeIn">
+        <div
+          className={`absolute z-[60] mt-2 ${
+            compact ? "left-1/2 -translate-x-1/2" : "left-0 sm:left-auto right-0 sm:right-auto"
+          } min-w-[285px] sm:min-w-[320px] bg-slate-950/95 backdrop-blur-xl border border-cyan-500/30 rounded-2xl shadow-2xl p-3.5 sm:p-4 text-slate-100 animate-fadeIn`}
+        >
           {/* Header with Month / Year navigation */}
           <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-800">
             <button

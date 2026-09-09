@@ -50,7 +50,6 @@ import SavingsTrackerView from "./SavingsTrackerView";
 import LoginScreen from "./LoginScreen";
 import { UserAccount } from "@/lib/auth";
 import ThemeToggle from "./ThemeToggle";
-import ImageToJsonModal from "./ImageToJsonModal";
 import DateTimePicker, { formatToDayMonthYear } from "./DateTimePicker";
 
 interface YolkFlowClientProps {
@@ -1757,9 +1756,6 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
               </div>
             )}
 
-            {/* 📸 চালান OCR বাটন */}
-            <ImageToJsonModal />
-
             {/* 🌓 থিম টগল */}
             <ThemeToggle />
 
@@ -1773,10 +1769,10 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
       </header>
 
       {/* Main Content Area */}
-      <main className="w-full max-w-none mx-auto px-2 sm:px-6 lg:px-[100px] py-4 sm:py-6 flex-1">
+      <main className="w-full max-w-none mx-auto px-2 sm:px-6 lg:px-[100px] pt-3 pb-24 sm:py-6 flex-1">
         <div className="space-y-4 sm:space-y-6">
           {/* Sticky Secondary Navigation (Tabs on Left, Date Navigator on Right) */}
-          <div className="hidden sm:flex sticky top-[56px] sm:top-[64px] z-30 glass-panel p-2 sm:p-2.5 rounded-2xl sm:rounded-3xl shadow-lg justify-between items-center gap-3">
+          <div className="hidden sm:flex sticky top-[58px] sm:top-[64px] z-30 glass-panel p-2 sm:p-2.5 rounded-2xl sm:rounded-3xl shadow-lg justify-between items-center gap-3 overflow-x-auto scrollbar-none">
             {/* Tab Switcher (RBAC Filtered) - Pill Track from UI Kit */}
             <div className="flex items-center p-1.5 bg-slate-900/90 border border-slate-700/80 rounded-full shrink-0 gap-1.5 shadow-inner">
               {isAllowed("dashboard") && (
@@ -1850,9 +1846,9 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
           </div>
 
           {/* Sticky Mobile Sub-Header (Date Navigator for Mobile Phone View) */}
-          <div className="sm:hidden sticky top-[54px] z-30 glass-panel p-2 rounded-2xl shadow-md flex items-center gap-1.5 w-full min-w-0">
-            {activeTab !== "overhead" && activeTab !== "savings" &&
-              renderDateNavigatorPill(
+          {activeTab !== "overhead" && activeTab !== "savings" && (
+            <div className="sm:hidden sticky top-[58px] z-30 glass-panel p-2 rounded-2xl shadow-md flex items-center gap-1.5 w-full min-w-0">
+              {renderDateNavigatorPill(
                 activeDisplayDate,
                 activeDisplayDay,
                 handleUnifiedDateChange,
@@ -1862,7 +1858,8 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                 activeDateIdx < data.length - 1,
                 "flex-1 min-w-0"
               )}
-          </div>
+            </div>
+          )}
 
           {activeTab === "dashboard" ? (
             /* ================= DASHBOARD TAB ================= */
