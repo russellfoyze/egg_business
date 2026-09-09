@@ -5044,7 +5044,9 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
         <OverheadExpensesView ledgerData={data} />
       ) : (
         /* ================= BUSINESS SAVINGS & EXTRA INFLOWS TAB ================= */
-        <SavingsTrackerView />
+        <div className="hidden sm:block">
+          <SavingsTrackerView />
+        </div>
       )}
 
       {/* Floating Bottom Nav for Mobile Screens */}
@@ -5088,20 +5090,6 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
           >
             <Building2 className="w-4 h-4" />
             <span className="text-[9px]">মাসিক খরচ</span>
-          </button>
-        )}
-
-        {isAllowed("savings") && (
-          <button
-            onClick={() => handleSwitchTab("savings")}
-            className={`flex flex-col items-center space-y-0.5 py-1 px-2.5 rounded-full transition-all cursor-pointer ${
-              activeTab === "savings"
-                ? "bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 font-black shadow-[0_0_12px_rgba(0,200,255,0.45)]"
-                : "text-slate-400 hover:text-cyan-300 font-semibold"
-            }`}
-          >
-            <PiggyBank className="w-4 h-4" />
-            <span className="text-[9px]">সঞ্চয়</span>
           </button>
         )}
 
