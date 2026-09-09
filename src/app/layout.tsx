@@ -1,5 +1,13 @@
 import type { Metadata } from "next";
+import { Hind_Siliguri } from "next/font/google";
 import "./globals.css";
+
+const hindSiliguri = Hind_Siliguri({
+  weight: ["300", "400", "500", "600", "700"],
+  subsets: ["bengali", "latin"],
+  display: "swap",
+  variable: "--font-hind-siliguri",
+});
 
 export const metadata: Metadata = {
   title: "M.A Khalek Sarker - ডিম ব্যবসার হালখাতা (YolkFlow)",
@@ -16,8 +24,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="bn" suppressHydrationWarning>
-      <body className="bg-slate-100/70 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen antialiased selection:bg-amber-500 selection:text-white pb-16 sm:pb-8 transition-colors duration-200">
+    <html lang="bn" className={hindSiliguri.variable} suppressHydrationWarning>
+      <body className={`${hindSiliguri.className} bg-slate-100/70 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen antialiased selection:bg-cyan-500 selection:text-slate-950 pb-16 sm:pb-8 transition-colors duration-200`}>
         {children}
       </body>
     </html>
