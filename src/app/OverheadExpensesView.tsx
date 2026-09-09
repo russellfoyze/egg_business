@@ -56,6 +56,7 @@ interface OverheadExpensesViewProps {
 export default function OverheadExpensesView({ ledgerData }: OverheadExpensesViewProps = {}) {
   const [internalLedgerData, setInternalLedgerData] = useState<ComputedDayData[]>([]);
   const [isPersonalListOpen, setIsPersonalListOpen] = useState<boolean>(false);
+  const [savingsTab, setSavingsTab] = useState<"both" | "shop" | "bank">("both");
 
   const [expenses, setExpenses] = useState<OverheadExpenseItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -634,141 +635,213 @@ export default function OverheadExpensesView({ ledgerData }: OverheadExpensesVie
           </div>
         </div>
 
-        {/* 2 Parts Grid: 1. In-Shop Savings | 2. In-Bank Savings */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
-          {/* Part 1: দোকানে সঞ্চয় (সমিতি === দোকানে সঞ্চয়) */}
-          <div className="bg-white/5 hover:bg-white/10 transition-colors border border-emerald-500/30 rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-3">
-            <div className="flex justify-between items-start">
-              <div className="flex items-center space-x-2.5">
-                <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center justify-center">
-                  <Store className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-black text-slate-100 flex items-center gap-1.5">
-                    <span>সমিতি / দোকানে সঞ্চয়</span>
-                    <span className="text-[10px] font-bold text-emerald-300 bg-emerald-950/80 px-2 py-0.5 rounded-md border border-emerald-600/40">
-                      In-Shop
-                    </span>
-                  </h4>
-                  <p className="text-[11px] text-slate-400 font-medium">দোকানের ক্যাশ ড্রয়ার বা আড়তে রক্ষিত নগদ সঞ্চয়</p>
-                </div>
-              </div>
-            </div>
+        {/* 2 Buttons to Open 2 Components for Saving */}
+        <div className="flex flex-wrap items-center justify-between gap-2.5 p-2 bg-black/40 rounded-2xl border border-emerald-500/30">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Button 1: দোকানে সঞ্চয় Component */}
+            <button
+              type="button"
+              onClick={() => setSavingsTab("shop")}
+              className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                savingsTab === "shop"
+                  ? "bg-emerald-600 text-white border-emerald-400 shadow-md ring-2 ring-emerald-400/40"
+                  : "bg-white/10 hover:bg-white/15 text-slate-300 border-white/10"
+              }`}
+            >
+              <Store className="w-4 h-4 text-emerald-300" />
+              <span>১. সমিতি / দোকানে সঞ্চয় (In-Shop)</span>
+              <span className="text-[10px] bg-emerald-950/80 px-2 py-0.5 rounded-md text-emerald-300 border border-emerald-500/40 font-black">
+                ৳ {totals.netShopSavings.toLocaleString()}
+              </span>
+            </button>
 
-            {/* In-Shop Financials breakdown */}
-            <div className="pt-2 space-y-1.5 border-t border-white/10 text-xs">
-              <div className="flex justify-between text-slate-300">
-                <span>মোট সঞ্চয় জমা:</span>
-                <span className="font-bold text-emerald-300">৳ {totals.savingsShopTotal.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-slate-400">
-                <span>সঞ্চয় হতে বিল পরিশোধ:</span>
-                <span className="font-bold text-amber-400">- ৳ {totals.savingsShopBillTotal.toLocaleString()}</span>
-              </div>
-              <div className="flex items-baseline justify-between pt-1 border-t border-white/10">
-                <span className="text-xs font-black text-slate-200">অবশিষ্ট নিট ফান্ড:</span>
-                <span className="text-xl sm:text-2xl font-black text-emerald-400 tracking-tight">
-                  ৳ {totals.netShopSavings.toLocaleString()}
-                </span>
-              </div>
-            </div>
+            {/* Button 2: ব্যাংকে সঞ্চয় Component */}
+            <button
+              type="button"
+              onClick={() => setSavingsTab("bank")}
+              className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                savingsTab === "bank"
+                  ? "bg-blue-600 text-white border-blue-400 shadow-md ring-2 ring-blue-400/40"
+                  : "bg-white/10 hover:bg-white/15 text-slate-300 border-white/10"
+              }`}
+            >
+              <Landmark className="w-4 h-4 text-blue-300" />
+              <span>২. ব্যাংকে সঞ্চয় (In-Bank / DPS)</span>
+              <span className="text-[10px] bg-blue-950/80 px-2 py-0.5 rounded-md text-blue-300 border border-blue-500/40 font-black">
+                ৳ {totals.netBankSavings.toLocaleString()}
+              </span>
+            </button>
 
-            <div className="grid grid-cols-2 gap-2 pt-1">
-              <button
-                type="button"
-                onClick={() => {
-                  setFormCategory("savings_shop");
-                  setFormPaymentMode("cash");
-                  setFormTitle("দোকানে নগদ সঞ্চয় জমা");
-                  setIsFormOpen(true);
-                }}
-                className="py-2 bg-emerald-600/80 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1 cursor-pointer shadow-xs active:scale-98"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>+ সঞ্চয় জমা</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setFormCategory("bill_from_savings_shop");
-                  setFormPaymentMode("savings_shop");
-                  setFormTitle("দোকানের সঞ্চয় হতে বিল পরিশোধ");
-                  setIsFormOpen(true);
-                }}
-                className="py-2 bg-amber-600/80 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1 cursor-pointer shadow-xs active:scale-98"
-              >
-                <Receipt className="w-3.5 h-3.5" />
-                <span>- বিল পরিশোধ</span>
-              </button>
-            </div>
+            {/* Button 3: উভয় ফান্ড (Both) */}
+            <button
+              type="button"
+              onClick={() => setSavingsTab("both")}
+              className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                savingsTab === "both"
+                  ? "bg-slate-700 text-white border-slate-500 shadow-md ring-2 ring-slate-400/30"
+                  : "bg-white/5 hover:bg-white/10 text-slate-400 border-transparent"
+              }`}
+            >
+              উভয় ফান্ড (Both)
+            </button>
           </div>
 
-          {/* Part 2: ব্যাংকে সঞ্চয় (In-Bank Savings / DPS) */}
-          <div className="bg-white/5 hover:bg-white/10 transition-colors border border-blue-500/30 rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-3">
-            <div className="flex justify-between items-start">
-              <div className="flex items-center space-x-2.5">
-                <div className="w-9 h-9 rounded-xl bg-blue-500/20 text-blue-300 border border-blue-500/30 flex items-center justify-center">
-                  <Landmark className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-black text-slate-100 flex items-center gap-1.5">
-                    <span>ব্যাংকে সঞ্চয়</span>
-                    <span className="text-[10px] font-bold text-blue-300 bg-blue-950/80 px-2 py-0.5 rounded-md border border-blue-600/40">
-                      In-Bank / DPS
-                    </span>
-                  </h4>
-                  <p className="text-[11px] text-slate-400 font-medium">ব্যাংক অ্যাকাউন্ট, ডিপিএস বা এফডিআর-এ সঞ্চয়</p>
-                </div>
-              </div>
-            </div>
+          <span className="text-[11px] text-slate-400 font-medium px-2 hidden sm:inline">
+            {savingsTab === "shop" && "দোকানের ক্যাশ ড্রয়ার বা আড়তে রক্ষিত নগদ সঞ্চয় খতিয়ান"}
+            {savingsTab === "bank" && "ব্যাংক অ্যাকাউন্ট, ডিপিএস বা এফডিআর সঞ্চয় খতিয়ান"}
+            {savingsTab === "both" && "উভয় সঞ্চয় তহবিল এক সাথে প্রদর্শন"}
+          </span>
+        </div>
 
-            {/* Bank Financials breakdown */}
-            <div className="pt-2 space-y-1.5 border-t border-white/10 text-xs">
-              <div className="flex justify-between text-slate-300">
-                <span>মোট ব্যাংক জমা:</span>
-                <span className="font-bold text-blue-300">৳ {totals.savingsBankTotal.toLocaleString()}</span>
+        {/* 2 Saving Components - conditionally displayed or side-by-side based on 2 buttons */}
+        <div className={`grid gap-3.5 sm:gap-4 ${savingsTab === "both" ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
+          {/* Component 1: সমিতি / দোকানে সঞ্চয় (In-Shop Savings) */}
+          {(savingsTab === "both" || savingsTab === "shop") && (
+            <div className="bg-white/5 hover:bg-white/10 transition-colors border border-emerald-500/30 rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-3">
+              <div className="flex justify-between items-start">
+                <div className="flex items-center space-x-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center justify-center">
+                    <Store className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black text-slate-100 flex items-center gap-1.5">
+                      <span>সমিতি / দোকানে সঞ্চয়</span>
+                      <span className="text-[10px] font-bold text-emerald-300 bg-emerald-950/80 px-2 py-0.5 rounded-md border border-emerald-600/40">
+                        In-Shop
+                      </span>
+                    </h4>
+                    <p className="text-[11px] text-slate-400 font-medium">দোকানের ক্যাশ ড্রয়ার বা আড়তে রক্ষিত নগদ সঞ্চয়</p>
+                  </div>
+                </div>
+                {savingsTab === "shop" && (
+                  <span className="text-[10px] font-bold text-emerald-300 bg-emerald-900/60 px-2.5 py-1 rounded-full border border-emerald-500/40">
+                    সক্রিয় কম্পোনেন্ট
+                  </span>
+                )}
               </div>
-              <div className="flex justify-between text-slate-400">
-                <span>ব্যাংক হতে বিল পরিশোধ:</span>
-                <span className="font-bold text-purple-300">- ৳ {totals.savingsBankBillTotal.toLocaleString()}</span>
-              </div>
-              <div className="flex items-baseline justify-between pt-1 border-t border-white/10">
-                <span className="text-xs font-black text-slate-200">অবশিষ্ট নিট ব্যাংক ফান্ড:</span>
-                <span className="text-xl sm:text-2xl font-black text-blue-400 tracking-tight">
-                  ৳ {totals.netBankSavings.toLocaleString()}
-                </span>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-2 pt-1">
-              <button
-                type="button"
-                onClick={() => {
-                  setFormCategory("savings_bank");
-                  setFormPaymentMode("bank");
-                  setFormTitle("ব্যাংক অ্যাকাউন্টে সঞ্চয় / DPS কিস্তি জমা");
-                  setIsFormOpen(true);
-                }}
-                className="py-2 bg-blue-600/80 hover:bg-blue-600 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1 cursor-pointer shadow-xs active:scale-98"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>+ সঞ্চয় জমা</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setFormCategory("bill_from_savings_bank");
-                  setFormPaymentMode("savings_bank");
-                  setFormTitle("ব্যাংকের সঞ্চয় হতে বিল পরিশোধ");
-                  setIsFormOpen(true);
-                }}
-                className="py-2 bg-purple-600/80 hover:bg-purple-600 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1 cursor-pointer shadow-xs active:scale-98"
-              >
-                <CreditCard className="w-3.5 h-3.5" />
-                <span>- বিল পরিশোধ</span>
-              </button>
+              {/* In-Shop Financials breakdown */}
+              <div className="pt-2 space-y-1.5 border-t border-white/10 text-xs">
+                <div className="flex justify-between text-slate-300">
+                  <span>মোট সঞ্চয় জমা:</span>
+                  <span className="font-bold text-emerald-300">৳ {totals.savingsShopTotal.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-slate-400">
+                  <span>সঞ্চয় হতে বিল পরিশোধ:</span>
+                  <span className="font-bold text-amber-400">- ৳ {totals.savingsShopBillTotal.toLocaleString()}</span>
+                </div>
+                <div className="flex items-baseline justify-between pt-1 border-t border-white/10">
+                  <span className="text-xs font-black text-slate-200">অবশিষ্ট নিট ফান্ড:</span>
+                  <span className="text-xl sm:text-2xl font-black text-emerald-400 tracking-tight">
+                    ৳ {totals.netShopSavings.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormCategory("savings_shop");
+                    setFormPaymentMode("cash");
+                    setFormTitle("দোকানে নগদ সঞ্চয় জমা");
+                    setIsFormOpen(true);
+                  }}
+                  className="py-2 bg-emerald-600/80 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1 cursor-pointer shadow-xs active:scale-98"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ সঞ্চয় জমা</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormCategory("bill_from_savings_shop");
+                    setFormPaymentMode("savings_shop");
+                    setFormTitle("দোকানের সঞ্চয় হতে বিল পরিশোধ");
+                    setIsFormOpen(true);
+                  }}
+                  className="py-2 bg-amber-600/80 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1 cursor-pointer shadow-xs active:scale-98"
+                >
+                  <Receipt className="w-3.5 h-3.5" />
+                  <span>- বিল পরিশোধ</span>
+                </button>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Component 2: ব্যাংকে সঞ্চয় (In-Bank Savings / DPS) */}
+          {(savingsTab === "both" || savingsTab === "bank") && (
+            <div className="bg-white/5 hover:bg-white/10 transition-colors border border-blue-500/30 rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-3">
+              <div className="flex justify-between items-start">
+                <div className="flex items-center space-x-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-blue-500/20 text-blue-300 border border-blue-500/30 flex items-center justify-center">
+                    <Landmark className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black text-slate-100 flex items-center gap-1.5">
+                      <span>ব্যাংকে সঞ্চয়</span>
+                      <span className="text-[10px] font-bold text-blue-300 bg-blue-950/80 px-2 py-0.5 rounded-md border border-blue-600/40">
+                        In-Bank / DPS
+                      </span>
+                    </h4>
+                    <p className="text-[11px] text-slate-400 font-medium">ব্যাংক অ্যাকাউন্ট, ডিপিএস বা এফডিআর-এ সঞ্চয়</p>
+                  </div>
+                </div>
+                {savingsTab === "bank" && (
+                  <span className="text-[10px] font-bold text-blue-300 bg-blue-900/60 px-2.5 py-1 rounded-full border border-blue-500/40">
+                    সক্রিয় কম্পোনেন্ট
+                  </span>
+                )}
+              </div>
+
+              {/* Bank Financials breakdown */}
+              <div className="pt-2 space-y-1.5 border-t border-white/10 text-xs">
+                <div className="flex justify-between text-slate-300">
+                  <span>মোট ব্যাংক জমা:</span>
+                  <span className="font-bold text-blue-300">৳ {totals.savingsBankTotal.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-slate-400">
+                  <span>ব্যাংক হতে বিল পরিশোধ:</span>
+                  <span className="font-bold text-purple-300">- ৳ {totals.savingsBankBillTotal.toLocaleString()}</span>
+                </div>
+                <div className="flex items-baseline justify-between pt-1 border-t border-white/10">
+                  <span className="text-xs font-black text-slate-200">অবশিষ্ট নিট ব্যাংক ফান্ড:</span>
+                  <span className="text-xl sm:text-2xl font-black text-blue-400 tracking-tight">
+                    ৳ {totals.netBankSavings.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormCategory("savings_bank");
+                    setFormPaymentMode("bank");
+                    setFormTitle("ব্যাংক অ্যাকাউন্টে সঞ্চয় / DPS কিস্তি জমা");
+                    setIsFormOpen(true);
+                  }}
+                  className="py-2 bg-blue-600/80 hover:bg-blue-600 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1 cursor-pointer shadow-xs active:scale-98"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ সঞ্চয় জমা</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormCategory("bill_from_savings_bank");
+                    setFormPaymentMode("savings_bank");
+                    setFormTitle("ব্যাংকের সঞ্চয় হতে বিল পরিশোধ");
+                    setIsFormOpen(true);
+                  }}
+                  className="py-2 bg-purple-600/80 hover:bg-purple-600 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1 cursor-pointer shadow-xs active:scale-98"
+                >
+                  <CreditCard className="w-3.5 h-3.5" />
+                  <span>- বিল পরিশোধ</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
