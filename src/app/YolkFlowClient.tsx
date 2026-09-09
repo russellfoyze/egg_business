@@ -353,15 +353,47 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
 
       if (existingEntry.expenses.list.length > 0) {
         setExpenses(
-          existingEntry.expenses.list.map((exp) => ({
-            expenseType: exp.type,
-            amount: exp.amount,
-            wastedEggQty: exp.wastedEggQty,
-            wastedEggCost: exp.wastedEggCost,
-          }))
+          existingEntry.expenses.list.map((exp) => {
+            const rawType = (exp.type || "").trim();
+            const isBroken = rawType === "ভাঙ্গা" || rawType.startsWith("ভাঙ্গা") || rawType.includes("ভাঙা");
+            const isPreset = EXPENSE_PRESETS.filter((p) => p !== "Other").includes(rawType);
+
+            let matchedType = "Other";
+            let customName = "";
+            let wastedQty = Number(exp.wastedEggQty) || 0;
+            let wastedCost = Number(exp.wastedEggCost) || 0;
+
+            if (isBroken) {
+              matchedType = "ভাঙ্গা";
+              const match = rawType.match(/\((\d+)\)/);
+              if (match && !wastedQty) {
+                wastedQty = Number(match[1]);
+              }
+              if (!wastedCost && wastedQty > 0) {
+                const avgRate = DEFAULT_RATES["সাদা (White Egg)"] || 10.9;
+                wastedCost = Number((wastedQty * avgRate).toFixed(2));
+              }
+            } else if (isPreset) {
+              matchedType = rawType;
+              customName = "";
+            } else {
+              matchedType = "Other";
+              customName = rawType;
+            }
+
+            return {
+              expenseType: matchedType,
+              customName: customName,
+              amount: Number(exp.amount) || 0,
+              wastedEggQty: wastedQty,
+              wastedEggCost: wastedCost,
+              isOverheadLinked: matchedType === "সমিতি",
+              overheadCategory: matchedType === "সমিতি" ? "savings_shop" : "extra",
+            };
+          })
         );
       } else {
-        setExpenses([{ expenseType: "নাস্তা-চা", customName: "", amount: 0, wastedEggQty: 0, wastedEggCost: 0 }]);
+        setExpenses([{ expenseType: "নাস্তা-চা", customName: "", amount: 0, wastedEggQty: 0, wastedEggCost: 0, isOverheadLinked: false, overheadCategory: "extra" }]);
       }
     } else {
       setFormPageNo("");
@@ -4667,6 +4699,14 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                 </button>
               </div>
             </div>
+ 
+            {/* Header row for columns on tablet/desktop */}
+            <div className="hidden sm:flex items-center gap-2.5 px-3 py-1.5 text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              <div className="w-44 shrink-0">খরচের খাত (Category)</div>
+              <div className="flex-1 min-w-0">বিবরণ / নোট / ভাঙ্গা ডিম (Details)</div>
+              <div className="w-36 shrink-0">টাকার পরিমাণ (Amount)</div>
+              <div className="shrink-0 text-right pr-2">ওভারহেড ও অ্যাকশন</div>
+            </div>
 
             <div className="space-y-2.5">
               {expenses.map((exp, index) => (
@@ -4679,62 +4719,78 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                   }`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center gap-2.5">
-                    {/* Preset Dropdown */}
-                    <div className="w-full sm:w-44">
+                    {/* 1. Preset Dropdown */}
+                    <div className="w-full sm:w-44 shrink-0">
                       <select
                         value={exp.expenseType}
                         onChange={(e) => handleExpenseChange(index, "expenseType", e.target.value)}
-                        className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-2.5 py-1.5 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 focus:outline-none"
+                        className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-2.5 py-1.5 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer"
                       >
                         {EXPENSE_PRESETS.map((preset) => (
                           <option key={preset} value={preset}>
-                            {preset}
+                            {preset === "Other" ? "অন্যান্য (Custom)" : preset}
                           </option>
                         ))}
+                        {!EXPENSE_PRESETS.includes(exp.expenseType) && exp.expenseType && (
+                          <option value={exp.expenseType}>{exp.expenseType}</option>
+                        )}
                       </select>
                     </div>
 
-                    {/* Custom Name if Other */}
-                    {exp.expenseType === "Other" && (
-                      <div className="flex-1">
+                    {/* 2. Middle Column: Waste Egg Calculator if ভাঙ্গা, or Custom Name if Other, or optional Note */}
+                    <div className="w-full sm:flex-1 min-w-0">
+                      {exp.expenseType === "ভাঙ্গা" ? (
+                        <div className="flex items-center space-x-2 bg-rose-50/70 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 rounded-lg px-2.5 py-1">
+                          <span className="text-[11px] font-bold text-rose-700 dark:text-rose-300 shrink-0">
+                            ভাঙ্গা ডিম:
+                          </span>
+                          <input
+                            type="number"
+                            value={exp.wastedEggQty || ""}
+                            onChange={(e) => handleExpenseChange(index, "wastedEggQty", Number(e.target.value))}
+                            placeholder="সংখ্যা"
+                            className="w-20 border border-rose-300 dark:border-rose-700 rounded-md px-2 py-0.5 bg-white dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-rose-400"
+                          />
+                          <span className="text-[10px] text-slate-400 font-medium">টি</span>
+                          {exp.wastedEggCost > 0 && (
+                            <span className="text-[10px] text-rose-600 dark:text-rose-400 font-bold ml-auto hidden md:inline">
+                              (ক্ষতি: ৳{exp.wastedEggCost.toLocaleString()})
+                            </span>
+                          )}
+                        </div>
+                      ) : exp.expenseType === "Other" ? (
                         <input
                           type="text"
                           value={exp.customName || ""}
                           onChange={(e) => handleExpenseChange(index, "customName", e.target.value)}
-                          placeholder="খরচের বিবরণ"
-                          className="w-full border border-slate-300 dark:border-slate-600 rounded-lg px-2.5 py-1.5 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-900 dark:text-slate-100 focus:outline-none"
+                          placeholder="খরচের নাম / বিবরণ (যেমন: bishu, hair cut, dawat...)"
+                          className="w-full border border-amber-300 dark:border-amber-700/80 rounded-lg px-2.5 py-1.5 bg-amber-50/40 dark:bg-amber-950/20 text-xs font-bold text-amber-900 dark:text-amber-200 placeholder:text-amber-600/50 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         />
-                      </div>
-                    )}
-
-                    {/* Waste Egg Calculator */}
-                    {exp.expenseType === "ভাঙ্গা" && (
-                      <div className="flex items-center space-x-2 flex-1">
-                        <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">ভাঙ্গা ডিম:</span>
+                      ) : (
                         <input
-                          type="number"
-                          value={exp.wastedEggQty || ""}
-                          onChange={(e) => handleExpenseChange(index, "wastedEggQty", Number(e.target.value))}
-                          placeholder="সংখ্যা"
-                          className="w-20 border border-slate-300 dark:border-slate-600 rounded-lg px-2 py-1.5 bg-white dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none"
+                          type="text"
+                          value={exp.customName || ""}
+                          onChange={(e) => handleExpenseChange(index, "customName", e.target.value)}
+                          placeholder="মন্তব্য / বিবরণ (ঐচ্ছিক)"
+                          className="w-full border border-slate-200 dark:border-slate-700/60 rounded-lg px-2.5 py-1.5 bg-white/70 dark:bg-slate-800/60 text-xs text-slate-700 dark:text-slate-300 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-amber-400"
                         />
-                      </div>
-                    )}
+                      )}
+                    </div>
 
-                    {/* Amount Input */}
-                    <div className="relative w-full sm:w-36">
+                    {/* 3. Amount Input (Always aligned in the exact same column) */}
+                    <div className="relative w-full sm:w-36 shrink-0">
                       <span className="absolute inset-y-0 left-0 pl-2.5 flex items-center text-slate-400 text-xs font-bold">৳</span>
                       <input
                         type="number"
                         value={exp.amount || ""}
                         onChange={(e) => handleExpenseChange(index, "amount", Number(e.target.value))}
                         placeholder="টাকা"
-                        className="w-full border border-slate-300 dark:border-slate-600 rounded-lg pl-6 pr-2.5 py-1.5 bg-white dark:bg-slate-800 text-xs font-black text-rose-700 dark:text-rose-400 focus:outline-none"
+                        className="w-full border border-slate-300 dark:border-slate-600 rounded-lg pl-6 pr-2.5 py-1.5 bg-white dark:bg-slate-800 text-xs font-black text-rose-700 dark:text-rose-400 focus:outline-none focus:ring-1 focus:ring-rose-500"
                       />
                     </div>
 
-                    {/* Overhead & Savings Toggle Button */}
-                    <div className="flex items-center space-x-2">
+                    {/* 4. Overhead & Savings Toggle Button + Delete */}
+                    <div className="flex items-center space-x-2 shrink-0">
                       <button
                         type="button"
                         onClick={() => {
