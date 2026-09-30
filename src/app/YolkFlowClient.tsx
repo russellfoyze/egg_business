@@ -4752,22 +4752,24 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
                       </label>
                       {extraCollectionItems.map((item, idx) => (
                         <div key={idx} className="flex items-center space-x-2">
-                          <input
-                            type="text"
-                            value={item.label}
-                            onChange={(e) => handleCollectionItemChange(idx, "label", e.target.value)}
-                            placeholder="খাতের নাম (যেমন: বাটা, শিপন)"
-                            className="flex-1 border border-slate-700/80 rounded-xl px-2.5 py-1.5 bg-slate-950/80 text-xs font-bold text-slate-100 focus:outline-none focus:border-cyan-400"
-                          />
-                          <div className="relative w-32">
-                            <span className="absolute inset-y-0 left-0 pl-2 flex items-center text-slate-400 text-xs font-bold">৳</span>
+                          <div className="flex-1 grid grid-cols-2 gap-2 min-w-0">
                             <input
-                              type="number"
-                              value={item.amount || ""}
-                              onChange={(e) => handleCollectionItemChange(idx, "amount", e.target.value)}
-                              placeholder="0"
-                              className="w-full border border-slate-700/80 rounded-xl pl-6 pr-2 py-1.5 bg-slate-950/80 text-xs font-black text-slate-100 focus:outline-none focus:border-cyan-400"
+                              type="text"
+                              value={item.label}
+                              onChange={(e) => handleCollectionItemChange(idx, "label", e.target.value)}
+                              placeholder="খাতের নাম (যেমন: বাটা, শিপন)"
+                              className="w-full border border-slate-700/80 rounded-xl px-2.5 py-1.5 bg-slate-950/80 text-xs font-bold text-slate-100 focus:outline-none focus:border-cyan-400"
                             />
+                            <div className="relative w-full">
+                              <span className="absolute inset-y-0 left-0 pl-2.5 flex items-center text-slate-400 text-xs font-bold">৳</span>
+                              <input
+                                type="number"
+                                value={item.amount || ""}
+                                onChange={(e) => handleCollectionItemChange(idx, "amount", e.target.value)}
+                                placeholder="0"
+                                className="w-full border border-slate-700/80 rounded-xl pl-6 pr-2.5 py-1.5 bg-slate-950/80 text-xs font-black text-slate-100 focus:outline-none focus:border-cyan-400"
+                              />
+                            </div>
                           </div>
                           <button
                             type="button"
