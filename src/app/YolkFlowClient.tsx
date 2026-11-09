@@ -278,6 +278,13 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
   const [data, setData] = useState<ComputedDayData[]>(initialData);
   const [activeTab, setActiveTab] = useState<"dashboard" | "entry" | "overhead">("dashboard");
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
+
+  // Clean up any legacy demo dashboard design cache
+  useEffect(() => {
+    try {
+      localStorage.removeItem("yolkflow_dashboard_design");
+    } catch (e) {}
+  }, []);
   const [authLoaded, setAuthLoaded] = useState<boolean>(false);
 
   // Load auth session on mount
@@ -318,6 +325,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
   const [selectedStockProductFilter, setSelectedStockProductFilter] = useState<string>("total_qty");
   const [hoveredStockIndex, setHoveredStockIndex] = useState<number | null>(null);
   const [selectedSalesDateRange, setSelectedSalesDateRange] = useState<string>("all");
+  const [breakageViewPeriod, setBreakageViewPeriod] = useState<"daily" | "weekly" | "monthly">("daily");
   const [salesGraphMetric, setSalesGraphMetric] = useState<"both" | "sales" | "margin">("both");
   const [hoveredSalesIndex, setHoveredSalesIndex] = useState<number | null>(null);
   const [salesTableSortOrder, setSalesTableSortOrder] = useState<"asc" | "desc">("asc");
@@ -1130,6 +1138,286 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
     return sevenDaysList.length > 0 ? Math.round(sevenDayMargin / sevenDaysList.length) : 0;
   }, [sevenDayMargin, sevenDaysList]);
 
+  // Comprehensive Daily, Weekly, and Monthly Breakage / Waste Analytics
+  const breakageStats = useMemo(() => {
+    if (!data || data.length === 0 || !currentViewDay) {
+      return {
+        daily: { qty: 0, cost: 0, percent: 0, lossRatio: 0, handledQty: 0, soldQty: 0, stockQty: 0, date: "" },
+        weekly: { qty: 0, cost: 0, percent: 0, lossRatio: 0, handledQty: 0, soldQty: 0, stockQty: 0, dayCount: 0, startDate: "", endDate: "" },
+        monthly: { qty: 0, cost: 0, percent: 0, lossRatio: 0, handledQty: 0, soldQty: 0, stockQty: 0, dayCount: 0, monthName: "", monthStr: "" },
+      };
+    }
+
+    const extractDayBreakage = (d: ComputedDayData) => {
+      const brokenExpenses = (d.expenses?.list || []).filter(
+        (e) =>
+          (e.type || "").includes("ভাঙ্গা") ||
+          (e.type || "").includes("ড্যামেজ") ||
+          (e.type || "").toLowerCase().includes("broken") ||
+          (e.type || "").toLowerCase().includes("damage")
+      );
+
+      let qty = 0;
+      let cost = 0;
+      for (const exp of brokenExpenses) {
+        let q = Number(exp.wastedEggQty) || 0;
+        if (q === 0) {
+          const match = (exp.type || "").match(/\((\d+)\)/);
+          if (match) {
+            q = parseInt(match[1], 10);
+          } else if (exp.amount) {
+            q = Math.round(exp.amount / 11);
+          }
+        }
+        qty += q;
+        cost += Number(exp.amount) || Number(exp.wastedEggCost) || 0;
+      }
+
+      if (qty === 0 && cost === 0) {
+        for (const exp of d.expenses?.list || []) {
+          if (exp.wastedEggQty && exp.wastedEggQty > 0) {
+            qty += Number(exp.wastedEggQty);
+            cost += Number(exp.amount) || Number(exp.wastedEggCost) || 0;
+          }
+        }
+      }
+
+      const soldQty =
+        d.sales?.totalSoldQty ||
+        Object.values(d.stock || {}).reduce((sum, s) => sum + (s.soldQty || 0), 0);
+
+      const stockQty = Object.values(d.stock || {}).reduce(
+        (sum, s) => sum + (s.currentStock || 0),
+        0
+      );
+
+      const expensesTotal = d.expenses?.totalExpenses || 0;
+
+      return { qty, cost, soldQty, stockQty, expensesTotal, handledQty: soldQty + stockQty };
+    };
+
+    // 1. Daily
+    const dayB = extractDayBreakage(currentViewDay);
+    const dailyPercent = dayB.handledQty > 0 ? (dayB.qty / dayB.handledQty) * 100 : 0;
+    const dailyLossRatio = dayB.expensesTotal > 0 ? (dayB.cost / dayB.expensesTotal) * 100 : 0;
+    const daily = {
+      qty: dayB.qty,
+      cost: dayB.cost,
+      percent: dailyPercent,
+      lossRatio: dailyLossRatio,
+      handledQty: dayB.handledQty,
+      soldQty: dayB.soldQty,
+      stockQty: dayB.stockQty,
+      date: currentViewDay.date,
+    };
+
+    // 2. Weekly (Last 7 days ending at currentViewDay)
+    const currentIdx = data.findIndex((d) => d.date === currentViewDay.date);
+    const targetIdx = currentIdx >= 0 ? currentIdx : data.length - 1;
+    const weeklyDays = data.slice(Math.max(0, targetIdx - 6), targetIdx + 1);
+
+    let weeklyQty = 0;
+    let weeklyCost = 0;
+    let weeklySoldQty = 0;
+    let weeklyExpenses = 0;
+    for (const d of weeklyDays) {
+      const b = extractDayBreakage(d);
+      weeklyQty += b.qty;
+      weeklyCost += b.cost;
+      weeklySoldQty += b.soldQty;
+      weeklyExpenses += b.expensesTotal;
+    }
+    const latestWeeklyDay = weeklyDays[weeklyDays.length - 1] || currentViewDay;
+    const weeklyEndingStock = Object.values(latestWeeklyDay.stock || {}).reduce(
+      (sum, s) => sum + (s.currentStock || 0),
+      0
+    );
+    const weeklyHandled = weeklySoldQty + weeklyEndingStock;
+    const weeklyPercent = weeklyHandled > 0 ? (weeklyQty / weeklyHandled) * 100 : 0;
+    const weeklyLossRatio = weeklyExpenses > 0 ? (weeklyCost / weeklyExpenses) * 100 : 0;
+    const weekly = {
+      qty: weeklyQty,
+      cost: weeklyCost,
+      percent: weeklyPercent,
+      lossRatio: weeklyLossRatio,
+      handledQty: weeklyHandled,
+      soldQty: weeklySoldQty,
+      stockQty: weeklyEndingStock,
+      dayCount: weeklyDays.length,
+      startDate: weeklyDays[0]?.date || "",
+      endDate: latestWeeklyDay.date || "",
+    };
+
+    // 3. Monthly (Month of currentViewDay)
+    const currentMonthStr = currentViewDay.date.slice(0, 7);
+    let monthlyDays = data.filter((d) => d.date.startsWith(currentMonthStr) && d.date <= currentViewDay.date);
+    if (monthlyDays.length === 0) {
+      monthlyDays = data.filter((d) => d.date.startsWith(currentMonthStr));
+    }
+    if (monthlyDays.length === 0) {
+      monthlyDays = data.slice(-30);
+    }
+
+    let monthlyQty = 0;
+    let monthlyCost = 0;
+    let monthlySoldQty = 0;
+    let monthlyExpenses = 0;
+    for (const d of monthlyDays) {
+      const b = extractDayBreakage(d);
+      monthlyQty += b.qty;
+      monthlyCost += b.cost;
+      monthlySoldQty += b.soldQty;
+      monthlyExpenses += b.expensesTotal;
+    }
+    const latestMonthlyDay = monthlyDays[monthlyDays.length - 1] || currentViewDay;
+    const monthlyEndingStock = Object.values(latestMonthlyDay.stock || {}).reduce(
+      (sum, s) => sum + (s.currentStock || 0),
+      0
+    );
+    const monthlyHandled = monthlySoldQty + monthlyEndingStock;
+    const monthlyPercent = monthlyHandled > 0 ? (monthlyQty / monthlyHandled) * 100 : 0;
+    const monthlyLossRatio = monthlyExpenses > 0 ? (monthlyCost / monthlyExpenses) * 100 : 0;
+
+    const parts = currentMonthStr.split("-");
+    const mYear = parts[0] || "";
+    const mMonth = parts[1] || "";
+    const banglaMonthNames: { [key: string]: string } = {
+      "01": "জানুয়ারি",
+      "02": "ফেব্রুয়ারি",
+      "03": "মার্চ",
+      "04": "এপ্রিল",
+      "05": "মে",
+      "06": "জুন",
+      "07": "জুলাই",
+      "08": "আগস্ট",
+      "09": "সেপ্টেম্বর",
+      "10": "অক্টোবর",
+      "11": "নভেম্বর",
+      "12": "ডিসেম্বর",
+    };
+    const monthName = banglaMonthNames[mMonth] ? `${banglaMonthNames[mMonth]} ${mYear}` : currentMonthStr;
+
+    const monthly = {
+      qty: monthlyQty,
+      cost: monthlyCost,
+      percent: monthlyPercent,
+      lossRatio: monthlyLossRatio,
+      handledQty: monthlyHandled,
+      soldQty: monthlySoldQty,
+      stockQty: monthlyEndingStock,
+      dayCount: monthlyDays.length,
+      monthName,
+      monthStr: currentMonthStr,
+    };
+
+    return { daily, weekly, monthly };
+  }, [data, currentViewDay]);
+
+  // Detailed summary calculations for Dashboard Upper & Secondary Sections
+  const summaryDetails = useMemo(() => {
+    if (!currentViewDay) {
+      return {
+        totalStockQty: 0,
+        activeStockCount: 0,
+        avgStockRate: 0,
+        todayPurchaseQty: 0,
+        todayPurchaseVal: 0,
+        cashRatio: 0,
+        stockRatio: 0,
+        customerDue: 0,
+        extraDue: 0,
+        providerDue: 0,
+        providerName: "",
+        netDuesBalance: 0,
+        prevDayBalance: 0,
+        businessExpense: 0,
+        breakageCost: 0,
+        breakageQty: 0,
+        avgSellingRate: 0,
+        cogs: 0,
+        grossProfit: 0,
+        cashChange: 0,
+        marginRate: 0,
+        diffFromAvgMargin: 0,
+      };
+    }
+
+    const stockEntries = Object.values(currentViewDay.stock || {});
+    const totalStockQty = stockEntries.reduce((sum, s) => sum + (s.currentStock || 0), 0);
+    const activeStockCount = stockEntries.filter((s) => (s.currentStock || 0) > 0).length;
+    const avgStockRate = totalStockQty > 0 ? (viewStock / totalStockQty) : 0;
+
+    let todayPurchaseQty = 0;
+    let todayPurchaseVal = 0;
+    for (const s of stockEntries) {
+      if (s.hasPurchase && s.purchaseQty > 0) {
+        todayPurchaseQty += s.purchaseQty;
+        todayPurchaseVal += s.purchaseQty * (s.purchaseRate || 0);
+      }
+    }
+
+    const cashRatio = viewCashPlusStock > 0 ? Math.round((viewCash / viewCashPlusStock) * 100) : 0;
+    const stockRatio = 100 - cashRatio;
+
+    const customerDue = currentViewDay.financials.totalDue || 0;
+    const extraDue = currentViewDay.financials.extraDue || 0;
+    const providerDue = currentViewDay.financials.providerDueMoney || 0;
+    const providerName = currentViewDay.financials.providerName || "";
+    const netDuesBalance = viewDues - providerDue;
+    const prevDayBalance = currentViewDay.financials.prevDayBalance || 0;
+
+    const breakageCost = breakageStats.daily.cost || 0;
+    const breakageQty = breakageStats.daily.qty || 0;
+    const businessExpense = Math.max(0, viewExpenses - viewPersonalExpense - breakageCost);
+
+    const avgSellingRate = viewTotalSoldQty > 0 ? (viewDailySalesAmount / viewTotalSoldQty) : 0;
+    const cogs = viewSoldStockCost;
+    const grossProfit = Math.max(0, viewDailySalesAmount - cogs);
+    const cashChange = viewCash - prevDayBalance;
+
+    const marginRate = viewDailySalesAmount > 0 ? (viewProfit / viewDailySalesAmount) * 100 : 0;
+    const diffFromAvgMargin = viewProfit - sevenDayAvgMargin;
+
+    return {
+      totalStockQty,
+      activeStockCount,
+      avgStockRate,
+      todayPurchaseQty,
+      todayPurchaseVal,
+      cashRatio,
+      stockRatio,
+      customerDue,
+      extraDue,
+      providerDue,
+      providerName,
+      netDuesBalance,
+      prevDayBalance,
+      businessExpense,
+      breakageCost,
+      breakageQty,
+      avgSellingRate,
+      cogs,
+      grossProfit,
+      cashChange,
+      marginRate,
+      diffFromAvgMargin,
+    };
+  }, [
+    currentViewDay,
+    viewStock,
+    viewCashPlusStock,
+    viewCash,
+    viewDues,
+    viewExpenses,
+    viewPersonalExpense,
+    breakageStats.daily,
+    viewTotalSoldQty,
+    viewDailySalesAmount,
+    viewSoldStockCost,
+    viewProfit,
+    sevenDayAvgMargin,
+  ]);
+
   // Profit & Margin Trend Chart Data
   const profitFilteredData: ComputedDayData[] = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -1662,12 +1950,21 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
     }
   }, [activeTab, selectedSalesDateRange, salesVsMarginStats.points.length, salesTableSortOrder]);
 
-  // Keep selected day visible in the table when selected
+  // Keep selected day visible inside the table container ONLY without scrolling the browser page
   useEffect(() => {
     if (activeTab === "dashboard" && currentViewDay?.date && salesTableRef.current) {
+      const container = salesTableRef.current;
       const row = document.getElementById(`tbl-sales-row-${currentViewDay.date}`);
-      if (row) {
-        row.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      if (row && container) {
+        const rowTop = row.offsetTop;
+        const rowHeight = row.offsetHeight;
+        const containerScrollTop = container.scrollTop;
+        const containerHeight = container.clientHeight;
+        if (rowTop < containerScrollTop) {
+          container.scrollTop = rowTop;
+        } else if (rowTop + rowHeight > containerScrollTop + containerHeight) {
+          container.scrollTop = rowTop + rowHeight - containerHeight;
+        }
       }
     }
   }, [activeTab, currentViewDay?.date]);
@@ -1894,9 +2191,9 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
       <main className="w-full max-w-none mx-auto px-2 sm:px-6 lg:px-[100px] pt-3 pb-24 sm:py-6 flex-1">
         <div className="space-y-4 sm:space-y-6">
           {/* Sticky Secondary Navigation (Tabs on Left, Date Navigator on Right) */}
-          <div className="hidden sm:flex sticky top-[58px] sm:top-[64px] z-30 glass-panel p-2 sm:p-2.5 rounded-2xl sm:rounded-3xl shadow-lg justify-between items-center gap-3 overflow-x-auto scrollbar-none">
+          <div className="hidden sm:flex sticky top-[58px] sm:top-[64px] z-50 glass-panel p-2 sm:p-2.5 rounded-2xl sm:rounded-3xl shadow-lg justify-between items-center gap-3">
             {/* Tab Switcher (RBAC Filtered) - Pill Track from UI Kit */}
-            <div className="flex items-center p-1.5 bg-slate-900/90 border border-slate-700/80 rounded-full shrink-0 gap-1.5 shadow-inner">
+            <div className="flex items-center p-1.5 bg-slate-900/90 border border-slate-700/80 rounded-full shrink-0 gap-1.5 shadow-inner overflow-x-auto scrollbar-none">
               {isAllowed("dashboard") && (
                 <button
                   onClick={() => handleSwitchTab("dashboard")}
@@ -1956,7 +2253,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
 
           {/* Sticky Mobile Sub-Header (Date Navigator for Mobile Phone View) */}
           {activeTab !== "overhead" && (
-            <div className="sm:hidden sticky top-[58px] z-30 glass-panel p-2 rounded-2xl shadow-md flex items-center gap-1.5 w-full min-w-0">
+            <div className="sm:hidden sticky top-[58px] z-50 glass-panel p-2 rounded-2xl shadow-md flex items-center gap-1.5 w-full min-w-0">
               {renderDateNavigatorPill(
                 activeDisplayDate,
                 activeDisplayDay,
@@ -1972,7 +2269,7 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
 
           {activeTab === "dashboard" ? (
             /* ================= DASHBOARD TAB ================= */
-        <div className="space-y-4 sm:space-y-6">
+        <div className="space-y-4 sm:space-y-[1vw]">
           {/* Dashboard Title Bar */}
           <div className="glass-panel p-4 sm:p-5 rounded-2xl sm:rounded-3xl shadow-md flex justify-between items-center transition-all">
             <div>
@@ -1990,142 +2287,368 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
             </div>
           </div>
 
-          {/* Top Summary Cards (Upper Section - Modern Frosted Glassmorphism) */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+          {/* Top Summary Cards (Upper Section - Modern Frosted Glassmorphism with 1vw layout) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-[1vw]">
             {/* 1. Cash + Stock */}
-            <div className="glass-panel-cyan rounded-3xl p-4 sm:p-5 relative overflow-hidden flex flex-col justify-between transition-all group hover:scale-[1.01] hover:shadow-[0_16px_40px_rgba(0,200,255,0.2)]">
-              <div className="flex justify-between items-start">
-                <div>
-                  <span className="text-[10px] sm:text-xs font-black tracking-wider text-cyan-400 bg-cyan-950/70 border border-cyan-500/40 px-2.5 py-1 rounded-full uppercase backdrop-blur-md inline-block">
-                    #ক্যাশ + মজুদ ডিম
-                  </span>
-                  <span className="text-[11px] font-bold text-slate-400 block mt-2">মোট সম্পদ ভ্যালু</span>
-                  <h3 className="text-2xl sm:text-3xl font-black text-cyan-300 drop-shadow-[0_0_16px_rgba(0,200,255,0.45)] mt-0.5 tracking-tight">
-                    ৳ {viewCashPlusStock.toLocaleString()}
-                  </h3>
+            <div className="glass-panel-cyan rounded-3xl lg:rounded-[1vw] p-4 sm:p-5 lg:p-[1vw] relative overflow-hidden flex flex-col justify-between transition-all group hover:scale-[1.01] hover:shadow-[0_16px_40px_rgba(0,200,255,0.2)]">
+              <div>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <span className="text-[10px] sm:text-xs font-black tracking-wider text-cyan-400 bg-cyan-950/70 border border-cyan-500/40 px-2.5 py-1 rounded-full uppercase backdrop-blur-md inline-block">
+                      #ক্যাশ + মজুদ ডিম
+                    </span>
+                    <span className="text-[11px] font-bold text-slate-400 block mt-2">মোট সম্পদ ভ্যালু (Liquid + Stock)</span>
+                    <h3 className="text-2xl sm:text-3xl font-black text-cyan-300 drop-shadow-[0_0_16px_rgba(0,200,255,0.45)] mt-0.5 tracking-tight">
+                      ৳ {viewCashPlusStock.toLocaleString()}
+                    </h3>
+                  </div>
+                  <div className="w-9 h-9 rounded-full bg-cyan-500/15 border border-cyan-400/40 flex items-center justify-center text-cyan-400 shadow-[0_0_12px_rgba(0,200,255,0.3)] shrink-0">
+                    <Coins className="w-4 h-4" />
+                  </div>
                 </div>
-                <div className="w-9 h-9 rounded-full bg-cyan-500/15 border border-cyan-400/40 flex items-center justify-center text-cyan-400 shadow-[0_0_12px_rgba(0,200,255,0.3)] shrink-0">
-                  <Coins className="w-4 h-4" />
+
+                {/* Proportional Split Visual Bar */}
+                <div className="mt-3">
+                  <div className="flex justify-between text-[10px] text-slate-400 mb-1 font-semibold">
+                    <span className="text-cyan-300">ক্যাশ {summaryDetails.cashRatio}%</span>
+                    <span className="text-amber-300">মজুদ {summaryDetails.stockRatio}%</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-slate-800/80 rounded-full overflow-hidden flex shadow-inner">
+                    <div
+                      className="bg-gradient-to-r from-cyan-400 to-cyan-300 transition-all duration-500"
+                      style={{ width: `${summaryDetails.cashRatio}%` }}
+                      title={`ক্যাশ: ${summaryDetails.cashRatio}%`}
+                    />
+                    <div
+                      className="bg-gradient-to-r from-amber-400 to-amber-300 transition-all duration-500"
+                      style={{ width: `${summaryDetails.stockRatio}%` }}
+                      title={`মজুদ: ${summaryDetails.stockRatio}%`}
+                    />
+                  </div>
                 </div>
               </div>
-              <div className="mt-3.5 pt-2.5 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-300 font-bold truncate">
-                <span>ক্যাশ: ৳{viewCash.toLocaleString()}</span>
-                <span className="text-cyan-400/50">|</span>
-                <span>মজুদ: ৳{viewStock.toLocaleString()}</span>
+
+              {/* Detailed Breakdown */}
+              <div className="mt-3 space-y-1.5 pt-2.5 border-t border-white/10 text-[11px]">
+                <div className="flex items-center justify-between font-bold">
+                  <span className="text-cyan-300 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-cyan-400 inline-block shadow-[0_0_6px_rgba(0,200,255,0.8)]" />
+                    ক্যাশ: ৳{viewCash.toLocaleString()}
+                  </span>
+                  <span className="text-cyan-400 font-black text-[10px] bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-500/30">
+                    {summaryDetails.cashRatio}%
+                  </span>
+                </div>
+                <div className="flex items-center justify-between font-bold">
+                  <span className="text-amber-300 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-amber-400 inline-block shadow-[0_0_6px_rgba(245,158,11,0.8)]" />
+                    মজুদ: ৳{viewStock.toLocaleString()}
+                  </span>
+                  <span className="text-amber-400 font-black text-[10px] bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-500/30">
+                    {summaryDetails.stockRatio}%
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1.5 border-t border-white/5 font-medium">
+                  <span>মোট ডিম: <strong className="text-slate-100 font-bold">{summaryDetails.totalStockQty.toLocaleString()} টি</strong></span>
+                  <span>গড় দর: <strong className="text-cyan-300 font-bold">৳{summaryDetails.avgStockRate.toFixed(2)}</strong></span>
+                </div>
               </div>
             </div>
 
             {/* 2. Total Dues */}
-            <div className="glass-panel-rose rounded-3xl p-4 sm:p-5 relative overflow-hidden flex flex-col justify-between transition-all group hover:scale-[1.01] hover:shadow-[0_16px_40px_rgba(244,63,94,0.2)]">
-              <div className="flex justify-between items-start">
-                <div>
-                  <span className="text-[10px] sm:text-xs font-black tracking-wider text-rose-400 bg-rose-950/70 border border-rose-500/40 px-2.5 py-1 rounded-full uppercase backdrop-blur-md inline-block">
-                    #বাকি খাতা (DUES)
-                  </span>
-                  <span className="text-[11px] font-bold text-slate-400 block mt-2">মোট দেনা / পাওনাদার</span>
-                  <h3 className="text-2xl sm:text-3xl font-black text-rose-400 drop-shadow-[0_0_16px_rgba(244,63,94,0.45)] mt-0.5 tracking-tight">
-                    ৳ {viewDues.toLocaleString()}
-                  </h3>
+            <div className="glass-panel-rose rounded-3xl lg:rounded-[1vw] p-4 sm:p-5 lg:p-[1vw] relative overflow-hidden flex flex-col justify-between transition-all group hover:scale-[1.01] hover:shadow-[0_16px_40px_rgba(244,63,94,0.2)]">
+              <div>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <span className="text-[10px] sm:text-xs font-black tracking-wider text-rose-400 bg-rose-950/70 border border-rose-500/40 px-2.5 py-1 rounded-full uppercase backdrop-blur-md inline-block">
+                      #বাকি খাতা (DUES)
+                    </span>
+                    <span className="text-[11px] font-bold text-slate-400 block mt-2">মোট বাকি পাওনা (Receivables)</span>
+                    <h3 className="text-2xl sm:text-3xl font-black text-rose-400 drop-shadow-[0_0_16px_rgba(244,63,94,0.45)] mt-0.5 tracking-tight">
+                      ৳ {viewDues.toLocaleString()}
+                    </h3>
+                  </div>
+                  <div className="w-9 h-9 rounded-full bg-rose-500/15 border border-rose-400/40 flex items-center justify-center text-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.3)] shrink-0">
+                    <DollarSign className="w-4 h-4" />
+                  </div>
                 </div>
-                <div className="w-9 h-9 rounded-full bg-rose-500/15 border border-rose-400/40 flex items-center justify-center text-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.3)] shrink-0">
-                  <DollarSign className="w-4 h-4" />
+
+                {/* Sub-breakdown badges */}
+                <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[10px] font-bold">
+                  <span className="bg-rose-950/60 border border-rose-500/30 px-2 py-0.5 rounded text-rose-300">
+                    খাতা বাকি: ৳{summaryDetails.customerDue.toLocaleString()}
+                  </span>
+                  {summaryDetails.extraDue > 0 && (
+                    <span className="bg-rose-950/60 border border-rose-500/30 px-2 py-0.5 rounded text-rose-300">
+                      অন্যান্য: ৳{summaryDetails.extraDue.toLocaleString()}
+                    </span>
+                  )}
                 </div>
               </div>
-              <div className="mt-3.5 pt-2.5 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-300 font-bold truncate">
-                <span>নগদ আদায়:</span>
-                <span className="text-rose-400 font-black">৳ {viewCash.toLocaleString()}</span>
+
+              {/* Detailed Breakdown */}
+              <div className="mt-3 space-y-1.5 pt-2.5 border-t border-white/10 text-[11px]">
+                <div className="flex items-center justify-between text-slate-300 font-bold truncate">
+                  <span>মহাজন দেনা:</span>
+                  <span className="text-rose-400 font-black">
+                    ৳ {summaryDetails.providerDue.toLocaleString()}
+                    {summaryDetails.providerName ? ` (${summaryDetails.providerName})` : ""}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1.5 border-t border-white/5 font-medium">
+                  <span>নেট পাওনা স্থিতি:</span>
+                  <span className={`font-black ${summaryDetails.netDuesBalance >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                    ৳ {summaryDetails.netDuesBalance.toLocaleString()}
+                  </span>
+                </div>
               </div>
             </div>
 
             {/* 3. Total Business Value */}
-            <div className="glass-panel-emerald rounded-3xl p-4 sm:p-5 relative overflow-hidden flex flex-col justify-between transition-all group hover:scale-[1.01] hover:shadow-[0_16px_40px_rgba(16,185,129,0.2)]">
-              <div className="flex justify-between items-start">
-                <div>
-                  <span className="text-[10px] sm:text-xs font-black tracking-wider text-emerald-400 bg-emerald-950/70 border border-emerald-500/40 px-2.5 py-1 rounded-full uppercase backdrop-blur-md inline-block">
-                    #সর্বমোট পাওনা
-                  </span>
-                  <span className="text-[11px] font-bold text-slate-400 block mt-2">ব্যবসার মোট তহবিল</span>
-                  <h3 className="text-2xl sm:text-3xl font-black text-emerald-400 drop-shadow-[0_0_16px_rgba(16,185,129,0.45)] mt-0.5 tracking-tight">
-                    ৳ {viewBusinessValue.toLocaleString()}
-                  </h3>
+            <div className="glass-panel-emerald rounded-3xl lg:rounded-[1vw] p-4 sm:p-5 lg:p-[1vw] relative overflow-hidden flex flex-col justify-between transition-all group hover:scale-[1.01] hover:shadow-[0_16px_40px_rgba(16,185,129,0.2)]">
+              <div>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <span className="text-[10px] sm:text-xs font-black tracking-wider text-emerald-400 bg-emerald-950/70 border border-emerald-500/40 px-2.5 py-1 rounded-full uppercase backdrop-blur-md inline-block">
+                      #সর্বমোট পাওনা
+                    </span>
+                    <span className="text-[11px] font-bold text-slate-400 block mt-2">ব্যবসার মোট তহবিল (Net Assets)</span>
+                    <h3 className="text-2xl sm:text-3xl font-black text-emerald-400 drop-shadow-[0_0_16px_rgba(16,185,129,0.45)] mt-0.5 tracking-tight">
+                      ৳ {viewBusinessValue.toLocaleString()}
+                    </h3>
+                  </div>
+                  <div className="w-9 h-9 rounded-full bg-emerald-500/15 border border-emerald-400/40 flex items-center justify-center text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.3)] shrink-0">
+                    <TrendingUp className="w-4 h-4" />
+                  </div>
                 </div>
-                <div className="w-9 h-9 rounded-full bg-emerald-500/15 border border-emerald-400/40 flex items-center justify-center text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.3)] shrink-0">
-                  <TrendingUp className="w-4 h-4" />
+
+                {/* Formula Breakdown Badges */}
+                <div className="mt-3 flex flex-wrap items-center gap-1 text-[10px] font-bold text-emerald-300/90">
+                  <span className="bg-rose-950/50 border border-rose-500/30 px-1.5 py-0.5 rounded text-rose-300">
+                    বাকি ৳{viewDues.toLocaleString()}
+                  </span>
+                  <span>+</span>
+                  <span className="bg-cyan-950/50 border border-cyan-500/30 px-1.5 py-0.5 rounded text-cyan-300">
+                    ক্যাশ ৳{viewCash.toLocaleString()}
+                  </span>
+                  <span>+</span>
+                  <span className="bg-amber-950/50 border border-amber-500/30 px-1.5 py-0.5 rounded text-amber-300">
+                    মজুদ ৳{viewStock.toLocaleString()}
+                  </span>
                 </div>
               </div>
-              <div className="mt-3.5 pt-2.5 border-t border-white/10 text-[11px] text-emerald-300/90 font-bold truncate">
-                বাকি + নগদ ক্যাশ + মজুদ ডিম
+
+              {/* Detailed Breakdown */}
+              <div className="mt-3 space-y-1.5 pt-2.5 border-t border-white/10 text-[11px]">
+                <div className="flex items-center justify-between text-slate-300 font-bold">
+                  <span>সাবেক জমা স্থিতি:</span>
+                  <span className="text-emerald-300 font-black">৳ {summaryDetails.prevDayBalance.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1.5 border-t border-white/5 font-medium">
+                  <span>দেনা-দায়সহ তহবিল:</span>
+                  <span className="text-slate-100 font-black">৳ {viewTotalBusinessWithDue.toLocaleString()}</span>
+                </div>
               </div>
             </div>
 
             {/* 4. Total Expenses */}
-            <div className="glass-panel-amber rounded-3xl p-4 sm:p-5 relative overflow-hidden flex flex-col justify-between transition-all group hover:scale-[1.01] hover:shadow-[0_16px_40px_rgba(245,158,11,0.2)]">
-              <div className="flex justify-between items-start">
-                <div>
-                  <span className="text-[10px] sm:text-xs font-black tracking-wider text-amber-400 bg-amber-950/70 border border-amber-500/40 px-2.5 py-1 rounded-full uppercase backdrop-blur-md inline-block">
-                    #মোট খরচ
-                  </span>
-                  <span className="text-[11px] font-bold text-slate-400 block mt-2">দৈনিক মোট ব্যয়</span>
-                  <h3 className="text-2xl sm:text-3xl font-black text-amber-400 drop-shadow-[0_0_16px_rgba(245,158,11,0.45)] mt-0.5 tracking-tight">
-                    ৳ {viewExpenses.toLocaleString()}
-                  </h3>
+            <div className="glass-panel-amber rounded-3xl lg:rounded-[1vw] p-4 sm:p-5 lg:p-[1vw] relative overflow-hidden flex flex-col justify-between transition-all group hover:scale-[1.01] hover:shadow-[0_16px_40px_rgba(245,158,11,0.2)]">
+              <div>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <span className="text-[10px] sm:text-xs font-black tracking-wider text-amber-400 bg-amber-950/70 border border-amber-500/40 px-2.5 py-1 rounded-full uppercase backdrop-blur-md inline-block">
+                      #মোট খরচ
+                    </span>
+                    <span className="text-[11px] font-bold text-slate-400 block mt-2">দৈনিক মোট ব্যয় (Outflows)</span>
+                    <h3 className="text-2xl sm:text-3xl font-black text-amber-400 drop-shadow-[0_0_16px_rgba(245,158,11,0.45)] mt-0.5 tracking-tight">
+                      ৳ {viewExpenses.toLocaleString()}
+                    </h3>
+                  </div>
+                  <div className="w-9 h-9 rounded-full bg-amber-500/15 border border-amber-400/40 flex items-center justify-center text-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.3)] shrink-0">
+                    <Receipt className="w-4 h-4" />
+                  </div>
                 </div>
-                <div className="w-9 h-9 rounded-full bg-amber-500/15 border border-amber-400/40 flex items-center justify-center text-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.3)] shrink-0">
-                  <Trash2 className="w-4 h-4" />
+
+                {/* Sub-breakdown items */}
+                <div className="mt-3 flex flex-wrap items-center gap-1 text-[10px] font-bold">
+                  <span className="bg-amber-950/60 border border-amber-500/30 px-1.5 py-0.5 rounded text-amber-300">
+                    দোকান: ৳{summaryDetails.businessExpense.toLocaleString()}
+                  </span>
+                  {viewPersonalExpense > 0 && (
+                    <span className="bg-purple-950/70 border border-purple-500/40 px-1.5 py-0.5 rounded text-purple-300">
+                      নিজ: ৳{viewPersonalExpense.toLocaleString()}
+                    </span>
+                  )}
+                  {summaryDetails.breakageCost > 0 && (
+                    <span className="bg-rose-950/70 border border-rose-500/40 px-1.5 py-0.5 rounded text-rose-300">
+                      ভাঙা: ৳{summaryDetails.breakageCost.toLocaleString()}
+                    </span>
+                  )}
                 </div>
               </div>
-              <div className="mt-3.5 pt-2.5 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-300 font-bold truncate">
-                <span>খরচসহ মোট: ৳{viewTotalBusinessWithExpenses.toLocaleString()}</span>
-                {viewPersonalExpense > 0 && (
-                  <span className="text-purple-300 bg-purple-950/70 border border-purple-500/40 px-2 py-0.5 rounded-full font-black text-[10px]">
-                    নিজ: ৳{viewPersonalExpense.toLocaleString()}
+
+              {/* Detailed Breakdown */}
+              <div className="mt-3 space-y-1.5 pt-2.5 border-t border-white/10 text-[11px]">
+                <div className="flex items-center justify-between text-slate-300 font-bold truncate">
+                  <span>খরচসহ মোট তহবিল:</span>
+                  <span className="text-amber-300 font-black">৳ {viewTotalBusinessWithExpenses.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1.5 border-t border-white/5 font-medium">
+                  <span>ব্যয় অনুপাত (বিক্রির):</span>
+                  <span className="text-amber-400 font-bold">
+                    {viewDailySalesAmount > 0 ? ((viewExpenses / viewDailySalesAmount) * 100).toFixed(1) + "%" : "০%"}
                   </span>
-                )}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Secondary Summary Chips - Modern Frosted Glass */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-4">
-            <div className="glass-panel rounded-2xl p-3.5 sm:p-4 transition-all group hover:border-cyan-500/40">
-              <span className="text-[11px] font-bold text-cyan-400 block">দৈনিক মোট বিক্রি (Sales)</span>
-              <span className="text-base sm:text-lg font-black text-cyan-300 drop-shadow-[0_0_10px_rgba(0,200,255,0.35)] mt-0.5 block">
-                ৳ {viewDailySalesAmount.toLocaleString()}
-              </span>
-              <span className="text-[10px] text-slate-400 font-bold block mt-0.5">
-                বিক্রি: {viewTotalSoldQty.toLocaleString()} টি
-              </span>
+          {/* Secondary Summary Chips - Modern Frosted Glass with 1vw layout */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-[1vw]">
+            {/* 1. Daily Sales */}
+            <div className="glass-panel rounded-2xl lg:rounded-[1vw] p-3.5 sm:p-4 lg:p-[1vw] transition-all group hover:border-cyan-500/40 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-cyan-400 block truncate">দৈনিক মোট বিক্রি (Sales)</span>
+                  <ShoppingCart className="w-3.5 h-3.5 text-cyan-400/70 shrink-0" />
+                </div>
+                <span className="text-base sm:text-lg lg:text-xl font-black text-cyan-300 drop-shadow-[0_0_10px_rgba(0,200,255,0.35)] mt-1 block tracking-tight">
+                  ৳ {viewDailySalesAmount.toLocaleString()}
+                </span>
+              </div>
+              <div className="mt-2.5 pt-2 border-t border-white/10 space-y-1 text-[10px]">
+                <div className="flex items-center justify-between text-slate-300 font-bold">
+                  <span>বিক্রি সংখ্যা:</span>
+                  <span className="text-cyan-300 font-black">{viewTotalSoldQty.toLocaleString()} টি</span>
+                </div>
+                <div className="flex items-center justify-between text-slate-400 font-medium">
+                  <span>গড় বিক্রয় দর:</span>
+                  <span className="text-slate-100 font-bold">৳ {summaryDetails.avgSellingRate.toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between text-slate-400 font-medium pt-0.5 border-t border-white/5">
+                  <span>মালের ক্রয়মূল্য:</span>
+                  <span className="text-slate-300">৳ {summaryDetails.cogs.toLocaleString()}</span>
+                </div>
+              </div>
             </div>
-            <div className="glass-panel rounded-2xl p-3.5 sm:p-4 transition-all group hover:border-slate-500/40">
-              <span className="text-[11px] font-bold text-slate-400 block">নগদ ক্যাশ (Cash)</span>
-              <span className="text-base sm:text-lg font-black text-slate-100 mt-0.5 block">
-                ৳ {viewCash.toLocaleString()}
-              </span>
-              <span className="text-[10px] text-slate-500 font-medium block mt-0.5">ড্রয়ার ক্যাশ</span>
+
+            {/* 2. Cash in Drawer */}
+            <div className="glass-panel rounded-2xl lg:rounded-[1vw] p-3.5 sm:p-4 lg:p-[1vw] transition-all group hover:border-slate-500/40 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-300 block truncate">নগদ ক্যাশ (Cash)</span>
+                  <Coins className="w-3.5 h-3.5 text-slate-400/70 shrink-0" />
+                </div>
+                <span className="text-base sm:text-lg lg:text-xl font-black text-slate-100 mt-1 block tracking-tight">
+                  ৳ {viewCash.toLocaleString()}
+                </span>
+              </div>
+              <div className="mt-2.5 pt-2 border-t border-white/10 space-y-1 text-[10px]">
+                <div className="flex items-center justify-between text-slate-300 font-bold">
+                  <span>ড্রয়ার সমাপনী:</span>
+                  <span className="text-slate-100 font-black">৳ {viewCash.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between text-slate-400 font-medium">
+                  <span>সাবেক ক্যাশ:</span>
+                  <span className="text-slate-300">৳ {summaryDetails.prevDayBalance.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between text-slate-400 font-medium pt-0.5 border-t border-white/5">
+                  <span>দৈনিক পরিবর্তন:</span>
+                  <span className={`font-bold ${summaryDetails.cashChange >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                    {summaryDetails.cashChange >= 0 ? "+" : ""}৳ {summaryDetails.cashChange.toLocaleString()}
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="glass-panel rounded-2xl p-3.5 sm:p-4 transition-all group hover:border-amber-500/40">
-              <span className="text-[11px] font-bold text-amber-400 block">মজুদ ডিমের মূল্য (Stock)</span>
-              <span className="text-base sm:text-lg font-black text-amber-300 drop-shadow-[0_0_10px_rgba(245,158,11,0.35)] mt-0.5 block">
-                ৳ {viewStock.toLocaleString()}
-              </span>
-              <span className="text-[10px] text-slate-400 font-medium block mt-0.5">বর্তমান মজুদ</span>
+
+            {/* 3. Stock Value */}
+            <div className="glass-panel rounded-2xl lg:rounded-[1vw] p-3.5 sm:p-4 lg:p-[1vw] transition-all group hover:border-amber-500/40 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-amber-400 block truncate">মজুদ ডিমের মূল্য (Stock)</span>
+                  <Boxes className="w-3.5 h-3.5 text-amber-400/70 shrink-0" />
+                </div>
+                <span className="text-base sm:text-lg lg:text-xl font-black text-amber-300 drop-shadow-[0_0_10px_rgba(245,158,11,0.35)] mt-1 block tracking-tight">
+                  ৳ {viewStock.toLocaleString()}
+                </span>
+              </div>
+              <div className="mt-2.5 pt-2 border-t border-white/10 space-y-1 text-[10px]">
+                <div className="flex items-center justify-between text-slate-300 font-bold">
+                  <span>মজুদ সংখ্যা:</span>
+                  <span className="text-amber-300 font-black">{summaryDetails.totalStockQty.toLocaleString()} টি</span>
+                </div>
+                <div className="flex items-center justify-between text-slate-400 font-medium">
+                  <span>চালু ক্যাটাগরি:</span>
+                  <span className="text-slate-100 font-bold">{summaryDetails.activeStockCount} প্রকার</span>
+                </div>
+                <div className="flex items-center justify-between text-slate-400 font-medium pt-0.5 border-t border-white/5">
+                  <span>গড় স্টক দর:</span>
+                  <span className="text-slate-300">৳ {summaryDetails.avgStockRate.toFixed(2)}</span>
+                </div>
+              </div>
             </div>
-            <div className="glass-panel rounded-2xl p-3.5 sm:p-4 transition-all group hover:border-indigo-500/40">
-              <span className="text-[11px] font-bold text-indigo-400 block">সাপ্তাহিক মার্জিন (7-Day)</span>
-              <span className={`text-base sm:text-lg font-black mt-0.5 block ${sevenDayMargin >= 0 ? "text-indigo-300 drop-shadow-[0_0_10px_rgba(99,102,241,0.35)]" : "text-rose-400"}`}>
-                ৳ {sevenDayMargin.toLocaleString()}
-              </span>
-              <span className="text-[10px] text-slate-400 font-medium block mt-0.5">বিগত ৭ দিনের মোট</span>
+
+            {/* 4. Weekly 7-Day Margin */}
+            <div className="glass-panel rounded-2xl lg:rounded-[1vw] p-3.5 sm:p-4 lg:p-[1vw] transition-all group hover:border-indigo-500/40 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-indigo-400 block truncate">সাপ্তাহিক মার্জিন (7-Day)</span>
+                  <BarChart3 className="w-3.5 h-3.5 text-indigo-400/70 shrink-0" />
+                </div>
+                <span className={`text-base sm:text-lg lg:text-xl font-black mt-1 block tracking-tight ${sevenDayMargin >= 0 ? "text-indigo-300 drop-shadow-[0_0_10px_rgba(99,102,241,0.35)]" : "text-rose-400"}`}>
+                  ৳ {sevenDayMargin.toLocaleString()}
+                </span>
+              </div>
+              <div className="mt-2.5 pt-2 border-t border-white/10 space-y-1 text-[10px]">
+                <div className="flex items-center justify-between text-slate-300 font-bold">
+                  <span>দৈনিক গড় মার্জিন:</span>
+                  <span className="text-indigo-300 font-black">৳ {sevenDayAvgMargin.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between text-slate-400 font-medium">
+                  <span>বিগত কার্যদিবস:</span>
+                  <span className="text-slate-100 font-bold">{sevenDaysList.length} দিন</span>
+                </div>
+                <div className="flex items-center justify-between text-slate-400 font-medium pt-0.5 border-t border-white/5">
+                  <span>৭ দিনের ট্রেন্ড:</span>
+                  <span className={`font-bold ${sevenDayMargin >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                    {sevenDayMargin >= 0 ? "উর্ধ্বমুখী (+)" : "হ্রাসমুখী (-)"}
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="glass-panel rounded-2xl p-3.5 sm:p-4 col-span-2 sm:col-span-1 transition-all group hover:border-emerald-500/40">
-              <span className="text-[11px] font-bold text-emerald-400 block">নিট মার্জিন (Margin)</span>
-              <span className={`text-base sm:text-lg font-black mt-0.5 block ${viewProfit >= 0 ? "text-emerald-300 drop-shadow-[0_0_10px_rgba(16,185,129,0.35)]" : "text-rose-400"}`}>
-                ৳ {viewProfit.toLocaleString()}
-              </span>
-              <span className="text-[10px] text-slate-400 font-medium block mt-0.5">আজকের নিট লাভ</span>
+
+            {/* 5. Net Profit Margin */}
+            <div className="glass-panel rounded-2xl lg:rounded-[1vw] p-3.5 sm:p-4 lg:p-[1vw] col-span-2 sm:col-span-1 transition-all group hover:border-emerald-500/40 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-emerald-400 block truncate">নিট মার্জিন (Margin)</span>
+                  <Activity className="w-3.5 h-3.5 text-emerald-400/70 shrink-0" />
+                </div>
+                <span className={`text-base sm:text-lg lg:text-xl font-black mt-1 block tracking-tight ${viewProfit >= 0 ? "text-emerald-300 drop-shadow-[0_0_10px_rgba(16,185,129,0.35)]" : "text-rose-400"}`}>
+                  ৳ {viewProfit.toLocaleString()}
+                </span>
+              </div>
+              <div className="mt-2.5 pt-2 border-t border-white/10 space-y-1 text-[10px]">
+                <div className="flex items-center justify-between text-slate-300 font-bold">
+                  <span>মার্জিন শতকরা:</span>
+                  <span className="text-emerald-300 font-black">{summaryDetails.marginRate.toFixed(1)}%</span>
+                </div>
+                <div className="flex items-center justify-between text-slate-400 font-medium">
+                  <span>গড় মার্জিনের চেয়ে:</span>
+                  <span className={`font-bold ${summaryDetails.diffFromAvgMargin >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                    {summaryDetails.diffFromAvgMargin >= 0 ? "+" : ""}৳ {summaryDetails.diffFromAvgMargin.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-slate-400 font-medium pt-0.5 border-t border-white/5">
+                  <span>স্ট্যাটাস:</span>
+                  <span className={`font-black ${viewProfit >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                    {viewProfit >= 0 ? "লাভজনক" : "লোকসান"}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
-
+          
           {/* Stock Historic Graph & Stock Details Section (65% / 35% Split) */}
           {currentViewDay && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-stretch">
@@ -4170,22 +4693,29 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
 
           {/* ================= 🧠 BUSINESS INTELLIGENCE (ভাঙ্গা ডিম ও ডিম প্রতি নিট লাভ) ================= */}
           {currentViewDay && (() => {
-            const brokenEggExpense = currentViewDay.expenses.list.find(
-              (e) => e.type.includes("ভাঙ্গা") || e.type.includes("ড্যামেজ")
-            );
-            const brokenQty =
-              brokenEggExpense?.wastedEggQty ||
-              (brokenEggExpense ? Math.round(brokenEggExpense.amount / 11) : 0);
-            const brokenCost = brokenEggExpense?.amount || 0;
-            const totalStockQty = Object.values(currentViewDay.stock || {}).reduce(
-              (sum, s) => sum + (s.currentStock || 0),
-              0
-            );
-            const totalHandledQty = viewTotalSoldQty + totalStockQty;
-            const breakagePercent =
-              totalHandledQty > 0 ? (brokenQty / totalHandledQty) * 100 : 0;
-            const breakageLossRatio =
-              viewExpenses > 0 ? (brokenCost / viewExpenses) * 100 : 0;
+            const activeBreakage =
+              breakageViewPeriod === "weekly"
+                ? breakageStats.weekly
+                : breakageViewPeriod === "monthly"
+                ? breakageStats.monthly
+                : breakageStats.daily;
+
+            const activePeriodTitle =
+              breakageViewPeriod === "weekly"
+                ? `সাপ্তাহিক মোট (${breakageStats.weekly.dayCount} দিন)`
+                : breakageViewPeriod === "monthly"
+                ? `মাসিক মোট (${breakageStats.monthly.monthName || "চলতি মাস"})`
+                : "আজকের দিন";
+
+            const activePercent = activeBreakage.percent;
+            const controlBadge =
+              activePercent < 0.5 ? "🟢 চমৎকার নিয়ন্ত্রণ" : activePercent <= 1.5 ? "🟡 স্বাভাবিক" : "🔴 অপচয় বেশি";
+            const controlBadgeColor =
+              activePercent < 0.5
+                ? "bg-emerald-500/20 text-emerald-300 border-emerald-400/40"
+                : activePercent <= 1.5
+                ? "bg-amber-500/20 text-amber-300 border-amber-400/40"
+                : "bg-rose-500/20 text-rose-300 border-rose-400/40";
 
             const marginPerEgg =
               viewTotalSoldQty > 0 ? viewProfit / viewTotalSoldQty : 0;
@@ -4199,102 +4729,268 @@ export default function YolkFlowClient({ initialData }: YolkFlowClientProps) {
             return (
               <div className="space-y-3 pt-1">
                 {/* 2 Core Business Metric Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
-                  {/* Card 1: ভাঙ্গা ডিম ও অপচয় হার */}
-                  <div className="glass-panel-rose rounded-3xl p-4 sm:p-6 space-y-3 shadow-xl">
-                    <div className="flex justify-between items-start">
-                      <div className="flex items-center space-x-2.5">
-                        <div className="p-2 bg-rose-500/20 text-rose-300 rounded-2xl border border-rose-400/30">
-                          <AlertTriangle className="w-5 h-5" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4 items-stretch">
+                  {/* Card 1: ভাঙ্গা ডিম ও অপচয় হার (Daily, Weekly, Monthly Breakdown) */}
+                  <div className="glass-panel-rose rounded-3xl p-4 sm:p-6 space-y-3.5 shadow-xl flex flex-col justify-between">
+                    <div className="space-y-3">
+                      {/* Top Header */}
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center space-x-2.5">
+                          <div className="p-2 bg-rose-500/20 text-rose-300 rounded-2xl border border-rose-400/30">
+                            <AlertTriangle className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h4 className="text-xs sm:text-sm font-black text-slate-100 flex items-center gap-1.5 flex-wrap">
+                              <span>ভাঙ্গা ডিম ও অপচয় হার</span>
+                              <span className="text-[10px] font-bold text-rose-300/90 px-2 py-0.5 rounded-md bg-rose-950/70 border border-rose-700/50">
+                                {activePeriodTitle}
+                              </span>
+                            </h4>
+                            <p className="text-[11px] text-rose-200/80">
+                              দৈনিক, সাপ্তাহিক ও মাসিক ডিমের অপচয়, ভাঙ্গা ডিমের সংখ্যা ও আর্থিক ক্ষতি
+                            </p>
+                          </div>
                         </div>
+                        <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border shadow-sm ${controlBadgeColor}`}>
+                          {controlBadge}
+                        </span>
+                      </div>
+
+                      {/* Period Selection Filter Tabs */}
+                      <div className="flex items-center gap-1.5 p-1 bg-slate-950/80 rounded-2xl border border-white/10 text-[11px]">
+                        <button
+                          type="button"
+                          onClick={() => setBreakageViewPeriod("daily")}
+                          className={`flex-1 py-1.5 px-2 rounded-xl font-bold transition-all cursor-pointer text-center ${
+                            breakageViewPeriod === "daily"
+                              ? "bg-gradient-to-r from-rose-500 to-pink-500 text-white font-black shadow-[0_0_12px_rgba(244,63,94,0.4)]"
+                              : "text-slate-400 hover:text-rose-200 hover:bg-white/5"
+                          }`}
+                        >
+                          📅 আজকের দিন
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setBreakageViewPeriod("weekly")}
+                          className={`flex-1 py-1.5 px-2 rounded-xl font-bold transition-all cursor-pointer text-center ${
+                            breakageViewPeriod === "weekly"
+                              ? "bg-gradient-to-r from-rose-500 to-pink-500 text-white font-black shadow-[0_0_12px_rgba(244,63,94,0.4)]"
+                              : "text-slate-400 hover:text-rose-200 hover:bg-white/5"
+                          }`}
+                        >
+                          📊 সাপ্তাহিক ({breakageStats.weekly.dayCount} দিন)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setBreakageViewPeriod("monthly")}
+                          className={`flex-1 py-1.5 px-2 rounded-xl font-bold transition-all cursor-pointer text-center truncate ${
+                            breakageViewPeriod === "monthly"
+                              ? "bg-gradient-to-r from-rose-500 to-pink-500 text-white font-black shadow-[0_0_12px_rgba(244,63,94,0.4)]"
+                              : "text-slate-400 hover:text-rose-200 hover:bg-white/5"
+                          }`}
+                        >
+                          🗓️ মাসিক ({breakageStats.monthly.monthName || "চলতি মাস"})
+                        </button>
+                      </div>
+
+                      {/* Main Active Period Stats Display */}
+                      <div className="bg-slate-950/60 p-3.5 sm:p-4 rounded-2xl border border-rose-500/25 flex flex-wrap justify-between items-center gap-3">
                         <div>
-                          <h4 className="text-xs sm:text-sm font-black text-slate-100">ভাঙ্গা ডিম ও অপচয় হার</h4>
-                          <p className="text-[11px] text-rose-200/80">ডিমের মোট অপচয় ও ক্ষতির শতকরা অনুপাত</p>
+                          <span className="text-[11px] font-bold text-slate-400 block">
+                            মোট অপচয় হার ({activePeriodTitle}):
+                          </span>
+                          <p className="text-2xl sm:text-3xl font-black text-rose-400">
+                            {activeBreakage.percent.toFixed(2)}%
+                          </p>
+                          <span className="text-[10px] text-slate-400 font-medium">
+                            হ্যান্ডেল্ড ডিম: {activeBreakage.handledQty.toLocaleString()} টি
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[11px] font-bold text-slate-400 block">
+                            ভাঙ্গা ও অপচয় ডিমের সংখ্যা:
+                          </span>
+                          <p className="text-xl sm:text-2xl font-black text-slate-100 flex items-center justify-end gap-1.5">
+                            <Egg className="w-5 h-5 text-amber-400 shrink-0" />
+                            {activeBreakage.qty.toLocaleString()} টি ডিম
+                          </p>
+                          <span className="text-[11px] font-bold text-rose-300">
+                            ক্ষতি: ৳ {activeBreakage.cost.toLocaleString()}
+                          </span>
                         </div>
                       </div>
-                      <span
-                        className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border ${
-                          breakagePercent < 0.5
-                            ? "bg-emerald-500/20 text-emerald-300 border-emerald-400/40"
-                            : breakagePercent <= 1.5
-                            ? "bg-amber-500/20 text-amber-300 border-amber-400/40"
-                            : "bg-rose-500/20 text-rose-300 border-rose-400/40"
-                        }`}
-                      >
-                        {breakagePercent < 0.5 ? "🟢 চমৎকার নিয়ন্ত্রণ" : breakagePercent <= 1.5 ? "🟡 স্বাভাবিক" : "🔴 অপচয় বেশি"}
-                      </span>
-                    </div>
 
-                    <div className="bg-slate-950/50 p-3.5 rounded-2xl border border-white/10 flex justify-between items-center">
-                      <div>
-                        <span className="text-[11px] font-bold text-slate-400">মোট অপচয় হার:</span>
-                        <p className="text-xl sm:text-2xl font-black text-rose-400">
-                          {breakagePercent.toFixed(2)}%
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-[11px] font-bold text-slate-400">ভাঙ্গা ডিমের সংখ্যা:</span>
-                        <p className="text-lg font-black text-slate-100">
-                          {brokenQty} টি ডিম
-                        </p>
+                      {/* Secondary Metrics Row for Active Period */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                        <div className="py-2 px-2.5 rounded-xl bg-slate-950/40 border border-white/5 flex flex-col justify-between">
+                          <span className="text-[11px] text-slate-400 font-medium">ভাঙ্গায় আর্থিক ক্ষতি:</span>
+                          <span className="font-bold text-sm text-rose-400 mt-0.5">
+                            ৳ {activeBreakage.cost.toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="py-2 px-2.5 rounded-xl bg-slate-950/40 border border-white/5 flex flex-col justify-between">
+                          <span className="text-[11px] text-slate-400 font-medium">মোট খরচের অংশ:</span>
+                          <span className="font-bold text-sm text-slate-200 mt-0.5">
+                            {activeBreakage.lossRatio.toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="col-span-2 sm:col-span-1 py-2 px-2.5 rounded-xl bg-slate-950/40 border border-white/5 flex flex-col justify-between">
+                          <span className="text-[11px] text-slate-400 font-medium">গড় প্রতি ডিমের ক্ষতি:</span>
+                          <span className="font-bold text-sm text-amber-300 mt-0.5">
+                            ৳ {activeBreakage.qty > 0 ? (activeBreakage.cost / activeBreakage.qty).toFixed(2) : "0.00"}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/10 text-xs">
-                      <div className="flex justify-between py-1.5 px-2.5 rounded-xl bg-slate-950/40 border border-white/5">
-                        <span className="text-slate-400">ভাঙ্গায় আর্থিক ক্ষতি:</span>
-                        <span className="font-bold text-rose-400">৳ {brokenCost.toLocaleString()}</span>
+                    {/* Dedicated Weekly & Monthly Summary Breakdown Grid */}
+                    <div className="pt-3 border-t border-white/10 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-black uppercase tracking-wider text-rose-300/90 flex items-center gap-1.5">
+                          <Layers className="w-3.5 h-3.5 text-rose-400" />
+                          সাপ্তাহিক ও মাসিক মোট অপচয় সারসংক্ষেপ (Weekly & Monthly Totals)
+                        </span>
                       </div>
-                      <div className="flex justify-between py-1.5 px-2.5 rounded-xl bg-slate-950/40 border border-white/5">
-                        <span className="text-slate-400">মোট খরচের অংশ:</span>
-                        <span className="font-bold text-slate-200">{breakageLossRatio.toFixed(1)}%</span>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        {/* Weekly Box */}
+                        <div
+                          onClick={() => setBreakageViewPeriod("weekly")}
+                          className={`p-3 rounded-2xl border transition-all cursor-pointer ${
+                            breakageViewPeriod === "weekly"
+                              ? "bg-rose-950/70 border-rose-400/60 shadow-[0_0_15px_rgba(244,63,94,0.3)] ring-1 ring-rose-400/40"
+                              : "bg-slate-950/50 border-white/10 hover:border-rose-400/30 hover:bg-slate-900/50"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[11px] font-black text-rose-300 flex items-center gap-1">
+                              📊 সাপ্তাহিক মোট ({breakageStats.weekly.dayCount} দিন)
+                            </span>
+                            <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-200 border border-rose-400/30">
+                              {breakageStats.weekly.percent.toFixed(2)}% অপচয়
+                            </span>
+                          </div>
+                          <div className="space-y-1 text-xs">
+                            <div className="flex justify-between items-baseline">
+                              <span className="text-[11px] text-slate-400">ভাঙ্গা/নষ্ট ডিমের সংখ্যা:</span>
+                              <span className="text-sm font-black text-slate-100">
+                                {breakageStats.weekly.qty.toLocaleString()} টি ডিম
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-baseline">
+                              <span className="text-[11px] text-slate-400">ভাঙ্গায় আর্থিক মূল্য/ক্ষতি:</span>
+                              <span className="text-sm font-black text-rose-400">
+                                ৳ {breakageStats.weekly.cost.toLocaleString()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Monthly Box */}
+                        <div
+                          onClick={() => setBreakageViewPeriod("monthly")}
+                          className={`p-3 rounded-2xl border transition-all cursor-pointer ${
+                            breakageViewPeriod === "monthly"
+                              ? "bg-rose-950/70 border-rose-400/60 shadow-[0_0_15px_rgba(244,63,94,0.3)] ring-1 ring-rose-400/40"
+                              : "bg-slate-950/50 border-white/10 hover:border-rose-400/30 hover:bg-slate-900/50"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[11px] font-black text-amber-300 flex items-center gap-1">
+                              🗓️ মাসিক মোট ({breakageStats.monthly.monthName || "চলতি মাস"})
+                            </span>
+                            <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-200 border border-amber-400/30">
+                              {breakageStats.monthly.percent.toFixed(2)}% অপচয়
+                            </span>
+                          </div>
+                          <div className="space-y-1 text-xs">
+                            <div className="flex justify-between items-baseline">
+                              <span className="text-[11px] text-slate-400">ভাঙ্গা/নষ্ট ডিমের সংখ্যা:</span>
+                              <span className="text-sm font-black text-slate-100">
+                                {breakageStats.monthly.qty.toLocaleString()} টি ডিম
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-baseline">
+                              <span className="text-[11px] text-slate-400">ভাঙ্গায় আর্থিক মূল্য/ক্ষতি:</span>
+                              <span className="text-sm font-black text-rose-400">
+                                ৳ {breakageStats.monthly.cost.toLocaleString()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Card 2: ডিম প্রতি গড় নিট লাভ */}
-                  <div className="glass-panel-emerald rounded-3xl p-4 sm:p-6 space-y-3 shadow-xl">
-                    <div className="flex justify-between items-start">
-                      <div className="flex items-center space-x-2.5">
-                        <div className="p-2 bg-emerald-500/20 text-emerald-300 rounded-2xl border border-emerald-400/30">
-                          <Coins className="w-5 h-5" />
+                  <div className="glass-panel-emerald rounded-3xl p-4 sm:p-6 space-y-3.5 shadow-xl flex flex-col justify-between">
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-center space-x-2.5">
+                          <div className="p-2 bg-emerald-500/20 text-emerald-300 rounded-2xl border border-emerald-400/30">
+                            <Coins className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h4 className="text-xs sm:text-sm font-black text-slate-100">ডিম প্রতি গড় নিট লাভ</h4>
+                            <p className="text-[11px] text-emerald-200/80">প্রতিটি ডিম বিক্রিতে খরচ বাদে প্রকৃত লাভ</p>
+                          </div>
                         </div>
+                        <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40">
+                          মার্জিন {netMarginPercentage.toFixed(1)}%
+                        </span>
+                      </div>
+
+                      <div className="bg-slate-950/50 p-3.5 rounded-2xl border border-white/10 flex justify-between items-center">
                         <div>
-                          <h4 className="text-xs sm:text-sm font-black text-slate-100">ডিম প্রতি গড় নিট লাভ</h4>
-                          <p className="text-[11px] text-emerald-200/80">প্রতিটি ডিম বিক্রিতে খরচ বাদে প্রকৃত লাভ</p>
+                          <span className="text-[11px] font-bold text-slate-400">প্রতি ডিমে নিট মার্জিন:</span>
+                          <p className="text-xl sm:text-2xl font-black text-emerald-400">
+                            ৳ {marginPerEgg.toFixed(2)}
+                            <span className="text-xs font-semibold text-slate-400 ml-1">
+                              / ডিম
+                            </span>
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[11px] font-bold text-slate-400">মোট ডিম বিক্রি:</span>
+                          <p className="text-lg font-black text-slate-100">
+                            {viewTotalSoldQty.toLocaleString()} টি
+                          </p>
                         </div>
                       </div>
-                      <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40">
-                        মার্জিন {netMarginPercentage.toFixed(1)}%
-                      </span>
+
+                      <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/10 text-xs">
+                        <div className="flex justify-between py-1.5 px-2.5 rounded-xl bg-slate-950/40 border border-white/5">
+                          <span className="text-slate-400">প্রতি ডিমে খরচ:</span>
+                          <span className="font-bold text-rose-400">৳ {operatingExpensePerEgg.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between py-1.5 px-2.5 rounded-xl bg-slate-950/40 border border-white/5">
+                          <span className="text-slate-400">দিনের মোট লাভ:</span>
+                          <span className="font-bold text-emerald-400">৳ {viewProfit.toLocaleString()}</span>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="bg-slate-950/50 p-3.5 rounded-2xl border border-white/10 flex justify-between items-center">
-                      <div>
-                        <span className="text-[11px] font-bold text-slate-400">প্রতি ডিমে নিট মার্জিন:</span>
-                        <p className="text-xl sm:text-2xl font-black text-emerald-400">
-                          ৳ {marginPerEgg.toFixed(2)}
-                          <span className="text-xs font-semibold text-slate-400 ml-1">
-                            / ডিম
+                    {/* Weekly Performance Overview to balance height */}
+                    <div className="pt-3 border-t border-white/10 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-black uppercase tracking-wider text-emerald-300/90 flex items-center gap-1.5">
+                          <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                          রোলিং মুনাফা সারসংক্ষেপ (7-Day Performance)
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div className="p-3 rounded-2xl bg-slate-950/50 border border-white/10">
+                          <span className="text-[11px] text-slate-400 font-medium block">৭ দিনের মোট নিট লাভ:</span>
+                          <span className={`text-sm font-black mt-0.5 block ${sevenDayMargin >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                            ৳ {sevenDayMargin.toLocaleString()}
                           </span>
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-[11px] font-bold text-slate-400">মোট ডিম বিক্রি:</span>
-                        <p className="text-lg font-black text-slate-100">
-                          {viewTotalSoldQty.toLocaleString()} টি
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/10 text-xs">
-                      <div className="flex justify-between py-1.5 px-2.5 rounded-xl bg-slate-950/40 border border-white/5">
-                        <span className="text-slate-400">প্রতি ডিমে খরচ:</span>
-                        <span className="font-bold text-rose-400">৳ {operatingExpensePerEgg.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between py-1.5 px-2.5 rounded-xl bg-slate-950/40 border border-white/5">
-                        <span className="text-slate-400">দিনের মোট লাভ:</span>
-                        <span className="font-bold text-emerald-400">৳ {viewProfit.toLocaleString()}</span>
+                        </div>
+                        <div className="p-3 rounded-2xl bg-slate-950/50 border border-white/10">
+                          <span className="text-[11px] text-slate-400 font-medium block">৭ দিনের দৈনিক গড় লাভ:</span>
+                          <span className={`text-sm font-black mt-0.5 block ${sevenDayAvgMargin >= 0 ? "text-emerald-300" : "text-rose-400"}`}>
+                            ৳ {sevenDayAvgMargin.toLocaleString()}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>

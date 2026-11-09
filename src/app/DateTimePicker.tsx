@@ -5,7 +5,6 @@ import {
   Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
-  Check,
   RotateCcw,
   X,
 } from "lucide-react";
@@ -19,7 +18,7 @@ interface DatePickerProps {
   compact?: boolean;
 }
 
-const MONTH_NAMES_BN = [
+export const MONTH_NAMES_BN = [
   "জানুয়ারি",
   "ফেব্রুয়ারি",
   "মার্চ",
@@ -34,7 +33,7 @@ const MONTH_NAMES_BN = [
   "ডিসেম্বর",
 ];
 
-const MONTH_NAMES_EN = [
+export const MONTH_NAMES_EN = [
   "January",
   "February",
   "March",
@@ -49,7 +48,7 @@ const MONTH_NAMES_EN = [
   "December",
 ];
 
-const WEEK_DAYS = [
+export const WEEK_DAYS = [
   { bn: "শনি", en: "Sa" },
   { bn: "রবি", en: "Su" },
   { bn: "সোম", en: "Mo" },
@@ -58,6 +57,44 @@ const WEEK_DAYS = [
   { bn: "বৃহঃ", en: "Th" },
   { bn: "শুক্র", en: "Fr" },
 ];
+
+export const BANGLA_DAYS_MAP: { [key: string]: string } = {
+  sunday: "রবিবার",
+  monday: "সোমবার",
+  tuesday: "মঙ্গলবার",
+  wednesday: "বুধবার",
+  thursday: "বৃহস্পতিবার",
+  friday: "শুক্রবার",
+  saturday: "শনিবার",
+  sun: "রবিবার",
+  mon: "সোমবার",
+  tue: "মঙ্গলবার",
+  wed: "বুধবার",
+  thu: "বৃহস্পতিবার",
+  fri: "শুক্রবার",
+  sat: "শনিবার",
+  "রবি": "রবিবার",
+  "সোম": "সোমবার",
+  "মঙ্গল": "মঙ্গলবার",
+  "বুধ": "বুধবার",
+  "বৃহস্পতি": "বৃহস্পতিবার",
+  "বৃহঃ": "বৃহস্পতিবার",
+  "শুক্র": "শুক্রবার",
+  "শনি": "শনিবার",
+  "রবিবার": "রবিবার",
+  "সোমবার": "সোমবার",
+  "মঙ্গলবার": "মঙ্গলবার",
+  "বুধবার": "বুধবার",
+  "বৃহস্পতিবার": "বৃহস্পতিবার",
+  "শুক্রবার": "শুক্রবার",
+  "শনিবার": "শনিবার",
+};
+
+export const getBanglaDay = (dayStr?: string): string => {
+  if (!dayStr) return "";
+  const cleaned = dayStr.trim().toLowerCase();
+  return BANGLA_DAYS_MAP[cleaned] || BANGLA_DAYS_MAP[dayStr.trim()] || dayStr.trim();
+};
 
 /**
  * Format YYYY-MM-DD to DD/MM/YYYY (Day/Month/Year)
@@ -159,7 +196,7 @@ export default function DateTimePicker({
     }
   };
 
-  // Calendar calculations (starting from Saturday = 0 in Bangladeshi standard or standard grid)
+  // Calendar calculations (starting from Saturday = 0 in Bangladeshi standard)
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
   // Saturday is index 0 in WEEK_DAYS:
   // JS Date.getDay(): 0 = Sun, 1 = Mon, ..., 6 = Sat
@@ -196,7 +233,7 @@ export default function DateTimePicker({
   const displayFormatted = formatToDayMonthYear(value);
 
   return (
-    <div ref={containerRef} className={`relative ${className}`}>
+    <div ref={containerRef} className={`relative ${isOpen ? "z-[9999]" : ""} ${className}`}>
       {label && (
         <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
           {label}
@@ -209,7 +246,7 @@ export default function DateTimePicker({
         onClick={() => setIsOpen(!isOpen)}
         className={`w-full flex items-center justify-between border rounded-xl transition-all cursor-pointer select-none ${
           compact
-            ? "px-2 py-1 bg-transparent border-slate-700/80 text-white hover:bg-white/10 text-xs"
+            ? "px-2 sm:px-2.5 py-1 bg-transparent border-slate-700/80 text-white hover:bg-white/10 hover:border-amber-500/60 text-xs font-semibold"
             : "px-3 py-2 bg-slate-50/70 dark:bg-slate-800/80 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 hover:border-amber-500 text-sm font-bold shadow-xs focus:ring-2 focus:ring-amber-500"
         }`}
       >
@@ -222,49 +259,47 @@ export default function DateTimePicker({
       {/* Popover Calendar */}
       {isOpen && (
         <div
-          className={`absolute z-[60] mt-2 ${
-            compact ? "left-1/2 -translate-x-1/2" : "left-0 sm:left-auto right-0 sm:right-auto"
-          } min-w-[285px] sm:min-w-[320px] bg-slate-950/95 backdrop-blur-xl border border-cyan-500/30 rounded-2xl shadow-2xl p-3.5 sm:p-4 text-slate-100 animate-fadeIn`}
+          className={`absolute z-[9999] mt-2 ${compact ? "right-0 max-sm:left-1/2 max-sm:-translate-x-1/2" : "left-0 sm:left-auto right-0 sm:right-auto"} w-[330px] sm:w-[350px] max-w-[calc(100vw-24px)] bg-[#030718] border border-[#1d293d] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] p-4 sm:p-5 text-slate-100 select-none animate-fadeIn`}
         >
           {/* Header with Month / Year navigation */}
-          <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-[#1d293d]">
             <button
               type="button"
               onClick={prevMonth}
-              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="p-1 text-slate-400 hover:text-white transition-colors cursor-pointer select-none"
               title="পূর্ববর্তী মাস"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-5 h-5 stroke-[2.2]" />
             </button>
 
             <div className="text-center">
-              <span className="text-sm font-black text-slate-900 dark:text-slate-100">
+              <div className="text-base sm:text-lg font-bold text-white tracking-wide">
                 {MONTH_NAMES_BN[viewMonth]} {viewYear}
-              </span>
-              <span className="block text-[10px] font-semibold text-slate-400 dark:text-slate-500">
+              </div>
+              <div className="text-xs font-normal text-slate-400 mt-0.5">
                 {MONTH_NAMES_EN[viewMonth]} (DD/MM/YYYY)
-              </span>
+              </div>
             </div>
 
             <button
               type="button"
               onClick={nextMonth}
-              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="p-1 text-slate-400 hover:text-white transition-colors cursor-pointer select-none"
               title="পরবর্তী মাস"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-5 h-5 stroke-[2.2]" />
             </button>
           </div>
 
           {/* Weekday headers: শনি, রবি, সোম, মঙ্গল, বুধ, বৃহঃ, শুক্র */}
-          <div className="grid grid-cols-7 gap-1 text-center mb-1.5">
+          <div className="grid grid-cols-7 gap-1 text-center mb-4">
             {WEEK_DAYS.map((w, idx) => (
               <div
                 key={idx}
-                className={`text-[11px] font-bold py-1 ${
+                className={`text-xs sm:text-sm font-bold py-0.5 ${
                   idx === 6
-                    ? "text-rose-600 dark:text-rose-400"
-                    : "text-slate-500 dark:text-slate-400"
+                    ? "text-[#f43f5e]"
+                    : "text-slate-200"
                 }`}
               >
                 {w.bn}
@@ -273,10 +308,10 @@ export default function DateTimePicker({
           </div>
 
           {/* Days Grid */}
-          <div className="grid grid-cols-7 gap-1 text-center">
+          <div className="grid grid-cols-7 gap-y-3 sm:gap-y-3.5 gap-x-1 text-center">
             {/* Empty slots for start of month */}
             {Array.from({ length: firstDayIndex }).map((_, idx) => (
-              <div key={`empty-${idx}`} className="h-8" />
+              <div key={`empty-${idx}`} className="h-9 w-9 sm:h-10 sm:w-10" />
             ))}
 
             {/* Days of month */}
@@ -296,12 +331,12 @@ export default function DateTimePicker({
                   key={`day-${dayNum}`}
                   type="button"
                   onClick={() => handleSelectDate(dayNum)}
-                  className={`h-8 w-8 mx-auto rounded-xl flex items-center justify-center text-xs font-bold transition-all cursor-pointer ${
+                  className={`h-9 w-9 sm:h-10 sm:w-10 mx-auto rounded-2xl flex items-center justify-center text-sm sm:text-base font-bold transition-all cursor-pointer ${
                     isSelected
-                      ? "bg-amber-600 text-white shadow-md shadow-amber-600/30 scale-105"
+                      ? "bg-[#e17100] text-white font-extrabold shadow-lg shadow-orange-500/35 scale-105"
                       : isToday
-                      ? "bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 border border-amber-400 dark:border-amber-700"
-                      : "text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-slate-800"
+                      ? "text-amber-300 font-bold border border-amber-500/70 hover:bg-slate-800/80 hover:text-white"
+                      : "text-white hover:bg-slate-800/80 hover:text-white"
                   }`}
                 >
                   {dayNum}
@@ -311,19 +346,19 @@ export default function DateTimePicker({
           </div>
 
           {/* Footer: Quick Today & Format Badge */}
-          <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+          <div className="mt-4 sm:mt-5 pt-3 sm:pt-3.5 border-t border-[#1d293d] flex items-center justify-between text-xs sm:text-sm">
             <button
               type="button"
               onClick={handleSetToday}
-              className="text-[11px] font-bold text-amber-700 dark:text-amber-300 hover:underline flex items-center gap-1 cursor-pointer"
+              className="flex items-center gap-1.5 text-amber-400 hover:text-amber-300 font-bold transition-colors cursor-pointer select-none"
             >
-              <RotateCcw className="w-3 h-3" />
+              <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
               <span>আজকের দিন (Today)</span>
             </button>
 
-            <div className="text-[11px] font-bold text-slate-600 dark:text-slate-300 truncate">
-              ফরম্যাট:{" "}
-              <span className="text-amber-600 dark:text-amber-400 font-mono">
+            <div className="font-bold flex items-center gap-1 select-none">
+              <span className="text-slate-200">ফরম্যাট:</span>
+              <span className="text-amber-400 font-mono">
                 {String(selectedDay).padStart(2, "0")}/
                 {String(viewMonth + 1).padStart(2, "0")}/{viewYear}
               </span>
@@ -332,10 +367,10 @@ export default function DateTimePicker({
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="text-slate-400 hover:text-white transition-colors cursor-pointer p-0.5 select-none"
               title="বন্ধ করুন"
             >
-              <X className="w-4 h-4" />
+              <X className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
             </button>
           </div>
         </div>

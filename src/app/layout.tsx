@@ -24,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="bn" className={hindSiliguri.variable} suppressHydrationWarning>
+    <html lang="bn" className={`${hindSiliguri.variable} dark`} suppressHydrationWarning>
       <body className={`${hindSiliguri.className} bg-slate-100/70 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen antialiased selection:bg-cyan-500 selection:text-slate-950 pb-16 sm:pb-8 transition-colors duration-200`}>
         {children}
       </body>

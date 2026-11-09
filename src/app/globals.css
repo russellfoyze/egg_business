@@ -210,102 +210,13 @@ html:not(.dark) .glass-panel-purple {
   box-shadow: 0 12px 32px -4px rgba(168, 85, 247, 0.12), 0 0 16px rgba(168, 85, 247, 0.06);
 }
 
-/* Light Mode Typography & Color Contrast Enhancements */
+/* Always protect dark themes */
+.dark, [data-theme="dark"], .force-dark {
+  color-scheme: dark;
+}
+
+/* Light Mode Frosted Components & Buttons */
 html:not(.dark) {
-  /* Slate texts to crisp dark slate */
-  .text-slate-100 {
-    color: #0f172a !important;
-  }
-  .text-slate-200 {
-    color: #1e293b !important;
-  }
-  .text-slate-300 {
-    color: #334155 !important;
-  }
-  .text-slate-400 {
-    color: #475569 !important;
-  }
-
-  /* Vibrant high-contrast metrics */
-  .text-cyan-300,
-  .text-cyan-400 {
-    color: #0284c7 !important;
-  }
-  .text-amber-300,
-  .text-amber-400 {
-    color: #b45309 !important;
-  }
-  .text-rose-300,
-  .text-rose-400 {
-    color: #be123c !important;
-  }
-  .text-emerald-300,
-  .text-emerald-400 {
-    color: #047857 !important;
-  }
-  .text-purple-300,
-  .text-purple-400 {
-    color: #7e22ce !important;
-  }
-
-  /* Inner Card, Dropdown & Container Backgrounds */
-  .bg-slate-900\/95,
-  .bg-slate-900\/90,
-  .bg-slate-900\/80,
-  .bg-slate-900\/70,
-  .bg-slate-900,
-  .bg-slate-950\/95,
-  .bg-slate-950\/90,
-  .bg-slate-950\/80,
-  .bg-slate-950 {
-    background-color: rgba(255, 255, 255, 0.88) !important;
-    border-color: rgba(203, 213, 225, 0.9) !important;
-  }
-
-  /* Input fields, select dropdowns and textareas */
-  input:not([type="checkbox"]):not([type="radio"]),
-  select,
-  textarea {
-    background-color: #ffffff !important;
-    color: #0f172a !important;
-    border-color: #cbd5e1 !important;
-  }
-  input::placeholder,
-  textarea::placeholder {
-    color: #94a3b8 !important;
-  }
-  select option {
-    background-color: #ffffff !important;
-    color: #0f172a !important;
-  }
-
-  /* Colored Status Badges & Pills */
-  [class*="bg-cyan-950"] {
-    background-color: rgba(224, 242, 254, 0.95) !important;
-    color: #0369a1 !important;
-    border-color: rgba(56, 189, 248, 0.5) !important;
-  }
-  [class*="bg-amber-950"] {
-    background-color: rgba(254, 243, 199, 0.95) !important;
-    color: #92400e !important;
-    border-color: rgba(251, 191, 36, 0.55) !important;
-  }
-  [class*="bg-rose-950"] {
-    background-color: rgba(255, 228, 230, 0.95) !important;
-    color: #9f1239 !important;
-    border-color: rgba(251, 113, 133, 0.5) !important;
-  }
-  [class*="bg-emerald-950"] {
-    background-color: rgba(209, 250, 229, 0.95) !important;
-    color: #065f46 !important;
-    border-color: rgba(52, 211, 153, 0.5) !important;
-  }
-  [class*="bg-purple-950"] {
-    background-color: rgba(243, 232, 255, 0.95) !important;
-    color: #6b21a8 !important;
-    border-color: rgba(192, 132, 252, 0.5) !important;
-  }
-
   /* Cyber Buttons in Light Mode */
   .cyber-btn-outline {
     background: rgba(240, 249, 255, 0.95);
